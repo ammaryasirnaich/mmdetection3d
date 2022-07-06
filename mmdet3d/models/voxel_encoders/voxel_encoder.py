@@ -643,20 +643,34 @@ class IEVFE(nn.Module):
         mask = get_paddings_indicator(num_points, voxel_count, axis=0)
         voxel_feats *= mask.unsqueeze(-1).type_as(voxel_feats)
 
-        # generating intensity historgram for voxels   
-        # intensity_features = self.generateVoxelIntensityHist(voxel_feats)
-        # import time
-        # tic = time.perf_counter()
-        intensity_features = self.generateVoxelIntensityHist(voxel_feats)
-        
-        # toc = time.perf_counter()
-        # print(f"generateVoxelIntensityHist {toc - tic:0.4f} seconds")
-        
-        # tic = time.perf_counter()
-        # intensity_features = self.generateVoxelIntensityHist_v2(voxel_feats)
-        # toc = time.perf_counter()
-        # print(f"generateVoxelIntensityHist_v2 {toc - tic:0.4f} seconds")
 
+        # Transfering data from Numpy -> Pytorch Tensor -> Cupy -> Numba (numba doesnt explicity supports tensor hence used it via cupy)
+        features_cp  = cp.asarray(voxel_feats)
+        features_nb = numba.cuda.to_device(features_cp)
+        feature_size = features_nb.shape[1]
+
+
+        ### Kernal Configuration
+        threads_per_block =1
+        blocks = voxel_feats.shape[0]  # equal to the number of rows
+        feature_length = voxel_feats.shape[1]  # equal to the number of intensity values in each voxel (e.g 5 values)
+
+        # declera the intensity output feature size
+        intensity_features  = np.zeros(features_nb.shape[0]*10).astype(np.float32).reshape(features_nb.shape[0],10)
+        intensity_features = cuda.to_device(intensity_features)
+
+        ## launch the intensity histogram kernal
+        row_wise_histogram[blocks, threads_per_block](features_nb, intensity_features, feature_length)
+
+        # numba to cupy, than cupy to tensor
+        # intensity_features.copy_to_host()
+
+
+        
+
+
+
+        # intensity_features = self.generateVoxelIntensityHist(voxel_feats)
 
 
 
@@ -673,6 +687,14 @@ class IEVFE(nn.Module):
         return voxel_feats
 
 
+    
+
+
+
+
+    
+    
+    
     def generateVoxelIntensityHist(self, features):
         
         # print("Intermediate feature shape", features.shape)
@@ -691,6 +713,8 @@ class IEVFE(nn.Module):
             final_feature[row,:] = hist
 
         return final_feature
+
+
 
     def generateVoxelIntensityHist_v2(self, features):
         
