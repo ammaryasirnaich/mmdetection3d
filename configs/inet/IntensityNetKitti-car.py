@@ -1,7 +1,5 @@
 
 # dataset settings
-from numpy import True_
-
 
 dataset_type = 'KittiDataset'
 data_root = '/workspace/data/kitti/'
@@ -153,7 +151,7 @@ point_cloud_range=[0, -40, -3, 70.4, 40, 1]
 #  type='DynamicVFE',  # HardVFE , IEVFE' , HardSimpleVFE
 
 model = dict(
-    type='IntensityNet', # Type of the Detector, refer to mmdet3d.models.detectors 
+    type='VoxelNet', # Type of the Detector, refer to mmdet3d.models.detectors 
     voxel_layer=dict(
         max_num_points=5,
         point_cloud_range=[0, -40, -3, 70.4, 40, 1],
@@ -238,10 +236,10 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './working_dir'
+work_dir = '/workingspace/mmdetection3d/working_dir'
 load_from = None
 resume_from = None
-workflow = [('train', 1), ('val', 1)]
+workflow = [('train', 1)]   # , ('val', 1)
 
 # disable opencv multithreading to avoid system being overloaded
 opencv_num_threads = 0

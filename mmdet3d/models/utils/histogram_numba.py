@@ -17,3 +17,4 @@ def row_wise_histogram(feature, output,  feature_length):
             # mybin[idx][i] = bin_number
             if bin_number >= 0 and bin_number < output.shape[1]:
                 cuda.atomic.add(output[idx], bin_number, 1)
+
