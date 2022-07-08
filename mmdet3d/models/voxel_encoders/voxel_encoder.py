@@ -8,6 +8,12 @@ from torch import nn
 from .. import builder
 from ..builder import VOXEL_ENCODERS
 from .utils import VFELayer, get_paddings_indicator
+from ..utils.histogram_numba import row_wise_histogram
+import cupy as cp
+import numba
+import numpy as np
+from numba import cuda
+
 
 
 @VOXEL_ENCODERS.register_module()
@@ -641,11 +647,11 @@ class IEVFE(nn.Module):
         # Need to ensure that empty voxels remain set to zeros.
         voxel_count = voxel_feats.shape[1]
         mask = get_paddings_indicator(num_points, voxel_count, axis=0)
-        voxel_feats *= mask.unsqueeze(-1).type_as(voxel_feats)
+        voxel_feats *= mask.unsqueeze(-1).type_as(voxel_feats)   
 
-
-        # Transfering data from Numpy -> Pytorch Tensor -> Cupy -> Numba (numba doesnt explicity supports tensor hence used it via cupy)
-        features_cp  = cp.asarray(voxel_feats)
+        
+        # Transfering data Pytorch Tensor -> Cupy -> Numba (numba doesnt explicity supports tensor hence used it via cupy)
+        features_cp  = cp.asarray(voxel_feats[:,:,3])  # taking intensity values only
         features_nb = numba.cuda.to_device(features_cp)
         feature_size = features_nb.shape[1]
 
@@ -662,14 +668,12 @@ class IEVFE(nn.Module):
         ## launch the intensity histogram kernal
         row_wise_histogram[blocks, threads_per_block](features_nb, intensity_features, feature_length)
 
-        # numba to cupy, than cupy to tensor
-        # intensity_features.copy_to_host()
+        # convert the numba kernal output (intensity histogram) to pytorch tensor
+        # numba -> cupy -> tensor
+        intensity_features = cp.asarray(intensity_features)  # convert from numba to cupy array
+        intensity_features = torch.as_tensor(intensity_features, device='cuda')
 
-
-        
-
-
-
+        ## below code is for loop wise intensity historgram calculation
         # intensity_features = self.generateVoxelIntensityHist(voxel_feats)
 
 
