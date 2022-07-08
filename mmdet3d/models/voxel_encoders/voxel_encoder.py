@@ -649,7 +649,7 @@ class IEVFE(nn.Module):
         mask = get_paddings_indicator(num_points, voxel_count, axis=0)
         voxel_feats *= mask.unsqueeze(-1).type_as(voxel_feats)   
 
-        
+       
         # Transfering data Pytorch Tensor -> Cupy -> Numba (numba doesnt explicity supports tensor hence used it via cupy)
         features_cp  = cp.asarray(voxel_feats[:,:,3])  # taking intensity values only
         features_nb = numba.cuda.to_device(features_cp)
@@ -672,9 +672,10 @@ class IEVFE(nn.Module):
         # numba -> cupy -> tensor
         intensity_features = cp.asarray(intensity_features)  # convert from numba to cupy array
         intensity_features = torch.as_tensor(intensity_features, device='cuda')
+        
 
-        ## below code is for loop wise intensity historgram calculation
-        # intensity_features = self.generateVoxelIntensityHist(voxel_feats)
+        ## below code is a slow  and alternative of the above ,voxel wise intensity historgram calculation
+        #intensity_features = self.generateVoxelIntensityHist(voxel_feats)
 
 
 
