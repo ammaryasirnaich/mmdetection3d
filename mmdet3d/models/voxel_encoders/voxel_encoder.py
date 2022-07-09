@@ -651,7 +651,7 @@ class IEVFE(nn.Module):
 
        
         # Transfering data Pytorch Tensor -> Cupy -> Numba (numba doesnt explicity supports tensor hence used it via cupy)
-        features_cp  = cp.asarray(voxel_feats[:,:,3])  # taking intensity values only
+        features_cp  = cp.asarray(voxel_feats[:,:,3],dtype=np.float32)  # taking intensity values only
         features_nb = numba.cuda.to_device(features_cp)
         feature_size = features_nb.shape[1]
 
