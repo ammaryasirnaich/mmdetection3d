@@ -1,18 +1,18 @@
-
 # dataset settings
-
 dataset_type = 'KittiDataset'
 data_root = '/workspace/data/kitti/'
-class_names = ['Car']
+class_names = ['Pedestrian', 'Cyclist', 'Car']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
     classes=class_names,
-    sample_groups=dict(Car=15))
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6))
 
 file_client_args = dict(backend='disk')
 # Uncomment the following if use ceph or other file clients.
@@ -50,7 +50,6 @@ train_pipeline = [
     dict(type='PointShuffle'),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
     dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
-
 ]
 test_pipeline = [
     dict(
@@ -97,8 +96,8 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=2,  #6
-    workers_per_gpu=2,  #4
+    samples_per_gpu=6,
+    workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
         times=2,
@@ -185,20 +184,24 @@ model = dict(
         in_channels=[128, 256],
         upsample_strides=[1, 2],
         out_channels=[256, 256]),
-    bbox_head=dict(
+     bbox_head=dict(
         type='Anchor3DHead',
-        num_classes=1,
+        num_classes=3,
         in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='Anchor3DRangeGenerator',
-            ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
-            sizes=[[3.9, 1.6, 1.56]],
+            ranges=[
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -0.6, 70.4, 40.0, -0.6],
+                [0, -40.0, -1.78, 70.4, 40.0, -1.78],
+            ],
+            sizes=[[0.8, 0.6, 1.73], [1.76, 0.6, 1.73], [3.9, 1.6, 1.56]],
             rotations=[0, 1.57],
             reshape_out=False),
         diff_rad_by_sin=True,
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),   
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -211,6 +214,20 @@ model = dict(
     # model training and testing settings
     train_cfg=dict(
         assigner=[
+            dict(  # for Pedestrian
+                type='MaxIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.35,
+                neg_iou_thr=0.2,
+                min_pos_iou=0.2,
+                ignore_iof_thr=-1),
+            dict(  # for Cyclist
+                type='MaxIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.35,
+                neg_iou_thr=0.2,
+                min_pos_iou=0.2,
+                ignore_iof_thr=-1),
             dict(  # for Car
                 type='MaxIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
@@ -269,8 +286,6 @@ log_config = dict(
 #                         schedule = dict( wait=1,warmup=1,active=2),
 #                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
 #                         # with_stack =True,
-
-
 
 
 
