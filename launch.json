@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            // "program": "/workspace/mmdetection3d/tools/test.py",
+            "program": "/workspace/mmdetection3d/tools/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"]
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py"]
+            "args": ["/workspace/mmdetection3d/configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py"]
+
+           
+         
+             //## evaluating Arguments
+            // "args": ["/workspace/working_dir/intensityNet/intensityNetKitti_all_objects.py","/workspace/working_dir/intensityNet/epoch_40.pth",
+            //    "--eval","mAP","--eval-options","show=","True","out_dir","/workspace/working_dir/intensityNet/show_results"]
+            
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py","/workspace/mmdetection3d/working_dir/second_car/epoch_1.pth",
+            //    "--eval","mAP" ]
+
+            //## evaluating the VoxelNet Second model
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/mmdetection3d/working_dir/second_3class/hv_second_secfpn_classes.pth",
+            //     "--eval","mAP","--eval-options","show=","True","out_dir","/workspace/mmdetection3d/working_dir/second_3class/show_results"  ]
+                
+        }
+    ]
+}
+
+
+// python tools/test.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityAware/epoch_1.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/intensityAware/show_results'
+// python tools/test.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/second_3class/hv_second_secfpn_classes.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/second_3class/show_results'
+// python tools/test.py /workspace/mmdetection3d/working_dir/second_car/hv_second_car.py /workspace/mmdetection3d/working_dir/second_car/epoch_40.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/second_car/show_results'
+
+// python tools/test.py /workspace/mmdetection3d/configs/mvxnet/dv_mvx-fpn_second_secfpn_adamw_2x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/dvmvx/epoch_40.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/dvmvx/show_results'
+ 
+// python tools/create_data.py kitti --root-path /workspace/mmdetection3d/data/kitti/ --out-dir /workspace/mmdetection3d/data/kitti/
+
+
