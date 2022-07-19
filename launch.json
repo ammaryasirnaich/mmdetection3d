@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "/workspace/mmdetection3d/tools/test.py",
+            // "program": "/workspace/mmdetection3d/tools/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/mmdetection3d/working_dir/epoch_40.pth","--eval","mAP","--eval-options"," 'show=True'","'out_dir=/workspace/mmdetection3d/working_dir/show_results'"]
+
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth",
+            //    "--eval","mAP" ]
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth",
+            //     "--eval","mAP","--eval-options","show=","True","out_dir","/workspace/working_dir/show_results"  ]
+                
+        }
+    ]
+}
+
+
+// python tools/test.py /workspace/mmdetection3d/configs/second/mmdetection3d/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py /workspace/mmdetection3d/working_dir/hv_second_kitti-3d-car.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/show_results'
+
+ 
+// python tools/create_data.py kitti --root-path /workspace/mmdetection3d/data/kitti/ --out-dir /workspace/mmdetection3d/data/kitti/
+
+// /workspace/mmdetection3d/working_dir/epoch_40.pth
+
+// python tools/test.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/show_results'
