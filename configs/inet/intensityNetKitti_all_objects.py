@@ -4,7 +4,7 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 model = dict(
     type='VoxelNet',
     voxel_layer=dict(
-        max_num_points=5,
+        max_num_points=35,
         point_cloud_range=[0, -40, -3, 70.4, 40, 1],
         voxel_size=voxel_size,
         max_voxels=(16000, 40000)),
@@ -195,7 +195,7 @@ eval_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=6,
+    samples_per_gpu=4,
     workers_per_gpu=4,
     train=dict(
         type='RepeatDataset',
@@ -242,7 +242,7 @@ evaluation = dict(interval=1, pipeline=eval_pipeline)
 # Training settings
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = '/workspace/mmdetection3d/working_dir/intensityAware'
+work_dir = '/workspace/mmdetection3d/working_dir/intensityAware_35pnt'
 load_from = None
 resume_from = None
 workflow = [('train', 1), ('val', 1)]
