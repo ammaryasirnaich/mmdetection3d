@@ -8,14 +8,14 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            // "program": "/workspace/mmdetection3d/tools/train.py",  // for training
+            "program": "/workspace/mmdetection3d/tools/train.py",  // for training
             // "program": "/workspace/mmdetection3d/tools/test.py", // for testing
-            "program": "/workspace/mmdetection3d/tools/analysis_tools/get_flops.py", // Model Complexity
+            // "program": "/workspace/mmdetection3d/tools/analysis_tools/get_flops.py", // Model Complexity
 
             "console": "integratedTerminal",
             "justMyCode": true,
-            // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"] // for training 
-            "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py", "--shape=[15347, 8, 7]"] // for model complexity
+            "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"] // for training 
+            // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py", "--shape=[15347, 8, 7]"] // for model complexity
             // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/mmdetection3d/working_dir/epoch_40.pth","--eval","mAP","--eval-options","'show=True'","'out_dir=/workspace/mmdetection3d/working_dir/show_results'"]
 
             // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth",
