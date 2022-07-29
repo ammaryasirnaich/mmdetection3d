@@ -14,7 +14,7 @@
 
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"] // for training 
+            "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py","--resume-from","/workspace/mmdetection3d/working_dir/intensityAware/epoch_1.pth"] // for training 
             // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py", "--shape=[15347, 8, 7]"] // for model complexity
             // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/mmdetection3d/working_dir/epoch_40.pth","--eval","mAP","--eval-options","'show=True'","'out_dir=/workspace/mmdetection3d/working_dir/show_results'"]
 
@@ -38,14 +38,14 @@
 // Evaluation command for Second Model
 // python tools/test.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/second/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/second'
 // python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/second/epoch_40.pth
-python tools/analysis_tools/get_flops.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py  --shape [40000 4]
+// python tools/analysis_tools/get_flops.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py  --shape [40000 4]
 
 
 
 
 // Evaluation command for Intensity Aware Network
-// python tools/test.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityNet/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/intensityNet'
+// python tools/test.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/intensityAware_35pnt/'
 
 /// FLOPS and FPS calculation for Intensity Aware model
 // python tools/analysis_tools/get_flops.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py --shape [40000 4]
-// python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityNet/epoch_40.pth
+// python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth
