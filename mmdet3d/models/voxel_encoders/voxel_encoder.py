@@ -678,7 +678,6 @@ class IEVFE(nn.Module):
         #intensity_features = self.generateVoxelIntensityHist(voxel_feats)
 
 
-
         for i, vfe in enumerate(self.vfe_layers):
             voxel_feats = vfe(voxel_feats)
 
@@ -691,17 +690,8 @@ class IEVFE(nn.Module):
 
         return voxel_feats
 
-
     
-
-
-
-
-    
-    
-    
-    def generateVoxelIntensityHist(self, features):
-        
+    def generateVoxelIntensityHist(self, features):      
         # print("Intermediate feature shape", features.shape)
 
         # TODO: implement the voxel historgram method
@@ -721,23 +711,38 @@ class IEVFE(nn.Module):
 
 
 
-    def generateVoxelIntensityHist_v2(self, features):
-        
-        # TODO: implement the voxel historgram method
-        ''' Appending voxel intensity historgram feature  '''
-       
-        temp_hist_feature =features[:,:,3].clone().cpu().detach().numpy()
 
-        # print("shape of temp_hist_feature",temp_hist_feature.shape)
-        final_feature = torch.zeros((features.shape[0],10),dtype=torch.float32)
+@VOXEL_ENCODERS.register_module()
+class DBSCAN_VFE(nn.Module):
+    """Simple voxel feature encoder used in SECOND.
 
-        for row in range(features.shape[0]):
-            # hist = torch.histc(temp_hist_feature[row], bins=10,min=0,max=1) 
-            hist = numba_gpu_histogram(temp_hist_feature[row], bins=10,a_min=0,a_max=1) #bins, a_min, a_max
-            hist = torch.from_numpy(hist)
-            final_feature[row,:] = hist
+    It simply averages the values of points in a voxel.
 
-        return final_feature.cuda()
+    Args:
+        num_features (int, optional): Number of features to use. Default: 4.
+    """
 
+    def __init__(self, num_features=4):
+        super(HardSimpleVFE, self).__init__()
+        self.num_features = num_features
+        self.fp16_enabled = False
 
+    @force_fp32(out_fp16=True)
+    def forward(self, features, num_points, coors):
+        """Forward function.
 
+        Args:
+            features (torch.Tensor): Point features in shape
+                (N, M, 3(4)). N is the number of voxels and M is the maximum
+                number of points inside a single voxel.
+            num_points (torch.Tensor): Number of points in each voxel,
+                 shape (N, ).
+            coors (torch.Tensor): Coordinates of voxels.
+
+        Returns:
+            torch.Tensor: Mean of points inside each voxel in shape (N, 3(4))
+        """
+        points_mean = features[:, :, :self.num_features].sum(
+            dim=1, keepdim=False) / num_points.type_as(features).view(-1, 1)
+
+        return points_mean.contiguous()
