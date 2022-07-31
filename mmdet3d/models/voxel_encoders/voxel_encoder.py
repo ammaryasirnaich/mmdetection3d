@@ -723,7 +723,7 @@ class DBSCAN_VFE(nn.Module):
     """
 
     def __init__(self, num_features=4):
-        super(HardSimpleVFE, self).__init__()
+        super(DBSCAN_VFE, self).__init__()
         self.num_features = num_features
         self.fp16_enabled = False
 
