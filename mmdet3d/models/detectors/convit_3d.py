@@ -17,7 +17,6 @@ class ConViT3D(SingleStage3DDetector):
     def __init__(self,
                  voxel_layer,
                  voxel_encoder,
-                 middle_encoder,
                  backbone,
                  neck=None,
                  bbox_head=None,
@@ -35,17 +34,25 @@ class ConViT3D(SingleStage3DDetector):
             pretrained=pretrained)
         self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
-        self.middle_encoder = builder.build_middle_encoder(middle_encoder)
+        # self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
     def extract_feat(self, points, img_metas=None):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
-        x = self.middle_encoder(voxel_features, coors, batch_size)
-        x = self.backbone(x)
+        
+        # x = self.middle_encoder(voxel_features, coors, batch_size)
+        # x = self.backbone(x)
+        
+        x = self.backbone(voxel_features, coors, batch_size)
+
+        
         if self.with_neck:
             x = self.neck(x)
+
+
+
         return x
 
     @torch.no_grad()

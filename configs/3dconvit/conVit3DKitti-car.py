@@ -166,14 +166,8 @@ model = dict(
         # with_voxel_center=False,
         # point_cloud_range=point_cloud_range
         ),
-   
-    middle_encoder=dict(
-        type='SparseEncoder',
-        in_channels=138,
-        sparse_shape=[41, 1600, 1408],
-        order=('conv', 'norm', 'act')),
     backbone=dict(
-        type='AadaptiveConViT',
+        type='ConViT3DDecoder',
     ),
     neck=dict(
         type='SECONDFPN',
