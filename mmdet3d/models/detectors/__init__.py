@@ -19,7 +19,7 @@ from .ssd3dnet import SSD3DNet
 from .votenet import VoteNet
 from .voxelnet import VoxelNet
 from .IntensityNet import IntensityNet
-from .convit_3d import ConViT3D
+from .point_convit import ConViT3D
 
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
