@@ -15,6 +15,8 @@ from ..builder import BACKBONES
 from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
+from mmdet3d.models.backbones import PointNet2SASSG
+
 
 
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
@@ -322,6 +324,47 @@ class HybridEmbed(BaseModule):
         return x
 
 
+class PointEmbed(BaseModule):
+    """
+    PointEmbed. Takes raw point clouds and locality radius, based on the point density around the radius of it generates feature of D dimension.
+    Input is a Nx3 matrix of N point coordinates
+    Output is a N'xD matrix of N' point feature
+    """
+
+    def __init__(self,  
+                 radius=0.2, 
+                 nsample=64,
+                 in_chans=4, 
+                 embed_dim=64): 
+        super().__init__()
+        self.radius=0.2,
+        self.nsample=64,
+
+        
+        # mlp_dims = [3 * int(args.use_color), 64, 128, args.enc_dim]
+        #     preencoder = PointnetSAModuleVotes(
+        #         self.radius=0.2,
+        #         self.nsample=64,
+        #         npoint=args.preenc_npoints,
+        #         self.mlp=mlp_dims,
+        #         normalize_xyz=True,
+        #     )
+
+        
+
+        def forward(self, x):
+            featureSet = PointNet2SASSG()
+            coord, feature = featureSet(x)
+
+
+
+
+
+
+
+
+
+
 
 
 @BACKBONES.register_module()
@@ -378,13 +421,17 @@ class ConViT3DDecoder(BaseModule):
                 init_cfg=None,
                 pretrained=None):
         
-        super(self).__init__(init_cfg=init_cfg)
+        super().__init__(init_cfg=init_cfg)
         
         self.num_classes = num_classes
         self.local_up_to_layer = local_up_to_layer
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.locality_strength = locality_strength
         self.use_pos_embed = use_pos_embed
+
+
+        ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
+
 
         if hybrid_backbone is not None:
             self.patch_embed = HybridEmbed(
@@ -449,8 +496,9 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, x):
-        B = x.shape[0]
+    def forward_features(self, x, p, b):
+
+        B = b
         x = self.patch_embed(x)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)
@@ -467,8 +515,8 @@ class ConViT3DDecoder(BaseModule):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
-        x = self.forward_features(x)
+    def forward(self, voxel_features, coors, batch_size):
+        x = self.forward_features(voxel_features, coors, batch_size)
         x = self.head(x)
         return x
     

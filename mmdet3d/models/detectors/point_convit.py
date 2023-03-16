@@ -41,12 +41,17 @@ class ConViT3D(SingleStage3DDetector):
         voxels, num_points, coors = self.voxelize(points)
         voxel_features = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
+
+        print("voxel_feature_size", voxel_features.shape)
+        print("feature data",voxel_features[1,:] )
+        print("feature data",voxel_features[2,:] )
+        print("feature data",voxel_features[3,:] )
+        print("feature data",voxel_features[4,:] )
         
         # x = self.middle_encoder(voxel_features, coors, batch_size)
         # x = self.backbone(x)
         
         x = self.backbone(voxel_features, coors, batch_size)
-
         
         if self.with_neck:
             x = self.neck(x)
