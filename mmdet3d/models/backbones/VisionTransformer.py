@@ -337,10 +337,12 @@ class PointEmbed(BaseModule):
                  in_chans=4, 
                  embed_dim=64): 
         super().__init__()
-        self.radius=0.2,
-        self.nsample=64,
-
-        
+        in_channels=4,
+        radius=0.2,
+        nsample=64,
+        sa_channels=64,
+        fp_channels = 128,
+          
         # mlp_dims = [3 * int(args.use_color), 64, 128, args.enc_dim]
         #     preencoder = PointnetSAModuleVotes(
         #         self.radius=0.2,
@@ -350,10 +352,8 @@ class PointEmbed(BaseModule):
         #         normalize_xyz=True,
         #     )
 
-        
-
         def forward(self, x):
-            featureSet = PointNet2SASSG()
+            featureSet = PointNet2SASSG(in)
             coord, feature = featureSet(x)
 
 
