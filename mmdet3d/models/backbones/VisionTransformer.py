@@ -16,6 +16,7 @@ from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
+from mmdet3d.models.utils.pointnetsa import SimplePointNetSASSG
 
 
 
@@ -331,17 +332,18 @@ class PointEmbed(BaseModule):
     Output is a N'xD matrix of N' point feature
     """
 
-    def __init__(self,  
+    def __init__(self,
+                 num_points=2048,  
                  radius=0.2, 
                  nsample=64,
                  in_chans=4, 
                  embed_dim=64): 
         super().__init__()
-        in_channels=4,
-        radius=0.2,
-        nsample=64,
-        sa_channels=64,
-        fp_channels = 128,
+        self.in_channels=4,
+        self.radius=0.2,
+        self.nsample=64,
+        self.sa_channels=(64, 64, 128),
+        self.fp_channels = [128],
           
         # mlp_dims = [3 * int(args.use_color), 64, 128, args.enc_dim]
         #     preencoder = PointnetSAModuleVotes(
@@ -352,19 +354,11 @@ class PointEmbed(BaseModule):
         #         normalize_xyz=True,
         #     )
 
-        def forward(self, x):
-            featureSet = PointNet2SASSG(in)
-            coord, feature = featureSet(x)
-
-
-
-
-
-
-
-
-
-
+    def forward(self, x, coord):
+        featureSet = SimplePointNetSASSG(num_points=len(coord), in_channels=self.in_channels,radius=self.radius,num_samples=self.nsample,\
+                                        sa_channels=self.sa_channels,fp_channels=self.fp_channels)
+        coord, feature = featureSet(x,coord)
+        return coord, feature
 
 
 @BACKBONES.register_module()
@@ -396,12 +390,18 @@ class ConViT3DDecoder(BaseModule):
         use_pos_embed:True
         init_cfg=None,
         pretrained=None
+
+        
+        ## new configuration
+        radius=0.2, 
+        nsample=64,
+
     """
 
     def __init__(self,
                 img_size=224 ,
                 patch_size=16 ,
-                in_chans=3 ,
+                in_chans=4 ,
                 num_classes=1000 ,
                 embed_dim=48 ,
                 depth=12,
@@ -419,7 +419,9 @@ class ConViT3DDecoder(BaseModule):
                 locality_strength=1,
                 use_pos_embed=True,
                 init_cfg=None,
-                pretrained=None):
+                pretrained=None,
+                radius=0.2, 
+                nsample=64):
         
         super().__init__(init_cfg=init_cfg)
         
@@ -441,6 +443,8 @@ class ConViT3DDecoder(BaseModule):
                 img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
         self.num_patches = num_patches
+        
+        self.point_embed = PointEmbed(radius,nsample,in_chans,embed_dim)
         
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
@@ -472,8 +476,6 @@ class ConViT3DDecoder(BaseModule):
         self.head.apply(self._init_weights)
     
 
-
-
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
@@ -496,11 +498,18 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, x, p, b):
+    def forward_features(self, x, coors, b): #voxel_features, coors, batch_size
 
         B = b
-        x = self.patch_embed(x)
+        
 
+        # x = self.patch_embed(x)
+
+        # embedding using single PointNet
+        # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
+        x = self.point_embed(x,coors)
+
+        
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
         if self.use_pos_embed:
@@ -517,6 +526,7 @@ class ConViT3DDecoder(BaseModule):
 
     def forward(self, voxel_features, coors, batch_size):
         x = self.forward_features(voxel_features, coors, batch_size)
+        
         x = self.head(x)
         return x
     

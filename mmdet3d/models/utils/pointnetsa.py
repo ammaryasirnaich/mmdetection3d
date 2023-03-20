@@ -13,119 +13,242 @@ from mmcv.utils import to_2tuple
 from ..builder import BACKBONES
 from ...utils import get_root_logger
 from mmcv.runner import BaseModule
-from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
-from mmdet3d.models.backbones import PointNet2SASSG
 from mmcv.ops.group_points import *
 from mmcv.ops.furthest_point_sample import *
 from mmcv.ops.gather_points import *
 
 
-class PointnetSAModuleVotes(nn.Module):
+from typing import List, Tuple
+
+from mmcv.runner import auto_fp16
+from torch import nn as nn
+from ..builder import BACKBONES
+from mmdet3d.ops.pointnet_modules.point_sa_module import *
+
+
+
+class VoxelPoinetEmbedding(BasePointSAModule):
     ''' Modified based on _PointnetSAModuleBase and PointnetSAModuleMSG
-    with extra support for returning point indices for getting their GT votes '''
+    with no sampler method like FPS. 
+    Afer using the input from voxelization using mean of point clouds as 
+    reference point cloud with raduii to gather points around the reference 
 
-    # def __init__(
-    #         self,
-    #         *,
-    #         mlp: list[int],
-    #         npoint: int = None,
-    #         radius: float = None,
-    #         nsample: int = None,
-    #         bn: bool = True,
-    #         use_xyz: bool = True,
-    #         pooling: str = 'max',
-    #         sigma: float = None, # for RBF pooling
-    #         normalize_xyz: bool = False, # noramlize local XYZ with radius
-    #         sample_uniformly: bool = False,
-    #         ret_unique_cnt: bool = False
-    # ):
-    #     super().__init__()
-    #     self.npoint = npoint
-    #     self.radius = radius
-    #     self.nsample = nsample
-    #     self.pooling = pooling
-    #     self.mlp_module = None
-    #     self.use_xyz = use_xyz
-    #     self.sigma = sigma
-    #     if self.sigma is None:
-    #         self.sigma = self.radius/2
-    #     self.normalize_xyz = normalize_xyz
-    #     self.ret_unique_cnt = ret_unique_cnt
+    Args:
+    mlp_channels (list[int]): Specify of the pointnet before
+        the global pooling for each scale.
+    num_point (int, optional): Number of points.
+        Default: None.
+    radius (float, optional): Radius to group with.
+        Default: None.
+    num_sample (int, optional): Number of samples in each ball query.
+        Default: None.
+    norm_cfg (dict, optional): Type of normalization method.
+        Default: dict(type='BN2d').
+    use_xyz (bool, optional): Whether to use xyz.
+        Default: True.
+    pool_mod (str, optional): Type of pooling method.
+        Default: 'max_pool'.
+    normalize_xyz (bool, optional): Whether to normalize local XYZ
+        with radius. Default: False.
+  
+'''
+    
+    def __init__(self,
+                 mlp_channels,
+                 num_point=None,
+                 radius=None,
+                 num_sample=None,
+                 norm_cfg=dict(type='BN2d'),
+                 use_xyz=True,
+                 pool_mod='max',  
+                 normalize_xyz=False):
+        super().__init__(
+            mlp_channels=[mlp_channels],
+            num_point=num_point,
+            radii=[radius],
+            sample_nums=[num_sample],
+            norm_cfg=norm_cfg,
+            use_xyz=use_xyz,
+            pool_mod=pool_mod,
+            normalize_xyz=normalize_xyz)
+        
+    
 
-    #     if npoint is not None:
-    #         self.grouper = QueryAndGroup(radius, nsample,
-    #             use_xyz=use_xyz, ret_grouped_xyz=True, normalize_xyz=normalize_xyz,
-    #             sample_uniformly=sample_uniformly, ret_unique_cnt=ret_unique_cnt)
-    #     else:
-    #         self.grouper = GroupAll(use_xyz, ret_grouped_xyz=True)
 
-    #     mlp_spec = mlp
-    #     if use_xyz and len(mlp_spec)>0:
-    #         mlp_spec[0] += 3
-    #     self.mlp_module = SharedMLP(mlp_spec, bn=bn)
+    def forward(self, points_xyz, features=None, indices=None, focal_point=None):
+        """forward.
+
+        Args:
+            points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
+            features (Tensor, optional): (B, C, N) features of each point.
+                Default: None.
+            indices (Tensor, optional): (B, num_point) Index of the features.
+                Default: None.
+            focal_point (Tensor, optional): (B, M, 3) new coords of after downsampling 
+            using mean function on voxel points.
+                Default: None.
+
+        Returns:
+            Tensor: (B, M, 3) where M is the number of points.
+                New features xyz.
+            Tensor: (B, M, sum_k(mlps[k][-1])) where M is the number
+                of points. New feature descriptors.
+            Tensor: (B, M) where M is the number of points.
+                Index of the features.
+        """
+        new_features_list = []
+    
+        for i in range(len(self.groupers)):
+            # grouped_results may contain:
+            # - grouped_features: (B, C, num_point, nsample)
+            # - grouped_xyz: (B, 3, num_point, nsample)
+            # - grouped_idx: (B, num_point, nsample)
+            grouped_results = self.groupers[i](points_xyz, focal_point, features)
+
+            # (B, mlp[-1], num_point, nsample)
+            new_features = self.mlps[i](grouped_results)
+
+            # this is a bit hack because PAConv outputs two values
+            # we take the first one as feature
+            if isinstance(self.mlps[i][0], PAConv):
+                assert isinstance(new_features, tuple)
+                new_features = new_features[0]
+
+            # (B, mlp[-1], num_point)
+            new_features = self._pool_features(new_features)
+            new_features_list.append(new_features)
+
+        return focal_point, torch.cat(new_features_list, dim=1)
+ 
+       
 
 
-    # def forward(self, xyz: torch.Tensor,
-    #             features: torch.Tensor = None,
-    #             inds: torch.Tensor = None) -> (torch.Tensor, torch.Tensor):
-    #     r"""
-    #     Parameters
-    #     ----------
-    #     xyz : torch.Tensor
-    #         (B, N, 3) tensor of the xyz coordinates of the features
-    #     features : torch.Tensor
-    #         (B, C, N) tensor of the descriptors of the the features
-    #     inds : torch.Tensor
-    #         (B, npoint) tensor that stores index to the xyz points (values in 0-N-1)
-    #     Returns
-    #     -------
-    #     new_xyz : torch.Tensor
-    #         (B, npoint, 3) tensor of the new features' xyz
-    #     new_features : torch.Tensor
-    #         (B, \sum_k(mlps[k][-1]), npoint) tensor of the new_features descriptors
-    #     inds: torch.Tensor
-    #         (B, npoint) tensor of the inds
-    #     """
 
-    #     xyz_flipped = xyz.transpose(1, 2).contiguous()
-    #     if inds is None:
-            
-    #         inds = furthest_point_sample(xyz, self.npoint)
-    #     else:
-    #         assert(inds.shape[1] == self.npoint)
-            
-    #     new_xyz = GatherPoints(
-    #         xyz_flipped, inds
-    #     ).transpose(1, 2).contiguous() if self.npoint is not None else None
 
-    #     if not self.ret_unique_cnt:
-    #         grouped_features, grouped_xyz = self.grouper(
-    #             xyz, new_xyz, features
-    #         )  # (B, C, npoint, nsample)
-    #     else:
-    #         grouped_features, grouped_xyz, unique_cnt = self.grouper(
-    #             xyz, new_xyz, features
-    #         )  # (B, C, npoint, nsample), (B,3,npoint,nsample), (B,npoint)
+# class SimplePointNetSASSG(BasePointNet):
+#     """PointNet with Single-scale grouping.
 
-    #     new_features = self.mlp_module(
-    #         grouped_features
-    #     )  # (B, mlp[-1], npoint, nsample)
-    #     if self.pooling == 'max':
-    #         new_features = F.max_pool2d(
-    #             new_features, kernel_size=[1, new_features.size(3)]
-    #         )  # (B, mlp[-1], npoint, 1)
-    #     elif self.pooling == 'avg':
-    #         new_features = F.avg_pool2d(
-    #             new_features, kernel_size=[1, new_features.size(3)]
-    #         )  # (B, mlp[-1], npoint, 1)
-    #     elif self.pooling == 'rbf': 
-    #         # Use radial basis function kernel for weighted sum of features (normalized by nsample and sigma)
-    #         # Ref: https://en.wikipedia.org/wiki/Radial_basis_function_kernel
-    #         rbf = torch.exp(-1 * grouped_xyz.pow(2).sum(1,keepdim=False) / (self.sigma**2) / 2) # (B, npoint, nsample)
-    #         new_features = torch.sum(new_features * rbf.unsqueeze(1), -1, keepdim=True) / float(self.nsample) # (B, mlp[-1], npoint, 1)
-    #     new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
+#     Args:
+#         in_channels (int): Input channels of point cloud.
+#         num_points (tuple[int]): The number of points which each SA
+#             module samples.
+#         radius (tuple[float]): Sampling radii of each SA module.
+#         num_samples (tuple[int]): The number of samples for ball
+#             query in each SA module.
+#         sa_channels (tuple[tuple[int]]): Out channels of each mlp in SA module.
+#         fp_channels (tuple[tuple[int]]): Out channels of each mlp in FP module.
+#         norm_cfg (dict): Config of normalization layer.
+#         sa_cfg (dict): Config of set abstraction module, which may contain
+#             the following keys and values:
 
-    #     if not self.ret_unique_cnt:
-    #         return new_xyz, new_features, inds
-    #     else:
-    #         return new_xyz, new_features, inds, unique_cnt
+#             - pool_mod (str): Pool method ('max' or 'avg') for SA modules.
+#             - use_xyz (bool): Whether to use xyz as a part of features.
+#             - normalize_xyz (bool): Whether to normalize xyz with radii in
+#               each SA module.
+#     """
+
+#     def __init__(self,
+#                  in_channels,
+#                  num_points=(2048, 1024, 512, 256),
+#                  radius=(0.2, 0.4, 0.8, 1.2),
+#                  num_samples=(64, 32, 16, 16),
+#                  sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+#                               (128, 128, 256)),
+#                  fp_channels=((256, 256), (256, 256)),
+#                  norm_cfg=dict(type='BN2d'),
+#                  sa_cfg=dict(
+#                      type='PointSAModule',
+#                      pool_mod='max',
+#                      use_xyz=True,
+#                      normalize_xyz=True),
+#                  init_cfg=None):
+#         super().__init__(init_cfg=init_cfg)
+#         self.num_sa = len(sa_channels)
+#         self.num_fp = len(fp_channels)
+
+#         assert len(num_points) == len(radius) == len(num_samples) == len(
+#             sa_channels)
+#         assert len(sa_channels) >= len(fp_channels)
+
+#         self.SA_modules = nn.ModuleList()
+#         sa_in_channel = in_channels - 3  # number of channels without xyz
+#         skip_channel_list = [sa_in_channel]
+
+#         for sa_index in range(self.num_sa):
+#             cur_sa_mlps = list(sa_channels[sa_index])
+#             cur_sa_mlps = [sa_in_channel] + cur_sa_mlps
+#             sa_out_channel = cur_sa_mlps[-1]
+
+#             self.SA_modules.append(
+#                 build_sa_module(
+#                     num_point=num_points[sa_index],
+#                     radius=radius[sa_index],
+#                     num_sample=num_samples[sa_index],
+#                     mlp_channels=cur_sa_mlps,
+#                     norm_cfg=norm_cfg,
+#                     cfg=sa_cfg))
+#             skip_channel_list.append(sa_out_channel)
+#             sa_in_channel = sa_out_channel
+
+#         self.FP_modules = nn.ModuleList()
+
+#         fp_source_channel = skip_channel_list.pop()
+#         fp_target_channel = skip_channel_list.pop()
+#         for fp_index in range(len(fp_channels)):
+#             cur_fp_mlps = list(fp_channels[fp_index])
+#             cur_fp_mlps = [fp_source_channel + fp_target_channel] + cur_fp_mlps
+#             self.FP_modules.append(PointFPModule(mlp_channels=cur_fp_mlps))
+#             if fp_index != len(fp_channels) - 1:
+#                 fp_source_channel = cur_fp_mlps[-1]
+#                 fp_target_channel = skip_channel_list.pop()
+
+#     @auto_fp16(apply_to=('points', ))
+#     def forward(self, points,vox_cood):
+#         """Forward pass.
+
+#         Args:
+#             points (torch.Tensor): point coordinates with features,
+#                 with shape (B, N, 3 + input_feature_dim).
+
+#         Returns:
+#                 xyz, FeaturesxD  
+#         """
+#         # xyz, features = self._split_point_feats(points)
+#         xyz =  points[:,1:4]
+#         features = points[:,:4]
+
+#         batch, num_points = xyz.shape[:2]
+#         indices = xyz.new_tensor(range(num_points)).unsqueeze(0).repeat(
+#             batch, 1).long()
+
+#         sa_xyz = [xyz]
+#         sa_features = [features]
+#         sa_indices = [indices]
+
+#         for i in range(self.num_sa):
+#             cur_xyz, cur_features, cur_indices = self.SA_modules[i](
+#                 sa_xyz[i], sa_features[i])
+#             sa_xyz.append(cur_xyz)
+#             sa_features.append(cur_features)
+#             sa_indices.append(
+#                 torch.gather(sa_indices[-1], 1, cur_indices.long()))
+
+#         fp_xyz = [sa_xyz[-1]]
+#         fp_features = [sa_features[-1]]
+#         fp_indices = [sa_indices[-1]]
+
+#         for i in range(self.num_fp):
+#             fp_features.append(self.FP_modules[i](
+#                 sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
+#                 sa_features[self.num_sa - i - 1], fp_features[-1]))
+#             fp_xyz.append(sa_xyz[self.num_sa - i - 1])
+#             fp_indices.append(sa_indices[self.num_sa - i - 1])
+
+#         ret = dict(
+#             fp_xyz=fp_xyz,
+#             fp_features=fp_features,
+#             fp_indices=fp_indices,
+#             sa_xyz=sa_xyz,
+#             sa_features=sa_features,
+#             sa_indices=sa_indices)
+#         return ret
