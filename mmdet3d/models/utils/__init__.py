@@ -5,9 +5,9 @@ from .gen_keypoints import get_keypoints
 from .handle_objs import filter_outside_objs, handle_proj_objs
 from .mlp import MLP
 from .histogram_numba import row_wise_histogram
-from .pointnetsa import SimplePointNetSASSG
+from .pointnetsa import VoxelPoinetEmbedding
 
 __all__ = [
     'clip_sigmoid', 'MLP', 'get_edge_indices', 'filter_outside_objs',
-    'handle_proj_objs', 'get_keypoints', 'row_wise_histogram','SimplePointNetSASSG'
+    'handle_proj_objs', 'get_keypoints', 'row_wise_histogram','VoxelPoinetEmbedding'
 ]

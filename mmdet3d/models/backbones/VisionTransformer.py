@@ -16,7 +16,7 @@ from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
-from mmdet3d.models.utils.pointnetsa import SimplePointNetSASSG
+from mmdet3d.models.utils.pointnetsa import VoxelPoinetEmbedding
 
 
 
@@ -354,8 +354,10 @@ class PointEmbed(BaseModule):
         #         normalize_xyz=True,
         #     )
 
+        # self, points_xyz, features=None, indices=None, focal_point=None
+
     def forward(self, x, coord):
-        featureSet = SimplePointNetSASSG(num_points=len(coord), in_channels=self.in_channels,radius=self.radius,num_samples=self.nsample,\
+        featureSet = VoxelPoinetEmbedding(num_points=len(coord), in_channels=self.in_channels,radius=self.radius,num_samples=self.nsample,\
                                         sa_channels=self.sa_channels,fp_channels=self.fp_channels)
         coord, feature = featureSet(x,coord)
         return coord, feature
@@ -397,7 +399,6 @@ class ConViT3DDecoder(BaseModule):
         nsample=64,
 
     """
-
     def __init__(self,
                 img_size=224 ,
                 patch_size=16 ,

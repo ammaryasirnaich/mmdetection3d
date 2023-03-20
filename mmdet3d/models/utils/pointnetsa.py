@@ -93,8 +93,7 @@ class VoxelPoinetEmbedding(BasePointSAModule):
                 New features xyz.
             Tensor: (B, M, sum_k(mlps[k][-1])) where M is the number
                 of points. New feature descriptors.
-            Tensor: (B, M) where M is the number of points.
-                Index of the features.
+           
         """
         new_features_list = []
     
