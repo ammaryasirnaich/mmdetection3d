@@ -59,7 +59,7 @@ model = dict(
 
 
 
-data_root = '/workspace/data/kitti/'
+data_root = '/workspace/data/kitti_detection/kitti/'
 work_dir = '/workspace'
 log_config = dict(
     interval=50,
