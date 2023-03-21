@@ -3,7 +3,7 @@ import torch
 from mmcv.runner import force_fp32
 from torch.nn import functional as F
 from mmcv.ops import DynamicVoxelization
-
+from mmcv.ops import Voxelization
 from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from .. import builder
 from ..builder import DETECTORS
@@ -33,7 +33,7 @@ class IntensityNet(SingleStage3DDetector):
             test_cfg=test_cfg,
             init_cfg=init_cfg,
             pretrained=pretrained)
-        self.voxel_layer = DynamicVoxelization(**voxel_layer)
+        self.voxel_layer = Voxelization(**voxel_layer)
         self.voxel_encoder = builder.build_voxel_encoder(voxel_encoder)
         self.middle_encoder = builder.build_middle_encoder(middle_encoder)
 
