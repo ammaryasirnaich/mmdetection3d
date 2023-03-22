@@ -16,7 +16,7 @@ from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
-from mmdet3d.models.utils.pointnetsa import VoxelPoinetEmbedding
+
 
 
 
@@ -325,6 +325,8 @@ class HybridEmbed(BaseModule):
         return x
 
 
+
+
 class PointEmbed(BaseModule):
     """
     PointEmbed. Takes raw point clouds and locality radius, based on the point density around the radius of it generates feature of D dimension.
@@ -332,18 +334,18 @@ class PointEmbed(BaseModule):
     Output is a N'xD matrix of N' point feature
     """
 
-    def __init__(self,
-                 num_points=2048,  
-                 radius=0.2, 
-                 nsample=64,
-                 in_chans=4, 
-                 embed_dim=64): 
-        super().__init__()
-        self.in_channels=4,
-        self.radius=0.2,
-        self.nsample=64,
-        self.sa_channels=(64, 64, 128),
-        self.fp_channels = [128],
+    # def __init__(self,
+    #              num_points=2048,  
+    #              radius=0.2, 
+    #              nsample=64,
+    #              in_chans=4, 
+    #              embed_dim=64): 
+    #     super().__init__()
+    #     self.in_channels=4,
+    #     self.radius=0.2,
+    #     self.nsample=64,
+    #     self.sa_channels=(64, 64, 128),
+    #     self.fp_channels = [128],
           
         # mlp_dims = [3 * int(args.use_color), 64, 128, args.enc_dim]
         #     preencoder = PointnetSAModuleVotes(
@@ -357,10 +359,7 @@ class PointEmbed(BaseModule):
         # self, points_xyz, features=None, indices=None, focal_point=None
 
     def forward(self, x, coord):
-        featureSet = VoxelPoinetEmbedding(num_points=len(coord), in_channels=self.in_channels,radius=self.radius,num_samples=self.nsample,\
-                                        sa_channels=self.sa_channels,fp_channels=self.fp_channels)
-        coord, feature = featureSet(x,coord)
-        return coord, feature
+      pass
 
 
 @BACKBONES.register_module()
