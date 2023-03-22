@@ -9,8 +9,7 @@ from mmdet3d.models import build_backbone
 
 
 
-def vfe_feature_encoder():
-    
+def vfe_feature_encoder(): 
     ### configuration for VFE encoder 
     hardsimple_feature_net_cfg = dict(
         type='HardVFE',
@@ -30,6 +29,19 @@ def vfe_feature_encoder():
     voxel_feats = hardsimple_feature_net(features, num_voxels, coors)
     return voxel_feats , coors
    
+
+def down_sample_encoder():
+    hard_simple_VFE_cfg = dict(type='HardSimpleVFE', num_features=4)
+    hard_simple_VFE = build_voxel_encoder(hard_simple_VFE_cfg)
+    features = torch.rand([240000, 10, 4])
+    num_voxels = torch.randint(1, 10, [240000])
+
+    outputs = hard_simple_VFE(features, num_voxels, None)
+    assert outputs.shape == torch.Size([240000, 4])
+    return outputs
+
+
+
 
 def voxel_point_encoding():
     if not torch.cuda.is_available():
@@ -109,6 +121,7 @@ def test_pointnet2_sa_ssg():
 
     xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+   
     # test forward
     ret_dict = self(xyz)
     fp_xyz = ret_dict['fp_xyz']
@@ -154,17 +167,27 @@ def test_pointnet2_sa_ssg():
 
 
 
-
-
-
 def point_embedding_backbone():
+    '''
+    voxelizating point cloud space and get voxel cooridnates
+    '''
+    
+    #### voxelization and downsampling
+    voxel_feats , coors = vfe_feature_encoder()
+    coors = coors.view(1,-1,3).to('cuda:0', dtype=torch.float32)
+    voxel_feats  = voxel_feats.view(1,-1,4).to('cuda:0', dtype=torch.float32)   # (B, N, 4)
+    print("voxel_feats", voxel_feats.shape)
+
+    '''
+    Creating Voxel Embedding using pointnet 
+    '''
+
     if not torch.cuda.is_available():
         pytest.skip()
-
     cfg = dict(
-        type='VoxelPoinetEmbedding',
-        # in_channels=4,
-        num_points=(32, 16),
+        type='PointNet2SASSG',
+        in_channels=4,
+        num_points=(32,16),
         radius=(0.8, 1.2),
         num_samples=(16, 8),
         sa_channels=((8, 16), (16, 16)),
@@ -172,24 +195,18 @@ def point_embedding_backbone():
     self = build_backbone(cfg)
     self.cuda()
 
-    voxel_feats , coors = vfe_feature_encoder()
-
-    print("voxel_feats", voxel_feats.shape)
-   
-    coors = coors.view(1,-1,3).to('cuda:0', dtype=torch.float32)
-    voxel_feats  = voxel_feats.view(1,-1,4).to('cuda:0', dtype=torch.float32)
-
-
-    print("coor shape", coors.shape)
-
-
-    ret_dict = self(coors,voxel_feats)
+    ret_dict = self(voxel_feats) 
+    
     fp_xyz = ret_dict['fp_xyz']
     fp_features = ret_dict['fp_features']
     fp_indices = ret_dict['fp_indices']
     sa_xyz = ret_dict['sa_xyz']
     sa_features = ret_dict['sa_features']
     sa_indices = ret_dict['sa_indices']
+
+
+    assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
+    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
 
   
 
