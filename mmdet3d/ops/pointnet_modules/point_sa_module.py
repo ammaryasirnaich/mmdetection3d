@@ -352,3 +352,89 @@ class PointSAModule(PointSAModuleMSG):
             normalize_xyz=normalize_xyz)
 
 
+@SA_MODULES.register_module()
+class PointRefereceSAModule(PointSAModule):
+    """Point set abstraction module with single-scale grouping (SSG) used in
+    PointNets with no sampling techniques ( e.gFPS)
+
+    Args:
+        mlp_channels (list[int]): Specify of the pointnet before
+            the global pooling for each scale.
+        num_point (int, optional): Number of points.
+            Default: None.
+        radius (float, optional): Radius to group with.
+            Default: None.
+        num_sample (int, optional): Number of samples in each ball query.
+            Default: None.
+        norm_cfg (dict, optional): Type of normalization method.
+            Default: dict(type='BN2d').
+        use_xyz (bool, optional): Whether to use xyz.
+            Default: True.
+        pool_mod (str, optional): Type of pooling method.
+            Default: 'max_pool'.
+        fps_mod (list[str], optional): Type of FPS method, valid mod
+            ['F-FPS', 'D-FPS', 'FS'], Default: ['D-FPS'].
+        fps_sample_range_list (list[int], optional): Range of points
+            to apply FPS. Default: [-1].
+        normalize_xyz (bool, optional): Whether to normalize local XYZ
+            with radius. Default: False.
+    """
+
+    def forward(
+        self,
+        points_xyz,
+        features=None,
+        indices=None,
+        target_xyz=None,
+    ):
+        """forward.
+
+        Args:
+            points_xyz (Tensor): (B, N, 3) xyz coordinates of the features.
+            features (Tensor, optional): (B, C, N) features of each point.
+                Default: None.
+            indices (Tensor, optional): (B, num_point) Index of the features.
+                Default: None.
+            target_xyz (Tensor, optional): (B, M, 3) new coords of the outputs.
+                Default: None.
+
+        Returns:
+            Tensor: (B, M, 3) where M is the number of points.
+                New features xyz.
+            Tensor: (B, M, sum_k(mlps[k][-1])) where M is the number
+                of points. New feature descriptors.
+            Tensor: (B, M) where M is the number of points.
+                Index of the features.
+        """
+        new_features_list = []
+
+        # sample points, (B, num_point, 3), (B, num_point)
+        # new_xyz, indices = self._sample_points(points_xyz, features, indices,
+        #                                        target_xyz)
+
+        for i in range(len(self.groupers)):
+            # grouped_results may contain:
+            # - grouped_features: (B, C, num_point, nsample)
+            # - grouped_xyz: (B, 3, num_point, nsample)
+            # - grouped_idx: (B, num_point, nsample)
+
+            points_xyz = points_xyz.contiguous()
+            target_xyz = target_xyz.contiguous()
+            features = features.contiguous()
+          
+            grouped_results = self.groupers[i](points_xyz, target_xyz, features)
+
+            # (B, mlp[-1], num_point, nsample)
+            new_features = self.mlps[i](grouped_results)
+
+            # this is a bit hack because PAConv outputs two values
+            # we take the first one as feature
+            if isinstance(self.mlps[i][0], PAConv):
+                assert isinstance(new_features, tuple)
+                new_features = new_features[0]
+
+            # (B, mlp[-1], num_point)
+            new_features = self._pool_features(new_features)
+            new_features_list.append(new_features)
+
+        return target_xyz, torch.cat(new_features_list, dim=1)

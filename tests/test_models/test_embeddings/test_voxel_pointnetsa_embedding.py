@@ -12,22 +12,18 @@ from mmdet3d.models import build_backbone
 def vfe_feature_encoder(): 
     ### configuration for VFE encoder 
     hardsimple_feature_net_cfg = dict(
-        type='HardVFE',
-        in_channels=4,
-        feat_channels=[16],
-        with_distance=False,
-        voxel_size=(0.5, 0.5, 0.5),
-        point_cloud_range=(0, -40, -3, 70.4, 40, 1),
-        return_point_feats=False,
-        norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01))
-
+        type='HardSimpleVFE',      
+        )
     hardsimple_feature_net = build_voxel_encoder(hardsimple_feature_net_cfg)
 
-    features = torch.rand([97297, 20, 4])
+    point_xyz = torch.rand([97297, 20, 4])
     num_voxels = torch.randint(1, 100, [97297])
-    coors = torch.randint(0, 100, [97297, 3])
-    voxel_feats = hardsimple_feature_net(features, num_voxels, coors)
-    return voxel_feats , coors
+    voxel_coord = torch.randint(0, 100, [97297, 3])
+    mean_point_xyz = hardsimple_feature_net(point_xyz, num_voxels, voxel_coord)
+   
+    mean_point_xyz = mean_point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32)
+
+    return mean_point_xyz , point_xyz ,voxel_coord
    
 
 def down_sample_encoder():
@@ -173,10 +169,10 @@ def point_embedding_backbone():
     '''
     
     #### voxelization and downsampling
-    voxel_feats , coors = vfe_feature_encoder()
-    coors = coors.view(1,-1,3).to('cuda:0', dtype=torch.float32)
-    voxel_feats  = voxel_feats.view(1,-1,4).to('cuda:0', dtype=torch.float32)   # (B, N, 4)
-    print("voxel_feats", voxel_feats.shape)
+    mean_point_xyz , point_xyz, cntr_voxel_xyz = vfe_feature_encoder()
+    mean_point_xyz  = mean_point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32).contiguous()   # (B, N, 4)
+    point_xyz  = point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32).contiguous()   # (B, V*N, 4)
+   
 
     '''
     Creating Voxel Embedding using pointnet 
@@ -185,9 +181,9 @@ def point_embedding_backbone():
     if not torch.cuda.is_available():
         pytest.skip()
     cfg = dict(
-        type='PointNet2SASSG',
+        type= 'PointNet2SASSG_SL', #  PointNet2SASSG ,PointNet2SASSG_SL
         in_channels=4,
-        num_points=(32,16),
+        num_points=(32, 16),
         radius=(0.8, 1.2),
         num_samples=(16, 8),
         sa_channels=((8, 16), (16, 16)),
@@ -195,29 +191,41 @@ def point_embedding_backbone():
     self = build_backbone(cfg)
     self.cuda()
 
-    ret_dict = self(voxel_feats) 
+
+    print("mean_point_xyz.shape", mean_point_xyz.shape)
+    ret_dict = self(point_xyz, mean_point_xyz[...,:3] )  #, mean_point_xyz[...,:3] 
     
     fp_xyz = ret_dict['fp_xyz']
     fp_features = ret_dict['fp_features']
-    fp_indices = ret_dict['fp_indices']
+ 
     sa_xyz = ret_dict['sa_xyz']
     sa_features = ret_dict['sa_features']
-    sa_indices = ret_dict['sa_indices']
+   
 
 
-    assert len(fp_xyz) == len(fp_features) == len(fp_indices) == 3
-    assert len(sa_xyz) == len(sa_features) == len(sa_indices) == 3
-
-  
-
+    assert len(fp_xyz) == len(fp_features)  == 3
+    assert len(sa_xyz) == len(sa_features)  == 3
+    assert fp_xyz[0].shape == torch.Size([1, 16, 3])
+    assert fp_xyz[1].shape == torch.Size([1, 32, 3])
+    assert fp_xyz[2].shape == torch.Size([1, 100, 3])
+    assert fp_features[0].shape == torch.Size([1, 16, 16])
+    assert fp_features[1].shape == torch.Size([1, 16, 32])
+    assert fp_features[2].shape == torch.Size([1, 16, 100])
+    assert sa_xyz[0].shape == torch.Size([1, 100, 3])
+    assert sa_xyz[1].shape == torch.Size([1, 32, 3])
+    assert sa_xyz[2].shape == torch.Size([1, 16, 3])
+    assert sa_features[0].shape == torch.Size([1, 3, 100])
+    assert sa_features[1].shape == torch.Size([1, 16, 32])
+    assert sa_features[2].shape == torch.Size([1, 16, 16])
+   
 
 
 
 if __name__ == "__main__":
     # test_hard_simple_VFE()
-    voxel_feats, voxel_corrd = vfe_feature_encoder()
-    print("feature shape", voxel_feats.shape)
-    print("feature shape", voxel_corrd.shape)
+    # voxel_feats, voxel_corrd = vfe_feature_encoder()
+    # print("feature shape", voxel_feats.shape)
+    # print("feature shape", voxel_corrd.shape)
     point_embedding_backbone()
     # test_pointnet2_sa_ssg()
     # point_embedding()
