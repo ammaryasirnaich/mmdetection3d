@@ -28,7 +28,7 @@ def test_pointnet2_sa_ssg():
     assert self.FP_modules[0].mlps.layer0.conv.out_channels == 16
     assert self.FP_modules[1].mlps.layer0.conv.in_channels == 19
 
-    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz)
@@ -131,7 +131,7 @@ def test_multi_backbone():
 
     assert len(self.backbone_list) == 4
 
-    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz[:, :, :4])
@@ -216,7 +216,7 @@ def test_pointnet2_sa_msg():
     assert self.SA_modules[0].mlps[1].layer1.conv.out_channels == 8
     assert self.SA_modules[2].mlps[2].layer2.conv.out_channels == 64
 
-    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz[:, :, :4])
@@ -317,7 +317,7 @@ def test_dgcnn_gf():
     self = build_backbone(cfg)
     self.cuda()
 
-    xyz = np.fromfile('tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
     ret_dict = self(xyz)
@@ -405,3 +405,79 @@ def test_mink_resnet():
     assert y[0].tensor_stride[0] == 4
     assert y[1].F.shape == torch.Size([900, 128])
     assert y[1].tensor_stride[0] == 8
+
+
+def point_visual_transformer():
+    if not torch.cuda.is_available():
+        pytest.skip()
+    
+
+    # test list config
+    cfg_list = dict(
+    type='MultiBackbone',
+    num_streams=4,
+    suffixes=['net0', 'net1', 'net2', 'net3'],
+    backbones=[
+        dict(
+            type='PointNet2SASSG',
+            in_channels=4,
+            num_points=(256, 128, 64, 32),
+            radius=(0.2, 0.4, 0.8, 1.2),
+            num_samples=(64, 32, 16, 16),
+            sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                        (128, 128, 256)),
+            fp_channels=((256, 256), (256, 256)),
+            norm_cfg=dict(type='BN2d')),
+        dict(
+            type='PointNet2SASSG',
+            in_channels=4,
+            num_points=(256, 128, 64, 32),
+            radius=(0.2, 0.4, 0.8, 1.2),
+            num_samples=(64, 32, 16, 16),
+            sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                        (128, 128, 256)),
+            fp_channels=((256, 256), (256, 256)),
+            norm_cfg=dict(type='BN2d')),
+        dict(
+            type='PointNet2SASSG',
+            in_channels=4,
+            num_points=(256, 128, 64, 32),
+            radius=(0.2, 0.4, 0.8, 1.2),
+            num_samples=(64, 32, 16, 16),
+            sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                        (128, 128, 256)),
+            fp_channels=((256, 256), (256, 256)),
+            norm_cfg=dict(type='BN2d')),
+        dict(
+            type='PointNet2SASSG',
+            in_channels=4,
+            num_points=(256, 128, 64, 32),
+            radius=(0.2, 0.4, 0.8, 1.2),
+            num_samples=(64, 32, 16, 16),
+            sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                        (128, 128, 256)),
+            fp_channels=((256, 256), (256, 256)),
+            norm_cfg=dict(type='BN2d'))
+    ])
+
+    self = build_backbone(cfg_list)
+    self.cuda()
+
+    assert len(self.backbone_list) == 4
+
+    xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+    # test forward
+    ret_dict = self(xyz[:, :, :4])
+
+    assert ret_dict['hd_feature'].shape == torch.Size([1, 256, 128])
+    assert ret_dict['fp_xyz_net0'][-1].shape == torch.Size([1, 128, 3])
+    assert ret_dict['fp_features_net0'][-1].shape == torch.Size([1, 256, 128])
+
+    
+if __name__ == "__main__":
+    test_multi_backbone()
+    # point_visual_transformer()
+    print("End")
+   
+ 

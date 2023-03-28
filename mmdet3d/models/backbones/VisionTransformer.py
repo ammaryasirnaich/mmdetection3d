@@ -444,6 +444,8 @@ class ConViT3DDecoder(BaseModule):
         num_patches = self.patch_embed.num_patches
         self.num_patches = num_patches
         
+
+        ## call the PointNet2SASSG_SL backbone for genearting point feature embedding 
         self.point_embed = PointEmbed(radius,nsample,in_chans,embed_dim)
         
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
