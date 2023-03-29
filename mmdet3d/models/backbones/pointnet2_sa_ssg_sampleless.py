@@ -87,7 +87,7 @@ class PointNet2SASSG_SL(BasePointNet):
                 fp_target_channel = skip_channel_list.pop()
 
     @auto_fp16(apply_to=('points', ))
-    def forward(self, points,mean_point_xyz):
+    def forward(self, x):  #points,mean_point_xyz
         """Forward pass.
 
         Args:
@@ -104,6 +104,8 @@ class PointNet2SASSG_SL(BasePointNet):
                 - fp_indices (list[torch.Tensor]): Indices of the
                     input points.
         """
+        points = x["point_xyz"]
+        mean_point_xyz = x["point_feature"]
         xyz, features = self._split_point_feats(points)
 
         print(mean_point_xyz.shape)
@@ -117,17 +119,6 @@ class PointNet2SASSG_SL(BasePointNet):
         sa_xyz = [xyz]
         sa_features = [features]
         sa_indices = [indices]
-        # sa_mean_xyz = [mean_point_xyz]
-
-
-        
-        print("num sa ", self.num_sa)
-        
-        print("num sa ",len( sa_xyz ))
-        print("num sa ",len(sa_features))
-        print("num sa ",len(sa_indices))
-
-
         for i in range(self.num_sa):
     
             ## the first SA module takes the voxel mean coordinates as a target point  
@@ -138,9 +129,7 @@ class PointNet2SASSG_SL(BasePointNet):
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
            
-            # sa_indices.append(
-            #     torch.gather(sa_indices[-1], 1, cur_indices.long()))
-
+   
         fp_xyz = [sa_xyz[-1]]
         fp_features = [sa_features[-1]]
         # fp_indices = [sa_indices[-1]]
