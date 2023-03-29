@@ -472,13 +472,14 @@ class ConViT3DDecoder(BaseModule):
         # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
         # x = self.point_embed(x,coors)
 
-        xyz = point_embeddings["point_xyz"]
-        features = point_embeddings["point_feature"]
+        xyz = point_embeddings["fp_xyz"][-1]
+        features = point_embeddings["fp_features"][-1]
+        features = features.permute(0,2,1).contiguous()
         
         print("xyz coordinates", xyz.shape)
         print("features dimensions", features.shape)
 
-        
+        B = xyz.shape[0]
         
         cls_tokens = self.cls_token.expand(B, -1, -1)
 

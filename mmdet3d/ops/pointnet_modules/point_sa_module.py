@@ -424,6 +424,9 @@ class PointRefereceSAModule(PointSAModule):
             points_xyz = points_xyz.contiguous()
             target_xyz = target_xyz.contiguous()
             features = features.contiguous()
+
+            # print("shape point_xyz", points_xyz.shape)
+            # print("shape target_xyz", target_xyz.shape)
           
             grouped_results = self.groupers[i](points_xyz, target_xyz, features)
 
