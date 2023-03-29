@@ -117,9 +117,7 @@ class MultiBackbone(BaseModule):
             fp_features.append(cur_ret['fp_features'][-1])
             if cur_suffix != '':
                 for k in list(cur_ret.keys()):
-                    print("key", k)
                     cur_ret[k + '_' + cur_suffix] = cur_ret.pop(k)
-                    print(cur_ret.keys())
             ret.update(cur_ret)
 
         # Combine the features here
