@@ -326,42 +326,6 @@ class HybridEmbed(BaseModule):
 
 
 
-
-class PointEmbed(BaseModule):
-    """
-    PointEmbed. Takes raw point clouds and locality radius, based on the point density around the radius of it generates feature of D dimension.
-    Input is a Nx3 matrix of N point coordinates
-    Output is a N'xD matrix of N' point feature
-    """
-
-    # def __init__(self,
-    #              num_points=2048,  
-    #              radius=0.2, 
-    #              nsample=64,
-    #              in_chans=4, 
-    #              embed_dim=64): 
-    #     super().__init__()
-    #     self.in_channels=4,
-    #     self.radius=0.2,
-    #     self.nsample=64,
-    #     self.sa_channels=(64, 64, 128),
-    #     self.fp_channels = [128],
-          
-        # mlp_dims = [3 * int(args.use_color), 64, 128, args.enc_dim]
-        #     preencoder = PointnetSAModuleVotes(
-        #         self.radius=0.2,
-        #         self.nsample=64,
-        #         npoint=args.preenc_npoints,
-        #         self.mlp=mlp_dims,
-        #         normalize_xyz=True,
-        #     )
-
-        # self, points_xyz, features=None, indices=None, focal_point=None
-
-    def forward(self, x, coord):
-      pass
-
-
 @BACKBONES.register_module()
 class ConViT3DDecoder(BaseModule):
     """ 
@@ -420,8 +384,9 @@ class ConViT3DDecoder(BaseModule):
                 use_pos_embed=True,
                 init_cfg=None,
                 pretrained=None,
-                radius=0.2, 
-                nsample=64):
+                fp_channels = ((576,16)) # (head*embed_dim , output_dim)
+
+                ):
         
         super().__init__(init_cfg=init_cfg)
         
@@ -445,9 +410,7 @@ class ConViT3DDecoder(BaseModule):
         self.num_patches = num_patches
         
 
-        ## call the PointNet2SASSG_SL backbone for genearting point feature embedding 
-        self.point_embed = PointEmbed(radius,nsample,in_chans,embed_dim)
-        
+        ## call the PointNet2SASSG_SL backbone for genearting point feature embedding    
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
 
@@ -500,17 +463,22 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, x, coors, b): #voxel_features, coors, batch_size
+    def forward_features(self, point_embeddings): # voxel_features, coors
 
-        B = b
-        
 
         # x = self.patch_embed(x)
 
         # embedding using single PointNet
         # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
-        x = self.point_embed(x,coors)
+        # x = self.point_embed(x,coors)
 
+        xyz = point_embeddings["point_xyz"]
+        features = point_embeddings["point_feature"]
+        
+        print("xyz coordinates", xyz.shape)
+        print("features dimensions", features.shape)
+
+        
         
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
@@ -526,8 +494,9 @@ class ConViT3DDecoder(BaseModule):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, voxel_features, coors, batch_size):
-        x = self.forward_features(voxel_features, coors, batch_size)
+    def forward(self, x):
+
+        x = self.forward_features(x)
         
         x = self.head(x)
         return x

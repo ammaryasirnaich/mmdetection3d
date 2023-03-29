@@ -30,6 +30,8 @@ def test_pointnet2_sa_ssg():
 
     xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+
+    print("shape of xyz", xyz.shape)
     # test forward
     ret_dict = self(xyz)
     fp_xyz = ret_dict['fp_xyz']
@@ -409,8 +411,7 @@ def test_mink_resnet():
 
 def point_visual_transformer():
     if not torch.cuda.is_available():
-        pytest.skip()
-    
+        pytest.skip() 
 
     # test list config
     cfg_list = dict(
@@ -476,8 +477,9 @@ def point_visual_transformer():
 
     
 if __name__ == "__main__":
-    test_multi_backbone()
-    # point_visual_transformer()
+    # test_multi_backbone()
+    point_visual_transformer()
+    # test_pointnet2_sa_ssg()
     print("End")
    
  

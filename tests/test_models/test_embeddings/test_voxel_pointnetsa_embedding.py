@@ -162,8 +162,7 @@ def test_pointnet2_sa_ssg():
 def point_embedding_backbone():
     '''
     voxelizating point cloud space and get voxel cooridnates
-    '''
-    
+    '''  
     #### voxelization and downsampling
     mean_point_xyz , point_xyz, cntr_voxel_xyz = vfe_feature_encoder()
     mean_point_xyz  = mean_point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32).contiguous()   # (B, N, 4)
@@ -178,9 +177,9 @@ def point_embedding_backbone():
     cfg = dict(
         type= 'PointNet2SASSG_SL', #  PointNet2SASSG ,PointNet2SASSG_SL
         in_channels=4,
-        num_points=(32, 16),
+        num_points=(32, 16),   # irrelvent but make sure to have the same as the radius tuple
         radius=(0.8, 1.2),
-        num_samples=(16, 8),
+        num_samples=(16, 8),    # in each radius take 16 , 8 points repectivily
         sa_channels=((8, 16), (16, 16)),
         fp_channels=((16, 16), (16, 16)))
     self = build_backbone(cfg)
@@ -204,20 +203,16 @@ def point_embedding_backbone():
     print("fp_features[2].shape",fp_features[2].shape)
 
 
-    # assert len(fp_xyz) == len(fp_features)  == 3
-    # assert len(sa_xyz) == len(sa_features)  == 3
-    # assert fp_xyz[0].shape == torch.Size([1, 16, 3])
-    # assert fp_xyz[1].shape == torch.Size([1, 32, 3])
-    # assert fp_xyz[2].shape == torch.Size([1, 100, 3])
-    # assert fp_features[0].shape == torch.Size([1, 16, 16])
-    # assert fp_features[1].shape == torch.Size([1, 16, 32])
-    # assert fp_features[2].shape == torch.Size([1, 16, 100])
-    # assert sa_xyz[0].shape == torch.Size([1, 100, 3])
-    # assert sa_xyz[1].shape == torch.Size([1, 32, 3])
-    # assert sa_xyz[2].shape == torch.Size([1, 16, 3])
-    # assert sa_features[0].shape == torch.Size([1, 3, 100])
-    # assert sa_features[1].shape == torch.Size([1, 16, 32])
-    # assert sa_features[2].shape == torch.Size([1, 16, 16])
+
+
+self = build_backbone(cfg_list)
+self.cuda()
+
+
+
+
+
+
 
 if __name__ == "__main__":
     # test_hard_simple_VFE()
