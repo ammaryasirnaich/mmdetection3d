@@ -90,8 +90,10 @@ class PointNet2SASSG_SL(BasePointNet):
         """Forward pass.
 
         Args:
-            points (torch.Tensor): point coordinates with features,
-                with shape (B, N, 3 + input_feature_dim).
+            point_xyz (torch.Tensor): point coordinates with features,
+                with shape (B, V*N, 3 + input_feature_dim).
+            
+            mean_point_xyz : Mean or Voxel Point clouds. (B,C,3)
 
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
@@ -104,20 +106,32 @@ class PointNet2SASSG_SL(BasePointNet):
                     input points.
         """
 
-   
+        # print("point_xyz shape", point_xyz.shape)
+        # print("mean_point_xyz shape", mean_point_xyz.shape)
+
+        # print("dtype pf point_xyz",point_xyz.dtype )
+        # print("dtype pf mean_point_xyz",mean_point_xyz.dtype )
+
+
+        if(mean_point_xyz.dtype == torch.float16):
+            mean_point_xyz = mean_point_xyz.type(torch.float32)
+
+        # print("dtype changes to", mean_point_xyz.dtype )
+
+
         xyz, features = self._split_point_feats(point_xyz)
 
         # print(mean_point_xyz.shape)
         # print(xyz.shape)
 
 
-        batch, num_points = xyz.shape[:2]
-        indices = xyz.new_tensor(range(num_points)).unsqueeze(0).repeat(
-            batch, 1).long()
+        # batch, num_points = xyz.shape[:2]
+        # indices = xyz.new_tensor(range(num_points)).unsqueeze(0).repeat(
+        #     batch, 1).long()
 
         sa_xyz = [xyz]
         sa_features = [features]
-        sa_indices = [indices]
+        # sa_indices = [indices]
         for i in range(self.num_sa):
     
             ## the first SA module takes the voxel mean coordinates as a target point  
@@ -147,7 +161,8 @@ class PointNet2SASSG_SL(BasePointNet):
             # fp_indices=fp_indices,
             sa_xyz=sa_xyz,
             sa_features=sa_features,
-            sa_indices=sa_indices)
+            # sa_indices=sa_indices
+            )
         return ret
 
 
