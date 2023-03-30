@@ -147,28 +147,44 @@ Model parameter settings
 voxel_size = [0.05, 0.05, 0.1]
 point_cloud_range=[0, -40, -3, 70.4, 40, 1]
 
-#  type='DynamicVFE',  # HardVFE , IEVFE' , HardSimpleVFE
-
 model = dict(
-    type='ConViT3D', # Type of the Detector, refer to mmdet3d.models.detectors 
+    type='ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
     voxel_layer=dict(
         max_num_points=9,
         point_cloud_range=[0, -40, -3, 70.4, 40, 1],
         voxel_size=voxel_size,
         max_voxels=(16000, 40000)),
   
-    voxel_encoder=dict(
-        type='HardSimpleVFE',      # HardVFE , IEVFE
-        # in_channels=4,
-        # with_distance=False,
-        # voxel_size=voxel_size,
-        # with_cluster_center=True,
-        # with_voxel_center=False,
-        # point_cloud_range=point_cloud_range
-        ),
-    backbone=dict(
-        type='ConViT3DDecoder',
-    ),
+    voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE
+    middle_encoder =  dict(
+                type='PointNet2SASSG_SL',
+                in_channels=4,
+                num_points=(32,16), # irrelavent
+                radius=(0.8, 1.2),
+                num_samples=(16,8),
+                sa_channels=((8, 16), (16, 16)),
+                fp_channels=((16, 16), (16, 16)),
+                norm_cfg=dict(type='BN2d')),
+    backbone =  dict(
+                type='ConViT3DDecoder',
+                in_chans=16,
+                embed_dim=96,
+                depth = 12, # stochastic depth decay rule
+                num_heads=12 ,
+                mlp_ratio=4,
+                qkv_bias=False ,
+                qk_scale=None ,
+                drop_rate=0,
+                attn_drop_rate=0,
+                drop_path_rate=0, 
+                hybrid_backbone=None ,
+                global_pool=None,
+                local_up_to_layer=10 ,
+                locality_strength=1,
+                use_pos_embed=True,
+                init_cfg=None,
+                pretrained=None,
+                fp_channels = ((576,16),(16,16)), ), # (head*embed_dim , output_dim)
     neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
