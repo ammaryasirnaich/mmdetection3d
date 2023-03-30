@@ -106,29 +106,13 @@ class PointNet2SASSG_SL(BasePointNet):
                     input points.
         """
 
-        # print("point_xyz shape", point_xyz.shape)
-        # print("mean_point_xyz shape", mean_point_xyz.shape)
-
-        # print("dtype pf point_xyz",point_xyz.dtype )
-        # print("dtype pf mean_point_xyz",mean_point_xyz.dtype )
-
 
         if(mean_point_xyz.dtype == torch.float16):
             mean_point_xyz = mean_point_xyz.type(torch.float32)
 
-        # print("dtype changes to", mean_point_xyz.dtype )
-
-
         xyz, features = self._split_point_feats(point_xyz)
 
-        # print(mean_point_xyz.shape)
-        # print(xyz.shape)
-
-
-        # batch, num_points = xyz.shape[:2]
-        # indices = xyz.new_tensor(range(num_points)).unsqueeze(0).repeat(
-        #     batch, 1).long()
-
+  
         sa_xyz = [xyz]
         sa_features = [features]
         # sa_indices = [indices]

@@ -427,6 +427,9 @@ class PointRefereceSAModule(PointSAModule):
 
             # print("shape point_xyz", points_xyz.shape)
             # print("shape target_xyz", target_xyz.shape)
+            # print("shape features", features.shape)
+
+            # print("point_xyz data",points_xyz[-1])
           
             grouped_results = self.groupers[i](points_xyz, target_xyz, features)
 

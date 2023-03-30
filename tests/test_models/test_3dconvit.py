@@ -11,6 +11,8 @@ from mmcv.ops import Voxelization
 import mmdet3d.models.builder
 
 
+
+
 def vfe_feature_encoder(): 
     ### configuration for VFE encoder 
     hardsimple_feature_net_cfg = dict(type='HardSimpleVFE')
@@ -26,6 +28,45 @@ def vfe_feature_encoder():
 
     return mean_point_xyz , point_xyz ,voxel_coord
    
+
+
+
+
+def vef_feature_kitti():
+    voxel_size = [0.5, 0.5, 0.5]
+    point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+    max_num_points = 1000
+    
+
+    # xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
+    # xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+
+
+
+    point_xyz = np.fromfile('/workspace/mmdetection3d/tests/data/kitti/005063.bin', dtype=np.float32)
+    point_xyz = torch.from_numpy(point_xyz).view(1,-1, 4).numpy()  # (B, N, 6)
+    print("point_xyz shape",point_xyz.shape)
+    ### configuration for VFE encoder 
+    hardsimple_feature_net_cfg = dict(type='HardSimpleVFE')
+    hardsimple_feature_net = build_voxel_encoder(hardsimple_feature_net_cfg)
+
+    voxelize = VoxelGenerator(voxel_size, point_cloud_range, max_num_points)
+    voxels = voxelize.generate(point_xyz)
+    voxels, coors, num_points_per_voxel = voxels
+  
+    mean_point_xyz = hardsimple_feature_net(voxels, num_points_per_voxel, coors)
+
+    v,p,d = voxels.shape
+    voxels = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D
+    mean_point_xyz = mean_point_xyz.unsqueeze(0) # B,P,D
+
+    mean_point_xyz = mean_point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32)
+    point_xyz = point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32)
+
+    print(voxels[-1,:5,-1])
+    print(mean_point_xyz[-1,:5,-1])
+    return  mean_point_xyz , point_xyz ,coors
+
 
 def test_3dConViT():
     if not torch.cuda.is_available():
@@ -44,17 +85,26 @@ def test_3dConViT():
                 norm_cfg=dict(type='BN2d'))
     
     mean_point_xyz , point_xyz ,voxel_coord = vfe_feature_encoder()
+
+    # mean_point_xyz , point_xyz ,voxel_coord = vef_feature_kitti()
+
+
+    # print("mean_point_xyz",mean_point_xyz.shape)
+    # print("point_xyz",point_xyz.shape)
     
     # voxelization_layer = build_voxel_encoder(voxel_encoder)
     # voxelization_layer.cuda()
     # x = voxelization_layer()
 
-
+    # voxel_features.shape torch.Size([62973, 138])
+    # voxels torch.Size([62973, 5, 4])
+    
     ### using custome pointnet embedding
     embedding_encoder_layer = build_middle_encoder(middle_liyer)
     embedding_encoder_layer.cuda()
-    feat_dic = embedding_encoder_layer(point_xyz,mean_point_xyz[:,:,:3])
 
+
+    feat_dic = embedding_encoder_layer(point_xyz,mean_point_xyz[:,:,:3])
 
     ### backdone
     cfg_backbone =  dict(
