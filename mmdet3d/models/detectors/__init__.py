@@ -19,12 +19,12 @@ from .ssd3dnet import SSD3DNet
 from .votenet import VoteNet
 from .voxelnet import VoxelNet
 from .IntensityNet import IntensityNet
-from .point_convit import ConViT3D
+from .convit3d import ConVit3D
 
 __all__ = [
     'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
     'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
     'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
     'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'PointRCNN', 'SMOKEMono3D',
-    'MinkSingleStage3DDetector', 'SASSD' , 'IntensityNet', 'ConViT3D'
+    'MinkSingleStage3DDetector', 'SASSD' , 'IntensityNet', 'ConVit3D'
 ]

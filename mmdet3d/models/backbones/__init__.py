@@ -8,7 +8,7 @@ from .nostem_regnet import NoStemRegNet
 from .pointnet2_sa_msg import PointNet2SAMSG
 from .pointnet2_sa_ssg import PointNet2SASSG
 from .second import SECOND
-from .VisionTransformer import ConViT3DDecoder
+from .convit3d_encoder import ConViT3DDecoder
 
 __all__ = [
     'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 'NoStemRegNet',
