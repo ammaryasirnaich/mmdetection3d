@@ -113,6 +113,9 @@ def test_pointnet2_sa_ssg():
 
     xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
+
+    print(xyz[-1,:5,-1])
+    print("End")
    
     # test forward
     ret_dict = self(xyz)
@@ -205,22 +208,14 @@ def point_embedding_backbone():
 
 
 
-self = build_backbone(cfg_list)
-self.cuda()
-
-
-
-
-
-
 
 if __name__ == "__main__":
     # test_hard_simple_VFE()
     # voxel_feats, voxel_corrd = vfe_feature_encoder()
     # print("feature shape", voxel_feats.shape)
     # print("feature shape", voxel_corrd.shape)
-    point_embedding_backbone()
-    # test_pointnet2_sa_ssg()
+    # point_embedding_backbone()
+    test_pointnet2_sa_ssg()
     # point_embedding()
     print("End")
    
