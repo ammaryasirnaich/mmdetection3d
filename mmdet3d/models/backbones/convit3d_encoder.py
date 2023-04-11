@@ -12,6 +12,7 @@ from mmcv.cnn.utils.weight_init import trunc_normal_
 from mmcv.runner import BaseModule, ModuleList, _load_checkpoint
 from mmcv.utils import to_2tuple
 from ..builder import BACKBONES
+# from mmdet3d.models.builder import BACKBONES
 from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
@@ -472,12 +473,13 @@ class ConViT3DDecoder(BaseModule):
         # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
         # x = self.point_embed(x,coors)
 
-        xyz = point_embeddings["fp_xyz"][-1]
-        features = point_embeddings["fp_features"][-1]
-        features = features.permute(0,2,1).contiguous()
+        xyz = point_embeddings["fp_xyz"][-1]  # (B,V,3)
+        features = point_embeddings["fp_features"][-1].permute(0,2,1).contiguous()  # (B,V,D)
         
         print("xyz coordinates", xyz.shape)
         print("features dimensions", features.shape)
+        x = torch.cat((xyz,features),dim=2)  # (B,V,3+D)
+        print(" combined values" , x.shape)
 
         B = xyz.shape[0]
         

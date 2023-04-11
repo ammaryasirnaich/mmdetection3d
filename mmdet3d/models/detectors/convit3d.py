@@ -40,6 +40,7 @@ class ConVit3D(SingleStage3DDetector):
     def extract_feat(self, points, img_metas=None):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
+        print("voxel shape", voxels.shape)
         mean_point_xyz = self.voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0].item() + 1
         v,p,d = voxels.shape
@@ -48,6 +49,7 @@ class ConVit3D(SingleStage3DDetector):
         mean_point_xyz = mean_point_xyz.unsqueeze(0) # B,P,D
         
         x = self.middle_encoder(voxels,mean_point_xyz[:,:,:3])
+        # print(" feature set " , x.shape)
         x = self.backbone(x)
         if self.with_neck:
             x = self.neck(x)
