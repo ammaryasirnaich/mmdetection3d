@@ -167,7 +167,7 @@ model = dict(
                 norm_cfg=dict(type='BN2d')),
     backbone =  dict(
                 type='ConViT3DDecoder',
-                in_chans=16,
+                in_chans=19,
                 embed_dim=96,
                 depth = 12, # stochastic depth decay rule
                 num_heads=12 ,
@@ -181,7 +181,7 @@ model = dict(
                 global_pool=None,
                 local_up_to_layer=10 ,
                 locality_strength=1,
-                use_pos_embed=True,
+                use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
                 fp_channels = ((576,16),(16,16)), ), # (head*embed_dim , output_dim)
