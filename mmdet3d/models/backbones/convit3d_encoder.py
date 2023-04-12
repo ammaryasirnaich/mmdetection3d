@@ -17,6 +17,7 @@ from ...utils import get_root_logger
 from mmcv.runner import BaseModule
 from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
+import numpy as np
 
 
 
@@ -117,7 +118,8 @@ class GPSA(BaseModule):
     def forward(self, x):
         B, N, C = x.shape
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
-            self.get_rel_indices(N)
+            # self.get_rel_indices(N)
+            self.get_rel_indices_3d(num_patches=N)
 
         attn = self.get_attention(x)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -131,6 +133,9 @@ class GPSA(BaseModule):
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k = qk[0], qk[1]
         pos_score = self.rel_indices.expand(B, -1, -1,-1)
+
+        print("pos_score dimensions", pos_score.shape)
+
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
         patch_score = (q @ k.transpose(-2, -1)) * self.scale
         patch_score = patch_score.softmax(dim=-1)
@@ -180,6 +185,37 @@ class GPSA(BaseModule):
         rel_indices[:,:,:,0] = indx.unsqueeze(0)
         device = self.qk.weight.device
         self.rel_indices = rel_indices.to(device)
+
+
+    
+    def get_rel_indices_3d(self, patches_loc=None,num_patches=None,dim=3):
+        if patches_loc is None:
+            assert num_patches is not None
+            grid_size = round(num_patches**(1/dim))
+            if dim==2:
+                xi,yi = np.meshgrid(np.arange(grid_size),np.arange(grid_size))
+                patches_loc = np.c_[xi.reshape(-1),yi.reshape(-1)]
+            else:
+                xi,yi,zi = np.meshgrid(np.arange(grid_size),np.arange(grid_size),np.arange(grid_size))
+                patches_loc = np.c_[xi.reshape(-1),yi.reshape(-1),zi.reshape(-1)]
+
+            patches_loc = torch.tensor(patches_loc)
+
+        else:
+            num_patches = patches_loc.shape[0]
+            dim = patches_loc.shape[1]
+            
+        rel_ind =[]
+        for i in range(dim):
+            Xi = patches_loc[:,i] - patches_loc[:,i][:,None]
+            rel_ind.append(Xi)
+
+        rel_ind = torch.stack(rel_ind).permute([1,2,0])
+        rel_ind = torch.cat([rel_ind, ((rel_ind**2).sum(2)).unsqueeze(2)],dim=2)
+        if dim==3: rel_ind = rel_ind[:,:,[2,0,1,3]]
+
+        device = self.qk.weight.device
+        self.rel_indices = rel_ind.to(device) 
 
  
 class MHSA(BaseModule):
