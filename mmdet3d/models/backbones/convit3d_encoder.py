@@ -116,7 +116,7 @@ class GPSA(BaseModule):
             nn.init.constant_(m.weight, 1.0)
         
     def forward(self, x):
-        B, N, C = x.shape
+        B, N, C = x.shape   # batch, num_of_points, features
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
             # self.get_rel_indices(N)
             self.get_rel_indices_3d(num_patches=N)
@@ -294,6 +294,8 @@ class Block(BaseModule):
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
+        print("dim=",dim)
+
     def forward(self, x):
         x = x + self.drop_path(self.attn(self.norm1(x)))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
@@ -436,6 +438,7 @@ class ConViT3DDecoder(BaseModule):
 
         ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
 
+        print("embed_dim=",embed_dim)
 
         if hybrid_backbone is not None:
             self.patch_embed = HybridEmbed(
@@ -500,7 +503,7 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, point_embeddings): # voxel_features, coors
+    def forward_features(self, point_embeddings,batch_size): # voxel_features, coors
 
 
         # x = self.patch_embed(x)
@@ -509,15 +512,25 @@ class ConViT3DDecoder(BaseModule):
         # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
         # x = self.point_embed(x,coors)
 
-        xyz = point_embeddings["fp_xyz"][-1]  # (B,V,3)
-        features = point_embeddings["fp_features"][-1].permute(0,2,1).contiguous()  # (B,V,D)
-        
-        print("xyz coordinates", xyz.shape)
-        print("features dimensions", features.shape)
-        x = torch.cat((xyz,features),dim=2)  # (B,V,3+D)
-        print(" combined values" , x.shape)
+        # xyz = point_embeddings["fp_xyz"][-1]  # (B,V*P,3)
+        # features = point_embeddings["fp_features"][-1].permute(0,2,1).contiguous()  # (B,V*P,D)
+        # print("xyz coordinates", xyz.shape)
+        # print("features dimensions", features.shape)
+        # x = torch.cat((xyz,features),dim=2)  # (B,V*P,3+D)
+        # print(" combined values" , x.shape)
 
-        B = xyz.shape[0]
+        # voxel = point_embeddings["voxels"]
+
+        # B = xyz.shape[0]
+
+
+        x = point_embeddings["voxels"]
+        B = batch_size
+
+        print("batch no", B)
+        print("selecting only one point per voxel", x[:,:1,:].shape)
+
+        
         
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
@@ -533,9 +546,9 @@ class ConViT3DDecoder(BaseModule):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
+    def forward(self, x, batch_size):
 
-        x = self.forward_features(x)
+        x = self.forward_features(x,batch_size)
         
         x = self.head(x)
         return x
