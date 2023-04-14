@@ -116,6 +116,9 @@ class GPSA(BaseModule):
             nn.init.constant_(m.weight, 1.0)
         
     def forward(self, x):
+        x = x[:,:,:1,:].permute(2,0,1,3).squeeze(0)
+        print("reshaping", x.shape)
+    
         B, N, C = x.shape   # batch, num_of_points, features
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
             # self.get_rel_indices(N)
@@ -526,13 +529,7 @@ class ConViT3DDecoder(BaseModule):
 
         # x = point_embeddings["voxels"]
         B = batch_size
-
-        print("batch no", B)
-        print("selecting only one point per voxel", x[:,:1,:].shape)
-
         x = point_embeddings["voxels"].expand(B,-1,-1,-1)
-
-        
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
         if self.use_pos_embed:
