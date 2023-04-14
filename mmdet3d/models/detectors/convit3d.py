@@ -8,7 +8,7 @@ from mmdet3d.core import bbox3d2result, merge_aug_bboxes_3d
 from .. import builder
 from ..builder import DETECTORS
 from .single_stage import SingleStage3DDetector
-
+import numpy as np
 
 @DETECTORS.register_module()
 class ConVit3D(SingleStage3DDetector):
@@ -40,17 +40,14 @@ class ConVit3D(SingleStage3DDetector):
     def extract_feat(self, points, img_metas=None):
         """Extract features from points."""
         voxels, num_points, coors = self.voxelize(points)
-        print("voxel shape", voxels.shape)
-        mean_point_xyz = self.voxel_encoder(voxels, num_points, coors)
+        mean_point_xyz = self.voxel_encoder(voxels, num_points, coors)  # [ V,D(4) ]
         batch_size = coors[-1, 0].item() + 1
-        v,p,d = voxels.shape
-
-        voxels = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D
-        mean_point_xyz = mean_point_xyz.unsqueeze(0) # B,P,D
+        mean_point_xyz = mean_point_xyz.unsqueeze(0) # B,P,D   
+        x = self.middle_encoder(voxels ,mean_point_xyz[:,:,:3],batch_size)   
         
-        x = self.middle_encoder(voxels,mean_point_xyz[:,:,:3])
+    
         # print(" feature set " , x.shape)
-        x = self.backbone(x)
+        x = self.backbone(x, batch_size)
         if self.with_neck:
             x = self.neck(x)
         return x

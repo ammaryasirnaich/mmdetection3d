@@ -86,14 +86,16 @@ class PointNet2SASSG_SL(BasePointNet):
                 fp_target_channel = skip_channel_list.pop()
 
     @auto_fp16(apply_to=('points', ))
-    def forward(self, point_xyz, mean_point_xyz):  #points,mean_point_xyz
+    def forward(self, voxels, mean_point_xyz):  #points,mean_point_xyz
         """Forward pass.
 
         Args:
-            point_xyz (torch.Tensor): point coordinates with features,
+            voxels (torch.Tensor): point coordinates with features,
                 with shape (B, V*N, 3 + input_feature_dim).
             
             mean_point_xyz : Mean or Voxel Point clouds. (B,C,3)
+
+            batch_size : batcn size
 
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
@@ -106,13 +108,13 @@ class PointNet2SASSG_SL(BasePointNet):
                     input points.
         """
 
+        v,p,d = voxels.shape
+        point_xyz = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D  #reshape to get total number of points from all voxels
 
         if(mean_point_xyz.dtype == torch.float16):
             mean_point_xyz = mean_point_xyz.type(torch.float32)
 
         xyz, features = self._split_point_feats(point_xyz)
-
-  
         sa_xyz = [xyz]
         sa_features = [features]
         # sa_indices = [indices]
@@ -121,16 +123,13 @@ class PointNet2SASSG_SL(BasePointNet):
             ## the first SA module takes the voxel mean coordinates as a target point  
             cur_xyz, cur_features = self.SA_modules[i] ( 
                             sa_xyz[i], sa_features[i], target_xyz=mean_point_xyz )
-           
-
+        
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
            
-   
         fp_xyz = [sa_xyz[-1]]
         fp_features = [sa_features[-1]]
-        # fp_indices = [sa_indices[-1]]
-        
+        # fp_indices = [sa_indices[-1]]       
 
         for i in range(self.num_fp):
             fp_features.append(self.FP_modules[i](
@@ -139,6 +138,11 @@ class PointNet2SASSG_SL(BasePointNet):
             fp_xyz.append(sa_xyz[self.num_sa - i - 1])
             # fp_indices.append(sa_indices[self.num_sa - i - 1])
 
+               # print("fp_features shape:",fp_features[-1].shape)
+
+        fp_features[-1] = fp_features[-1].permute(0,2,1)
+        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(v,p,-1)
+
         ret = dict(
             fp_xyz=fp_xyz,
             fp_features=fp_features,
@@ -146,6 +150,7 @@ class PointNet2SASSG_SL(BasePointNet):
             sa_xyz=sa_xyz,
             sa_features=sa_features,
             # sa_indices=sa_indices
+            voxels = voxel_feature
             )
         return ret
 

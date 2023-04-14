@@ -23,6 +23,12 @@ def vfe_feature_encoder():
     point_xyz = torch.rand([97297, 20, 4])
     num_voxels = torch.randint(1, 100, [97297])
     voxel_coord = torch.randint(0, 100, [97297, 3])
+
+
+
+
+    
+    
     mean_point_xyz = hardsimple_feature_net(point_xyz, num_voxels, voxel_coord)
    
     mean_point_xyz = mean_point_xyz.view(1,-1,4).to('cuda:0', dtype=torch.float32)

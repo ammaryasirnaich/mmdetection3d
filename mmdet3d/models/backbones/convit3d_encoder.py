@@ -524,13 +524,14 @@ class ConViT3DDecoder(BaseModule):
         # B = xyz.shape[0]
 
 
-        x = point_embeddings["voxels"]
+        # x = point_embeddings["voxels"]
         B = batch_size
 
         print("batch no", B)
         print("selecting only one point per voxel", x[:,:1,:].shape)
 
-        
+        x = point_embeddings["voxels"].expand(B,-1,-1,-1)
+
         
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
