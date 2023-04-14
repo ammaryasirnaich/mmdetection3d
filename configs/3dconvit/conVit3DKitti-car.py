@@ -144,6 +144,13 @@ Model parameter settings
 '''
 # voxel_size = [0.2, 0.2, 0.4]
 # voxel_size = [0.05, 0.05, 0.2]
+# x=1408 , y=1600, z= 40
+
+# voxel_size = [0.05, 0.05, 0.1]
+# point_cloud_range=[70.4, 80, 4]
+               #       x  , y,  z
+
+
 voxel_size = [0.05, 0.05, 0.1]
 point_cloud_range=[0, -40, -3, 70.4, 40, 1]
 
@@ -167,10 +174,11 @@ model = dict(
                 norm_cfg=dict(type='BN2d')),
     backbone =  dict(
                 type='ConViT3DDecoder',
+                num_classes=3, 
                 in_chans=19,
-                embed_dim=96,
+                embed_dim=19, 
                 depth = 12, # stochastic depth decay rule
-                num_heads=12 ,
+                num_heads=6 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
