@@ -117,7 +117,11 @@ def test_3DConViT():
     xyz = np.fromfile('/workspace/mmdetection3d/tests/data/sunrgbd/points/000001.bin', dtype=np.float32)
     xyz = torch.from_numpy(xyz).view(1, -1, 6).cuda()  # (B, N, 6)
     # test forward
-    x = dict(point_xyz=xyz[:, :, :4], point_feature=xyz[:, :, :3])
+    x = dict(point_xyz=xyz[:, :, :4], mean_point_xyz=xyz[:, :, :3])
+
+    print("Wait")
+    
+
 
     ret_dict = self(x)
 
