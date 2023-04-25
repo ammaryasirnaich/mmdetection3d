@@ -87,16 +87,15 @@ class PointNet2SASSG_SL(BasePointNet):
                 fp_source_channel = cur_fp_mlps[-1]
                 fp_target_channel = skip_channel_list.pop()
 
-    def forward(self, voxels, mean_point_xyz):  #points,mean_point_xyz
+    def forward(self, point_dic):  #points,mean_point_xyz
         """Forward pass.
 
         Args:
-            voxels (torch.Tensor): point coordinates with features,
-                with shape (B, V*N, 3 + input_feature_dim).
-            
-            mean_point_xyz : Mean or Voxel Point clouds. (B,C,3)
+            point_dic (dic[str,torch.Tensor ]: The Input is the dic having 
+            point_xyz and mean_point_xyz
+               - point_xyz : The coordinates of each point clouds inside the voxel.
+               - point_feature :  Mean point of Voxel Point clouds. (B,V,3)
 
-            batch_size : batcn size
 
         Returns:
             dict[str, list[torch.Tensor]]: Outputs after SA and FP modules.
@@ -108,7 +107,8 @@ class PointNet2SASSG_SL(BasePointNet):
                 - fp_indices (list[torch.Tensor]): Indices of the
                     input points.
         """
-
+        voxels = point_dic["point_xyz"]
+        mean_point_xyz =point_dic["mean_point_xyz"]
         v,p,d = voxels.shape
         point_xyz = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D  #reshape to get total number of points from all voxels
 
