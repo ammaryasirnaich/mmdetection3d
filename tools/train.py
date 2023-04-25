@@ -12,9 +12,10 @@ from mmengine.runner import Runner
 from mmdet3d.utils import replace_ceph_backend
 
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a 3D detector')
-    parser.add_argument('config', help='train config file path')
+    parser.add_argument('config', default='/workspace/mmdetection3d/configs/3dconvit/conVit3DKitti-car.py', help='train config file path')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
         '--amp',
