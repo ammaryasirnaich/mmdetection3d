@@ -3,11 +3,12 @@ import numpy as np
 import pytest
 import torch
 
-from mmdet3d.models import build_backbone
-from mmdet3d.models.builder import build_voxel_encoder,DETECTORS
-from mmdet3d.core.voxel.voxel_generator import VoxelGenerator
-from mmcv.ops import Voxelization
-import mmdet3d.models.builder
+# from mmdet3d.models import build_backbone
+from mmdet3d.registry import MODELS
+# from mmdet3d.models.builder import build_voxel_encoder,DETECTORS
+# from mmdet3d.core.voxel.voxel_generator import VoxelGenerator
+# from mmcv.ops import Voxelization
+# import mmdet3d.models.builder
 
 
 
@@ -18,7 +19,7 @@ def vfe_feature_encoder():
     hardsimple_feature_net_cfg = dict(
         type='HardSimpleVFE',      
         )
-    hardsimple_feature_net = build_voxel_encoder(hardsimple_feature_net_cfg)
+    hardsimple_feature_net = MODELS.build(hardsimple_feature_net_cfg)
 
     point_xyz = torch.rand([97297, 20, 4])
     num_voxels = torch.randint(1, 100, [97297])
@@ -108,7 +109,7 @@ def test_3DConViT():
     
     # ])
 
-    self = build_backbone(cfg_list)
+    self = MODELS.build(cfg_list)
     self.cuda()
 
     assert len(self.backbone_list) == 2
