@@ -645,7 +645,7 @@ class SegVFE(nn.Module):
         return voxel_feats, voxel_coors
 
 
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class IEVFE(nn.Module):
     """Intesntiy Extended Voxel feature encoder used in INET Intensity.
 
@@ -741,7 +741,7 @@ class IEVFE(nn.Module):
         if fusion_layer is not None:
             self.fusion_layer = builder.build_fusion_layer(fusion_layer)
 
-    @force_fp32(out_fp16=True)
+ 
     def forward(self,
                 features,
                 num_points,
@@ -861,8 +861,7 @@ class IEVFE(nn.Module):
 
         return final_feature
 
-
-@VOXEL_ENCODERS.register_module()
+@MODELS.register_module()
 class DBSCAN_VFE(nn.Module):
     """Simple voxel feature encoder used in SECOND.
 
@@ -877,7 +876,7 @@ class DBSCAN_VFE(nn.Module):
         self.num_features = num_features
         self.fp16_enabled = False
 
-    @force_fp32(out_fp16=True)
+    # @force_fp32(out_fp16=True)
     def forward(self, features, num_points, coors):
         """Forward function.
 

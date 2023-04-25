@@ -1,13 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmcv.runner import auto_fp16
-from torch import nn as nn
 
-from mmdet3d.ops import PointFPModule, build_sa_module
-from ..builder import BACKBONES, MIDDLE_ENCODERS
+from torch import nn as nn
+# from .base_pointnet import BasePointNet
+from mmdet3d.models.backbones import base_pointnet
+from mmdet3d.models.layers import PointFPModule, build_sa_module
+from mmdet3d.registry import MODELS
 from mmdet3d.models.backbones.base_pointnet import BasePointNet
 
-@MIDDLE_ENCODERS.register_module()
+
+@MODELS.register_module()
 class PointNet2SASSG_SL(BasePointNet):
     """PointNet2 with Single-scale grouping without sampling methods.
 
@@ -85,7 +87,6 @@ class PointNet2SASSG_SL(BasePointNet):
                 fp_source_channel = cur_fp_mlps[-1]
                 fp_target_channel = skip_channel_list.pop()
 
-    @auto_fp16(apply_to=('points', ))
     def forward(self, voxels, mean_point_xyz):  #points,mean_point_xyz
         """Forward pass.
 

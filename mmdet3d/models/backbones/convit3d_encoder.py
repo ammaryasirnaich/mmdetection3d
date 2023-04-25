@@ -6,16 +6,28 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-from mmcv.cnn import build_norm_layer, constant_init, trunc_normal_init
+# from mmcv.cnn import build_norm_layer, constant_init, trunc_normal_init
+from mmcv.cnn import *
 from mmcv.cnn.bricks.transformer import FFN, build_dropout
-from mmcv.cnn.utils.weight_init import trunc_normal_
-from mmcv.runner import BaseModule, ModuleList, _load_checkpoint
-from mmcv.utils import to_2tuple
-from ..builder import BACKBONES
+
+from mmengine.model import BaseModule, ModuleList
+from mmengine.registry import MODELS
+
+from mmengine.model.weight_init import trunc_normal_
+from mmengine.model import BaseModule, ModuleList
+
+# from mmcv.cnn.utils.weight_init import trunc_normal_
+# from mmcv.runner import BaseModule, ModuleList, _load_checkpoint
+
+# from mmcv.utils import to_2tuple
+
+from mmengine.utils import to_2tuple
+# from ..builder import BACKBONES
 # from mmdet3d.models.builder import BACKBONES
-from ...utils import get_root_logger
-from mmcv.runner import BaseModule
-from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
+# from ...utils import get_root_logger
+
+
+# from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
 import numpy as np
 
@@ -368,7 +380,7 @@ class HybridEmbed(BaseModule):
 
 
 
-@BACKBONES.register_module()
+@MODELS.register_module()
 class ConViT3DDecoder(BaseModule):
     """ 
     ConViT3DDecoder: Using End-to-End Transformers paradigam which behaves also as convolution for early layers and fully attention at later layers
