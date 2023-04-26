@@ -109,6 +109,10 @@ class PointNet2SASSG_SL(BasePointNet):
         """
         voxels = point_dic["point_xyz"]
         mean_point_xyz =point_dic["mean_point_xyz"]
+
+        print("shape of voxel tensor", voxels.shape)
+        print("shape of mean_point_xyz tensor", mean_point_xyz.shape)
+        
         v,p,d = voxels.shape
         point_xyz = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D  #reshape to get total number of points from all voxels
 
