@@ -36,7 +36,6 @@ db_sampler = dict(
         backend_args=backend_args),
     backend_args=backend_args)
 
-
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -257,7 +256,7 @@ model = dict(
      _delete_=True,
         assigner=[
             dict(  # for Car
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
