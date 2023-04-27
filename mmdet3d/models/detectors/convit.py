@@ -38,12 +38,18 @@ class ConVit3D(SingleStage3DDetector):
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""
         voxel_dict = batch_inputs_dict['voxels']
+
+        # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
+        
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
-        x = self.middle_encoder(voxel_features, voxel_dict['coors'],
-                                batch_size)
+        voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
+        x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3])
+        
+
+
         x = self.backbone(x)
         if self.with_neck:
             x = self.neck(x)

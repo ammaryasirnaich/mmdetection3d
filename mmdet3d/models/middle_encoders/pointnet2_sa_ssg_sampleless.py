@@ -87,14 +87,12 @@ class PointNet2SASSG_SL(BasePointNet):
                 fp_source_channel = cur_fp_mlps[-1]
                 fp_target_channel = skip_channel_list.pop()
 
-    def forward(self, point_dic):  #points,mean_point_xyz
+    def forward(self, voxels, mean_point_xyz):  #points,mean_point_xyz
         """Forward pass.
 
         Args:
-            point_dic (dic[str,torch.Tensor ]: The Input is the dic having 
-            point_xyz and mean_point_xyz
-               - point_xyz : The coordinates of each point clouds inside the voxel.
-               - point_feature :  Mean point of Voxel Point clouds. (B,V,3)
+               - voxels : The coordinates of each point clouds inside the voxel. (V,P,D)
+               - mean_point_xyz :  Mean point of Voxel Point clouds. (B,V,3)
 
 
         Returns:
@@ -104,17 +102,19 @@ class PointNet2SASSG_SL(BasePointNet):
                     each fp features.
                 - fp_features (list[torch.Tensor]): The features
                     from each Feature Propagate Layers.
-                - fp_indices (list[torch.Tensor]): Indices of the
-                    input points.
+                - voxel_feature(torch.Tensor): The voxel-wise feature  concatination of (fp_xyz, fp_features)
+                
         """
-        voxels = point_dic["point_xyz"]
-        mean_point_xyz =point_dic["mean_point_xyz"]
 
-        print("shape of voxel tensor", voxels.shape)
-        print("shape of mean_point_xyz tensor", mean_point_xyz.shape)
+        # print("tyep mean_point_xyz", mean_point_xyz.shape)
+        # print("shape of voxel tensor", voxels.shape)
+        # print("shape of mean_point_xyz tensor", mean_point_xyz.size)
         
         v,p,d = voxels.shape
-        point_xyz = voxels.view(v*p,d).unsqueeze(0)  # B,V*P,D  #reshape to get total number of points from all voxels
+        batch_szie = mean_point_xyz.shape[0]
+        point_xyz = voxels.view(v*p,d).expand(batch_szie,-1,-1)  # B,V*P,D  #reshape to get total number of points from all voxels
+
+        # print("point_xyz shape after unsqueeze", point_xyz.shape)
 
         if(mean_point_xyz.dtype == torch.float16):
             mean_point_xyz = mean_point_xyz.type(torch.float32)
@@ -146,11 +146,18 @@ class PointNet2SASSG_SL(BasePointNet):
                # print("fp_features shape:",fp_features[-1].shape)
 
         fp_features[-1] = fp_features[-1].permute(0,2,1)
-        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(v,p,-1)
+        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2)
+        # print("fp_xyz[-1] ", fp_xyz[-1].shape)
+        # print("fp_features[-1] ", fp_features[-1].shape)
+        # print("voxel_feature ", voxel_feature.shape)
+
+        voxel_feature = voxel_feature.expand(batch_szie,-1,-1,-1)
+        # print("voxel_feature ", voxel_feature.shape)
+        print(type(voxel_feature))
 
         ret = dict(
-            fp_xyz=fp_xyz,
-            fp_features=fp_features,
+            # fp_xyz=fp_xyz,
+            # fp_features=fp_features,
             # fp_indices=fp_indices,
             sa_xyz=sa_xyz,
             sa_features=sa_features,
