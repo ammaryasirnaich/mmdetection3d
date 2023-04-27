@@ -518,7 +518,7 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, point_embeddings_dic): # voxel_features, coors
+    def forward_features(self, point_embeddings_dic): # 
 
 
         # x = self.patch_embed(x)
@@ -539,12 +539,12 @@ class ConViT3DDecoder(BaseModule):
         # B = xyz.shape[0]
 
 
-        x = point_embeddings_dic["voxels"]
+        x = point_embeddings_dic["voxels"]  # (B,V,P,D)
 
         print("batch size", x.shape)
 
-        B = x.shape(0)
-        x = point_embeddings_dic["voxels"].expand(B,-1,-1,-1)
+        B = x.shape[0]
+        x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
         if self.use_pos_embed:
@@ -559,9 +559,9 @@ class ConViT3DDecoder(BaseModule):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x, batch_size):
+    def forward(self, x):
 
-        x = self.forward_features(x,batch_size)
+        x = self.forward_features(x)
         
         x = self.head(x)
         return x
