@@ -102,7 +102,7 @@ class PointNet2SASSG_SL(BasePointNet):
                     each fp features.
                 - fp_features (list[torch.Tensor]): The features
                     from each Feature Propagate Layers.
-                - voxel_feature(torch.Tensor): The voxel-wise feature  concatination of (fp_xyz, fp_features)
+                - voxel_feature(torch.Tensor): The voxel-wise feature  concatination of (fp_xyz, fp_features) (B,V,P,D)
                 
         """
 
@@ -111,9 +111,11 @@ class PointNet2SASSG_SL(BasePointNet):
         # print("shape of mean_point_xyz tensor", mean_point_xyz.size)
         
         v,p,d = voxels.shape
+        # print("origional voxel shape" ,voxels.shape)
         batch_szie = mean_point_xyz.shape[0]
         point_xyz = voxels.view(v*p,d).expand(batch_szie,-1,-1)  # B,V*P,D  #reshape to get total number of points from all voxels
 
+        # .view(-1, v,p,d)
         # print("point_xyz shape after unsqueeze", point_xyz.shape)
 
         if(mean_point_xyz.dtype == torch.float16):
@@ -146,14 +148,14 @@ class PointNet2SASSG_SL(BasePointNet):
                # print("fp_features shape:",fp_features[-1].shape)
 
         fp_features[-1] = fp_features[-1].permute(0,2,1)
-        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2)
+        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(batch_szie,v,p,-1)
         # print("fp_xyz[-1] ", fp_xyz[-1].shape)
         # print("fp_features[-1] ", fp_features[-1].shape)
         # print("voxel_feature ", voxel_feature.shape)
 
-        voxel_feature = voxel_feature.expand(batch_szie,-1,-1,-1)
+        # voxel_feature = voxel_feature.expand(batch_szie,-1,-1,-1)
         # print("voxel_feature ", voxel_feature.shape)
-        print(type(voxel_feature))
+        # print(type(voxel_feature))
 
         ret = dict(
             # fp_xyz=fp_xyz,

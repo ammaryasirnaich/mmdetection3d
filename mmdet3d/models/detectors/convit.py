@@ -46,7 +46,7 @@ class ConVit3D(SingleStage3DDetector):
         
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
-        x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3])
+        x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)
         
 
 
