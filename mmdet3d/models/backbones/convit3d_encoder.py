@@ -133,6 +133,9 @@ class GPSA(BaseModule):
         x = x[:,:,:1,:].permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
         print("reshaping", x.shape)
 
+        # voxel_coords
+        # rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
+
         B, N, C = x.shape   # batch, num_of_points, features
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
             # self.get_rel_indices(N)
@@ -520,7 +523,7 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
     
 
-    def forward_features(self, point_embeddings_dic): # 
+    def forward_features(self, point_embeddings_dic, voxel_coors): # 
 
 
         # x = self.patch_embed(x)
@@ -540,7 +543,8 @@ class ConViT3DDecoder(BaseModule):
 
         # B = xyz.shape[0]
 
-
+        pos = voxel_coors
+        print("shape of voxel_coors", voxel_coors.shape)
         x = point_embeddings_dic["voxels"]  # (B,V,P,D)
 
         print("point_embeddings_dic[voxels]", x.shape)
@@ -549,6 +553,18 @@ class ConViT3DDecoder(BaseModule):
         x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
         cls_tokens = self.cls_token.expand(B, -1, -1)
 
+        
+        # to-do, similar like
+        '''
+        pos = coords.permute(0, 2, 1)
+        rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
+        rel_pos = rel_pos.sum(dim=-1)  
+        fused_features = voxel_features + self.point_features(features, rel_pos)
+        
+        ''' 
+
+        
+        
         if self.use_pos_embed:
             x = x + self.pos_embed
         x = self.pos_drop(x)
@@ -561,9 +577,9 @@ class ConViT3DDecoder(BaseModule):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
+    def forward(self, x, voxel_coor):
 
-        x = self.forward_features(x)
+        x = self.forward_features(x, voxel_coor)
         
         x = self.head(x)
         return x
