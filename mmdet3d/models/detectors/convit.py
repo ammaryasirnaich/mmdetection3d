@@ -50,9 +50,7 @@ class ConVit3D(SingleStage3DDetector):
         print("voxel_features shape after voxelization", voxel_features.shape)
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)
         
-
-
-        x = self.backbone(x)
+        x = self.backbone(x,voxel_dict['coors'])
         if self.with_neck:
             x = self.neck(x)
         return x
