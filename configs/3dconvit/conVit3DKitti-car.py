@@ -168,13 +168,15 @@ visualizer = dict(
 '''
 Model parameter settings
 '''
-# voxel_size = [0.2, 0.2, 0.4]
-# voxel_size = [0.05, 0.05, 0.2]
+
+# voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
+# voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # x=1408 , y=1600, z= 40
 
 # voxel_size = [0.05, 0.05, 0.1]
 # point_cloud_range=[70.4, 80, 4]
                #       x  , y,  z
+
 
 voxel_size = [0.05, 0.05, 0.1]
 point_cloud_range=[0, -40, -3, 70.4, 40, 1]
@@ -185,8 +187,8 @@ model = dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
-            max_num_points=9,
-            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
+            max_num_points=9,  #35
+              point_cloud_range= point_cloud_range,
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
   
