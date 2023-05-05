@@ -127,9 +127,11 @@ class GPSA(BaseModule):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
         
-    def forward(self, x):
+    def forward(self, x, voxel_coord):
         # x : voxel-wise feature (B,V,P,D)
-        print("shape of input", x.shape)
+        print("voxel feature shape of input", x.shape)
+        print(" voxel coordinate shape",  voxel_coord.shape)
+
         x = x[:,:,:1,:].permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
         print("reshaping", x.shape)
 
@@ -139,8 +141,8 @@ class GPSA(BaseModule):
         B, N, C = x.shape   # batch, num_of_points, features
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
             # self.get_rel_indices(N)
-            self.get_rel_indices_3d(num_patches=N)
-            self.get_patch_wise_relative_encoding(x)
+            # self.get_rel_indices_3d(num_patches=N)
+            self.get_patch_wise_relative_encoding(voxel_coord)
 
         attn = self.get_attention(x)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -342,8 +344,8 @@ class Block(BaseModule):
 
         print("dim=",dim)
 
-    def forward(self, x):
-        x = x + self.drop_path(self.attn(self.norm1(x)))
+    def forward(self, x, voxel_coords):
+        x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
@@ -567,7 +569,7 @@ class ConViT3DDecoder(BaseModule):
 
         # B = xyz.shape[0]
 
-        pos = voxel_coors
+        # pos = voxel_coors
         print("shape of voxel_coors", voxel_coors.shape)
         x = point_embeddings_dic["voxels"]  # (B,V,P,D)
 
@@ -587,14 +589,6 @@ class ConViT3DDecoder(BaseModule):
         
         ''' 
 
-        pos = pos.permute(0, 2, 1)
-    
-
-
-
-
-        
-        
         if self.use_pos_embed:
             x = x + self.pos_embed
         x = self.pos_drop(x)
@@ -602,14 +596,14 @@ class ConViT3DDecoder(BaseModule):
         for u,blk in enumerate(self.blocks):
             if u == self.local_up_to_layer :
                 x = torch.cat((cls_tokens, x), dim=1)
-            x = blk(x)
+            x = blk(x,voxel_coors)
 
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x, voxel_coor):
+    def forward(self, x, voxel_coors):
 
-        x = self.forward_features(x, voxel_coor)
+        x = self.forward_features(x, voxel_coors)
         
         x = self.head(x)
         return x
