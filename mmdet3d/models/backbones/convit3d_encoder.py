@@ -140,6 +140,7 @@ class GPSA(BaseModule):
         if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
             # self.get_rel_indices(N)
             self.get_rel_indices_3d(num_patches=N)
+            self.get_patch_wise_relative_encoding(x)
 
         attn = self.get_attention(x)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -235,7 +236,32 @@ class GPSA(BaseModule):
         if dim==3: rel_ind = rel_ind[:,:,[2,0,1,3]]
 
         device = self.qk.weight.device
-        self.rel_indices = rel_ind.to(device) 
+        self.rel_indices = rel_ind.to(device)
+
+    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
+
+        # start =0
+        print("shape of input", coord.shape)
+        last_limit = coord.shape[1]
+        print("last_limit",last_limit)
+        stride = 1024
+        repeat_cycles = int(last_limit/stride)
+
+        relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
+
+        print("shape of relative" , relative.shape)
+        leftover = last_limit-(stride*repeat_cycles)
+        print("remains of points", leftover)
+        if(leftover!=0):
+            relative = relative.repeat(1, repeat_cycles+1, 1, 1)
+            relative = relative[:,:last_limit,:,:]
+            print("final shape after clipping", relative.shape)
+        else:
+            relative = relative.repeat(1, repeat_cycles, 1, 1)
+        print("global_rel_pos",relative.shape)
+        device = self.qk.weight.device
+        self.rel_indices = relative.to(device)
+       
 
  
 class MHSA(BaseModule):
@@ -457,7 +483,6 @@ class ConViT3DDecoder(BaseModule):
 
 
         ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
-
         print("embed_dim=",embed_dim)
 
         if hybrid_backbone is not None:
@@ -468,7 +493,7 @@ class ConViT3DDecoder(BaseModule):
                 img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
         self.num_patches = num_patches
-        
+
 
         ## call the PointNet2SASSG_SL backbone for genearting point feature embedding    
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -521,10 +546,9 @@ class ConViT3DDecoder(BaseModule):
     def reset_classifier(self, num_classes, global_pool=''):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-    
+
 
     def forward_features(self, point_embeddings_dic, voxel_coors): # 
-
 
         # x = self.patch_embed(x)
 
@@ -552,7 +576,7 @@ class ConViT3DDecoder(BaseModule):
         B = x.shape[0]
         x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
         cls_tokens = self.cls_token.expand(B, -1, -1)
-
+    
         
         # to-do, similar like
         '''
@@ -562,6 +586,12 @@ class ConViT3DDecoder(BaseModule):
         fused_features = voxel_features + self.point_features(features, rel_pos)
         
         ''' 
+
+        pos = pos.permute(0, 2, 1)
+    
+
+
+
 
         
         
