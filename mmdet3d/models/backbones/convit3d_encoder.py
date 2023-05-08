@@ -133,7 +133,7 @@ class GPSA(BaseModule):
         print(" voxel coordinate shape",  voxel_coord.shape)
 
         x = x[:,:,:1,:].permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
-        print("reshaping", x.shape)
+        print("reshaping input shape", x.shape)
 
         # voxel_coords
         # rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
@@ -241,25 +241,33 @@ class GPSA(BaseModule):
         self.rel_indices = rel_ind.to(device)
 
     def get_patch_wise_relative_encoding(self,coord: torch.tensor):
+        '''
+        Arg:
+        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
 
+        Return:
+        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
+        the patch/block containing 1024 
+         
+        '''
         # start =0
         print("shape of input", coord.shape)
-        last_limit = coord.shape[1]
+        last_limit = coord.shape[0]
         print("last_limit",last_limit)
         stride = 1024
         repeat_cycles = int(last_limit/stride)
 
-        relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
+        relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
 
         print("shape of relative" , relative.shape)
         leftover = last_limit-(stride*repeat_cycles)
         print("remains of points", leftover)
         if(leftover!=0):
-            relative = relative.repeat(1, repeat_cycles+1, 1, 1)
-            relative = relative[:,:last_limit,:,:]
+            relative = relative.repeat( repeat_cycles+1, 1, 1)
+            relative = relative[:last_limit,:,:]
             print("final shape after clipping", relative.shape)
         else:
-            relative = relative.repeat(1, repeat_cycles, 1, 1)
+            relative = relative.repeat( repeat_cycles, 1, 1)
         print("global_rel_pos",relative.shape)
         device = self.qk.weight.device
         self.rel_indices = relative.to(device)
@@ -576,7 +584,7 @@ class ConViT3DDecoder(BaseModule):
         print("point_embeddings_dic[voxels]", x.shape)
 
         B = x.shape[0]
-        x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
+        # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
         cls_tokens = self.cls_token.expand(B, -1, -1)
     
         

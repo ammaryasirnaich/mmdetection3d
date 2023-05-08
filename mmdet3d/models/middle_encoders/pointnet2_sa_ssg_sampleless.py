@@ -161,8 +161,8 @@ class PointNet2SASSG_SL(BasePointNet):
             # fp_xyz=fp_xyz,
             # fp_features=fp_features,
             # fp_indices=fp_indices,
-            sa_xyz=sa_xyz,
-            sa_features=sa_features,
+            # sa_xyz=sa_xyz,
+            # sa_features=sa_features,
             # sa_indices=sa_indices
             voxels = voxel_feature
             )

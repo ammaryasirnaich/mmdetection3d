@@ -39,7 +39,7 @@ def test_hard_simple_VFE():
     # relative = torch.rand([1,1024*3, 50, 3]).cuda()
 
 
-    pos = torch.rand([1,93943, 3]).cuda()
+    pos = torch.rand([93943, 3]).cuda()
     generate_relative_encoding(pos)
 
     # print("relative_first", relative.shape)
@@ -78,22 +78,22 @@ def test_hard_simple_VFE():
 
 def generate_relative_encoding(coord: torch.tensor):
     # start =0
-    last_limit = coord.shape[1]
+    last_limit = coord.shape[0]
     print("last_limit",last_limit)
     stride = 1024
     repeat_cycles = int(last_limit/stride)
 
-    relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
+    relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
    
     print("shape of relative" , relative.shape)
     leftover = last_limit-(stride*repeat_cycles)
     print("remains of points", leftover)
     if(leftover!=0):
-        relative = relative.repeat(1, repeat_cycles+1, 1, 1)
-        relative = relative[:,:last_limit,:,:]
+        relative = relative.repeat( repeat_cycles+1, 1, 1)
+        relative = relative[:last_limit,:,:]
         print("final shape after clipping", relative.shape)
     else:
-        relative = relative.repeat(1, repeat_cycles, 1, 1)
+        relative = relative.repeat( repeat_cycles, 1, 1)
     print("global_rel_pos",relative.shape)
     return  relative
 
