@@ -270,10 +270,17 @@ class GPSA(BaseModule):
             # print("final shape after clipping", relative.shape)
         else:
             relative = relative.repeat( repeat_cycles, 1, 1)
-        # print("global_rel_pos",relative.shape)
+        print("global_rel_pos with location indices",relative.shape)
+
+        relative = relative.sum(dim=-1)
+        
+        print("global_rel_pos with range values",relative.shape)
+
         # device = self.qk.weight.device
         # self.rel_indices = relative.to(device)
         # if(relative.is_cuda): print(" using cuda")
+
+
 
        
 
