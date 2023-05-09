@@ -89,7 +89,6 @@ class PointNet2SASSG_SL(BasePointNet):
 
     def forward(self, voxels, mean_point_xyz):  #points,mean_point_xyz
         """Forward pass.
-
         Args:
                - voxels : The coordinates of each point clouds inside the voxel. (V,P,D)
                - mean_point_xyz :  Mean point of Voxel Point clouds. (B,V,3)
@@ -105,7 +104,6 @@ class PointNet2SASSG_SL(BasePointNet):
                 - voxel_feature(torch.Tensor): The voxel-wise feature  concatination of (fp_xyz, fp_features) (B,V,P,D)
                 
         """
-
         # print("tyep mean_point_xyz", mean_point_xyz.shape)
         # print("shape of voxel tensor", voxels.shape)
         # print("shape of mean_point_xyz tensor", mean_point_xyz.size)
@@ -146,7 +144,6 @@ class PointNet2SASSG_SL(BasePointNet):
             # fp_indices.append(sa_indices[self.num_sa - i - 1])
 
                # print("fp_features shape:",fp_features[-1].shape)
-
         fp_features[-1] = fp_features[-1].permute(0,2,1)
         voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(batch_size,v,p,-1)
         # print("fp_xyz[-1] ", fp_xyz[-1].shape)

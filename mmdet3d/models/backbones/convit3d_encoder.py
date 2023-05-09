@@ -251,26 +251,30 @@ class GPSA(BaseModule):
          
         '''
         # start =0
-        print("shape of input", coord.shape)
+        # print("shape of input", coord.shape)
         last_limit = coord.shape[0]
-        print("last_limit",last_limit)
+        # print("last_limit",last_limit)
         stride = 1024
         repeat_cycles = int(last_limit/stride)
 
         relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
 
-        print("shape of relative" , relative.shape)
+  
+
+        # print("shape of relative" , relative.shape)
         leftover = last_limit-(stride*repeat_cycles)
-        print("remains of points", leftover)
+        # print("remains of points", leftover)
         if(leftover!=0):
             relative = relative.repeat( repeat_cycles+1, 1, 1)
             relative = relative[:last_limit,:,:]
-            print("final shape after clipping", relative.shape)
+            # print("final shape after clipping", relative.shape)
         else:
             relative = relative.repeat( repeat_cycles, 1, 1)
-        print("global_rel_pos",relative.shape)
-        device = self.qk.weight.device
-        self.rel_indices = relative.to(device)
+        # print("global_rel_pos",relative.shape)
+        # device = self.qk.weight.device
+        # self.rel_indices = relative.to(device)
+        # if(relative.is_cuda): print(" using cuda")
+
        
 
  
