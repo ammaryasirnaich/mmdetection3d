@@ -152,11 +152,21 @@ class GPSA(BaseModule):
         return x
 
     def get_attention(self, x):
-        B, N, C = x.shape        
-        qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k = qk[0], qk[1]
-        pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        print("shape of input in get_attention",x.shape)
+        print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
+      
+        B, N, C = x.shape      
 
+        print(" reshape dimension", B, N, 2, self.num_heads, C // self.num_heads) 
+
+        qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        
+        q, k = qk[0], qk[1]
+
+        print("Q Dimension", q.size)
+
+        pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        print("+ R dimension", pos_score.shape)
         print("pos_score dimensions", pos_score.shape)
 
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
@@ -259,8 +269,6 @@ class GPSA(BaseModule):
 
         relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
 
-  
-
         # print("shape of relative" , relative.shape)
         leftover = last_limit-(stride*repeat_cycles)
         # print("remains of points", leftover)
@@ -275,11 +283,6 @@ class GPSA(BaseModule):
         print("global_rel_pos with range values",relative.shape)
 
  
-
-
-
-       
-
  
 class MHSA(BaseModule):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
@@ -585,10 +588,11 @@ class ConViT3DDecoder(BaseModule):
         # B = xyz.shape[0]
 
         # pos = voxel_coors
-        print("shape of voxel_coors", voxel_coors.shape)
-        x = point_embeddings_dic["voxels"]  # (B,V,P,D)
+        # print("shape of voxel_coors", voxel_coors.shape)
+        # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
+        x = point_embeddings_dic["fp_features"] # (B,V,P,D)
 
-        print("point_embeddings_dic[voxels]", x.shape)
+        print("point_embeddings_dic[fp_features]", x.shape)
 
         B = x.shape[0]
         # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
