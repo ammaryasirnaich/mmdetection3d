@@ -110,7 +110,9 @@ class GPSA(BaseModule):
         
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
-        self.pos_proj = nn.Linear(3, num_heads)
+
+        self.pos_proj = nn.Linear(3, num_heads) 
+        
         self.proj_drop = nn.Dropout(proj_drop)
         self.locality_strength = locality_strength
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
@@ -165,11 +167,17 @@ class GPSA(BaseModule):
 
         print("Q Dimension", q.size)
 
-        pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        print("self.rel_indices.shape: ",self.rel_indices.shape)
+        pos_score = self.rel_indices.expand(B, -1, -1)
+        
         print("+ R dimension", pos_score.shape)
         print("pos_score dimensions", pos_score.shape)
 
-        pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
+        # testing
+        pos_score = self.pos_proj(pos_score)
+        print("pos_score shape",pos_score.shape)
+
+        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
         patch_score = (q @ k.transpose(-2, -1)) * self.scale
         patch_score = patch_score.softmax(dim=-1)
         pos_score = pos_score.softmax(dim=-1)
@@ -261,7 +269,7 @@ class GPSA(BaseModule):
          
         '''
         # start =0
-        # print("shape of input", coord.shape)
+        print("shape of input", coord.shape)
         last_limit = coord.shape[0]
         # print("last_limit",last_limit)
         stride = 1024
@@ -279,9 +287,11 @@ class GPSA(BaseModule):
         else:
             relative = relative.repeat( repeat_cycles, 1, 1)
         print("global_rel_pos with location indices",relative.shape)
-        relative = relative.sum(dim=-1)        
-        print("global_rel_pos with range values",relative.shape)
-        self.rel_indices = relative
+        relative_distance = relative.sum(dim=-1)        
+        print("relative_distance shape",relative_distance.shape)
+        self.rel_indices = relative.unsqueeze(0)
+        # print("global_rel_pos with range values",self.rel_indices.shape)
+        # print("Pass")
 
  
  
