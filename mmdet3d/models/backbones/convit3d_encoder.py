@@ -281,6 +281,7 @@ class GPSA(BaseModule):
         print("global_rel_pos with location indices",relative.shape)
         relative = relative.sum(dim=-1)        
         print("global_rel_pos with range values",relative.shape)
+        self.rel_indices = relative
 
  
  
