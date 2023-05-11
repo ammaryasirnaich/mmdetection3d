@@ -227,7 +227,50 @@ class GPSA(BaseModule):
         device = self.qk.weight.device
         self.rel_indices = rel_indices.to(device)
 
+    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
+        '''
+        Arg:
+        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
 
+        Return:
+        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
+        the patch/block containing 1024 
+         
+        '''
+        # start =0
+        print("shape of input", coord.shape)
+        last_limit = coord.shape[0]
+        # print("last_limit",last_limit)
+        stride = 1024
+        repeat_cycles = int(last_limit/stride)
+
+        relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
+
+        # print("shape of relative" , relative.shape)
+        leftover = last_limit-(stride*repeat_cycles)
+        # print("remains of points", leftover)
+        if(leftover!=0):
+            relative = relative.repeat( repeat_cycles+1, 1, 1)
+            relative = relative[:last_limit,:,:]
+            # print("final shape after clipping", relative.shape)
+        else:
+            relative = relative.repeat( repeat_cycles, 1, 1)
+        # print("relative shape",relative.shape)
+        relative_distance = relative.sum(dim=-1)
+        # print("relative_distance shape",relative_distance.shape)
+        # print("content value before view", relative_distance[1,:4])
+
+        V,P = relative_distance.shape
+        relative_distance = relative_distance.view(V,P,1)        
+        # print("relative_distance shape",relative_distance.shape)
+
+        # print("content value after view", relative_distance[1,:4,])
+        self.rel_indices = relative.unsqueeze(0)
+        self.rel_indices  = torch.concat([relative,relative_distance],dim=2)
+        # print("dist_rel_indices shape ",self.rel_indices.shape)
+        # print("Pass")
+
+        
     
     def get_rel_indices_3d(self, patches_loc=None,num_patches=None,dim=3):
         if patches_loc is None:
@@ -258,40 +301,6 @@ class GPSA(BaseModule):
         device = self.qk.weight.device
         self.rel_indices = rel_ind.to(device)
 
-    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
-        '''
-        Arg:
-        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
-
-        Return:
-        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
-        the patch/block containing 1024 
-         
-        '''
-        # start =0
-        print("shape of input", coord.shape)
-        last_limit = coord.shape[0]
-        # print("last_limit",last_limit)
-        stride = 1024
-        repeat_cycles = int(last_limit/stride)
-
-        relative = coord[ 0:stride, None, :] - coord[ None, 0:stride, :]
-
-        # print("shape of relative" , relative.shape)
-        leftover = last_limit-(stride*repeat_cycles)
-        # print("remains of points", leftover)
-        if(leftover!=0):
-            relative = relative.repeat( repeat_cycles+1, 1, 1)
-            relative = relative[:last_limit,:,:]
-            # print("final shape after clipping", relative.shape)
-        else:
-            relative = relative.repeat( repeat_cycles, 1, 1)
-        print("global_rel_pos with location indices",relative.shape)
-        relative_distance = relative.sum(dim=-1)        
-        print("relative_distance shape",relative_distance.shape)
-        self.rel_indices = relative.unsqueeze(0)
-        # print("global_rel_pos with range values",self.rel_indices.shape)
-        # print("Pass")
 
  
  
