@@ -18,3 +18,8 @@ def test_voxel_generator():
     assert voxels.shape == (4, 5, 3)
     assert np.all(coors == expected_coors)
     assert np.all(num_points_per_voxel == expected_num_points_per_voxel)
+
+
+
+if __name__ =="__main__":
+    test_voxel_generator()
