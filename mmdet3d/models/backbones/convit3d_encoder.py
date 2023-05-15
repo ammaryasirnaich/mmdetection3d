@@ -111,7 +111,7 @@ class GPSA(BaseModule):
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
 
-        self.pos_proj = nn.Linear(3, num_heads) 
+        self.pos_proj = nn.Linear(4, num_heads) 
         
         self.proj_drop = nn.Dropout(proj_drop)
         self.locality_strength = locality_strength
@@ -168,7 +168,7 @@ class GPSA(BaseModule):
         print("Q Dimension", q.size)
 
         print("self.rel_indices.shape: ",self.rel_indices.shape)
-        pos_score = self.rel_indices.expand(B, -1, -1)
+        pos_score = self.rel_indices.expand(B, -1, -1,-1)
         
         print("+ R dimension", pos_score.shape)
         print("pos_score dimensions", pos_score.shape)
