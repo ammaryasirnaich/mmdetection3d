@@ -169,8 +169,8 @@ visualizer = dict(
 Model parameter settings
 '''
 
-voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
-# voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
+# voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
+voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # x=1408 , y=1600, z= 40
 
 # voxel_size = [0.05, 0.05, 0.1]
