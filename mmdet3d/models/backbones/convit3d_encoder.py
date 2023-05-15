@@ -174,13 +174,22 @@ class GPSA(BaseModule):
         print("pos_score dimensions", pos_score.shape)
 
         # testing
-        pos_score = self.pos_proj(pos_score)
+       
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
         print("pos_score shape",pos_score.shape)
-
-        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
-        patch_score = (q @ k.transpose(-2, -1)) * self.scale
-        patch_score = patch_score.softmax(dim=-1)
         pos_score = pos_score.softmax(dim=-1)
+        
+
+        # patch_score = (q @ k.transpose(-2, -1)) * self.scale
+        # patch_score = patch_score.softmax(dim=-1)
+
+
+        '''
+        Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
+        Self-attention Does Not Need O(n2) Memory
+        '''
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
 
         gating = self.gating_param.view(1,-1,1,1)
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
@@ -256,7 +265,7 @@ class GPSA(BaseModule):
         else:
             relative = relative.repeat( repeat_cycles, 1, 1)
         # print("relative shape",relative.shape)
-        relative_distance = relative.sum(dim=-1)
+        relative_distance = relative.sum(dim=-1, dtype = torch.float32)
         # print("relative_distance shape",relative_distance.shape)
         # print("content value before view", relative_distance[1,:4])
 
