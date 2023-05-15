@@ -1,6 +1,6 @@
 import torch
 
-from mmdet3d.models.builder import build_voxel_encoder
+from mmdet3d.registry import MODELS
 import numpy as np
 import pytest
 import torch
@@ -14,7 +14,7 @@ def vfe_feature_encoder():
     hardsimple_feature_net_cfg = dict(
         type='HardSimpleVFE',      
         )
-    hardsimple_feature_net = build_voxel_encoder(hardsimple_feature_net_cfg)
+    hardsimple_feature_net = MODELS(hardsimple_feature_net_cfg)
 
     point_xyz = torch.rand([97297, 20, 4])
     num_voxels = torch.randint(1, 100, [97297])
@@ -28,7 +28,7 @@ def vfe_feature_encoder():
 
 def down_sample_encoder():
     hard_simple_VFE_cfg = dict(type='HardSimpleVFE', num_features=4)
-    hard_simple_VFE = build_voxel_encoder(hard_simple_VFE_cfg)
+    hard_simple_VFE = MODELS(hard_simple_VFE_cfg)
     features = torch.rand([240000, 10, 4])
     num_voxels = torch.randint(1, 10, [240000])
 
@@ -204,6 +204,8 @@ def point_embedding_backbone():
 
     print("fp_xyz[2].shape",fp_xyz[2].shape)
     print("fp_features[2].shape",fp_features[2].shape)
+
+
 
 
 
