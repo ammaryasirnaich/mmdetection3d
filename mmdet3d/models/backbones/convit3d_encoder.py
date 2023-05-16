@@ -134,7 +134,7 @@ class GPSA(BaseModule):
         print("voxel feature shape of input", x.shape)
         print(" voxel coordinate shape",  voxel_coord.shape)
 
-        x = x[:,:,:1,:].permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
+        # x = x.permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
         print("reshaping input shape", x.shape)
 
         # voxel_coords
@@ -147,8 +147,11 @@ class GPSA(BaseModule):
             self.get_patch_wise_relative_encoding(voxel_coord)
 
         attn = self.get_attention(x) 
-        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        print("shape of attention", attn.shape)
+        x = attn.transpose(1, 2).reshape(B, N, C)
+        print("shape of attention", x.shape)
 
         x = self.proj(x)
         x = self.proj_drop(x)
@@ -189,11 +192,12 @@ class GPSA(BaseModule):
         Self-attention Does Not Need O(n2) Memory
         '''
         
-        pos_score = self.pos_proj(pos_score).permute(0,3,2,1)
-        pos_score = pos_score.softmax(dim=-2)
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        pos_score = pos_score.softmax(dim=-1)
         print("pos_score shape",pos_score.shape)
         print("shape of v", v.shape)
-        pos_score = pos_score @ v
+        print("truncted-shape of v", v[:,:,:pos_score.size(-1),:].shape)
+        pos_score = pos_score @ v[:,:,:pos_score.size(-1),:]
         print("pos_score @ V shape",pos_score.shape)
 
         # p = q.shape[-2]
@@ -217,6 +221,9 @@ class GPSA(BaseModule):
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
         return attn
+
+
+
 
     def get_attention_map(self, x, return_map = False):
 
@@ -411,7 +418,10 @@ class Block(BaseModule):
         print("dim=",dim)
 
     def forward(self, x, voxel_coords):
-        x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords))
+        print("Dimension of x" , x.shape)
+        x = x[:,:,:1,:].squeeze(2)#
+        print("Reduction of dimension x" , x.shape)
+        x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
