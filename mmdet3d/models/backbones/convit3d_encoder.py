@@ -146,9 +146,10 @@ class GPSA(BaseModule):
             # self.get_rel_indices_3d(num_patches=N)
             self.get_patch_wise_relative_encoding(voxel_coord)
 
-        attn = self.get_attention(x)
+        attn = self.get_attention(x) 
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -162,6 +163,7 @@ class GPSA(BaseModule):
         print(" reshape dimension", B, N, 2, self.num_heads, C // self.num_heads) 
 
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
         
         q, k = qk[0], qk[1]
 
@@ -173,25 +175,44 @@ class GPSA(BaseModule):
         print("+ R dimension", pos_score.shape)
         print("pos_score dimensions", pos_score.shape)
 
-        # testing
-       
-        pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
-        print("pos_score shape",pos_score.shape)
-        pos_score = pos_score.softmax(dim=-1)
+        # default       
+        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
+        # print("pos_score shape",pos_score.shape)
+        # pos_score = pos_score.softmax(dim=-1)
         
-
+       
         # patch_score = (q @ k.transpose(-2, -1)) * self.scale
         # patch_score = patch_score.softmax(dim=-1)
-
 
         '''
         Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         Self-attention Does Not Need O(n2) Memory
         '''
-        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        
+        pos_score = self.pos_proj(pos_score).permute(0,3,2,1)
+        pos_score = pos_score.softmax(dim=-2)
+        print("pos_score shape",pos_score.shape)
+        print("shape of v", v.shape)
+        pos_score = pos_score @ v
+        print("pos_score @ V shape",pos_score.shape)
+
+        # p = q.shape[-2]
+        # print("I shape" , q.dtype)
+        # l1=torch.eye(p,p,dtype=torch.float32, device="cuda")
+        # print("shape of l1" , l1.shape)
+        # attn_qk = F.scaled_dot_product_attention(q,k,l1)
+        # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        # patch_score = F.scaled_dot_product_attention(attn_qk,l1*torch.sqrt(attn_qk.size(-1)),v)
+        
         patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
 
         gating = self.gating_param.view(1,-1,1,1)
+
+        print("patch_score shape ", patch_score.shape)
+        print("pos_score shape ", pos_score.shape)
+        print("shape of gating", gating.shape)
+
+
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
@@ -243,8 +264,7 @@ class GPSA(BaseModule):
 
         Return:
         rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
-        the patch/block containing 1024 
-         
+        the patch/block containing 1024     
         '''
         # start =0
         print("shape of input", coord.shape)
@@ -280,7 +300,6 @@ class GPSA(BaseModule):
         # print("Pass")
 
         
-    
     def get_rel_indices_3d(self, patches_loc=None,num_patches=None,dim=3):
         if patches_loc is None:
             assert num_patches is not None
