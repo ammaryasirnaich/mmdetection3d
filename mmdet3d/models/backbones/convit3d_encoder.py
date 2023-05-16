@@ -149,34 +149,34 @@ class GPSA(BaseModule):
         attn = self.get_attention(x) 
         # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
-        print("shape of attention", attn.shape)
+        # print("shape of attention", attn.shape)
         x = attn.transpose(1, 2).reshape(B, N, C)
-        print("shape of attention", x.shape)
+        # print("shape of attention", x.shape)
 
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
 
     def get_attention(self, x):
-        print("shape of input in get_attention",x.shape)
-        print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
+        # print("shape of input in get_attention",x.shape)
+        # print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
       
         B, N, C = x.shape      
 
-        print(" reshape dimension", B, N, 2, self.num_heads, C // self.num_heads) 
+        # print(" reshape dimension", B, N, 2, self.num_heads, C // self.num_heads) 
 
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
         
         q, k = qk[0], qk[1]
 
-        print("Q Dimension", q.size)
+        # print("Q Dimension", q.size)
 
-        print("self.rel_indices.shape: ",self.rel_indices.shape)
+        # print("self.rel_indices.shape: ",self.rel_indices.shape)
         pos_score = self.rel_indices.expand(B, -1, -1,-1)
         
-        print("+ R dimension", pos_score.shape)
-        print("pos_score dimensions", pos_score.shape)
+        # print("+ R dimension", pos_score.shape)
+        # print("pos_score dimensions", pos_score.shape)
 
         # default       
         # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
@@ -194,11 +194,11 @@ class GPSA(BaseModule):
         
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
-        print("pos_score shape",pos_score.shape)
-        print("shape of v", v.shape)
-        print("truncted-shape of v", v[:,:,:pos_score.size(-1),:].shape)
+        # print("pos_score shape",pos_score.shape)
+        # print("shape of v", v.shape)
+        # print("truncted-shape of v", v[:,:,:pos_score.size(-1),:].shape)
         pos_score = pos_score @ v[:,:,:pos_score.size(-1),:]
-        print("pos_score @ V shape",pos_score.shape)
+        # print("pos_score @ V shape",pos_score.shape)
 
         # p = q.shape[-2]
         # print("I shape" , q.dtype)
@@ -212,9 +212,9 @@ class GPSA(BaseModule):
 
         gating = self.gating_param.view(1,-1,1,1)
 
-        print("patch_score shape ", patch_score.shape)
-        print("pos_score shape ", pos_score.shape)
-        print("shape of gating", gating.shape)
+        # print("patch_score shape ", patch_score.shape)
+        # print("pos_score shape ", pos_score.shape)
+        # print("shape of gating", gating.shape)
 
 
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
@@ -418,9 +418,6 @@ class Block(BaseModule):
         print("dim=",dim)
 
     def forward(self, x, voxel_coords):
-        print("Dimension of x" , x.shape)
-        x = x[:,:,:1,:].squeeze(2)#
-        print("Reduction of dimension x" , x.shape)
         x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
@@ -649,10 +646,11 @@ class ConViT3DDecoder(BaseModule):
         # print("shape of voxel_coors", voxel_coors.shape)
         # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
         x = point_embeddings_dic["fp_features"] # (B,V,P,D)
-
+        x = x[:,:,:1,:].squeeze(2)#
         print("point_embeddings_dic[fp_features]", x.shape)
 
         B = x.shape[0]
+
         # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
         cls_tokens = self.cls_token.expand(B, -1, -1)
     
@@ -671,6 +669,7 @@ class ConViT3DDecoder(BaseModule):
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
+            print("No of Block#", u)
             if u == self.local_up_to_layer :
                 x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
