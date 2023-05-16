@@ -169,8 +169,8 @@ visualizer = dict(
 Model parameter settings
 '''
 
-# voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
-voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
+voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
+# voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # x=1408 , y=1600, z= 40
 
 # voxel_size = [0.05, 0.05, 0.1]
@@ -215,7 +215,7 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=3 ,   #10
+                local_up_to_layer=4 ,   #10
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,

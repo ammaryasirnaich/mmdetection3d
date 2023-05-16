@@ -418,7 +418,13 @@ class Block(BaseModule):
         print("dim=",dim)
 
     def forward(self, x, voxel_coords):
-        x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
+        print("x shape " , x.shape)
+        print("voxek_coords", voxel_coords.shape)
+        y = self.attn(self.norm1(x),voxel_coords)
+        print("x shape " , x.shape)
+        print("y shape " , y.shape)
+        x = x+y
+        # x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
@@ -560,23 +566,24 @@ class ConViT3DDecoder(BaseModule):
         ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
         print("embed_dim=",embed_dim)
 
-        if hybrid_backbone is not None:
-            self.patch_embed = HybridEmbed(
-                hybrid_backbone, img_size=img_size, in_chans=in_chans, embed_dim=embed_dim)
-        else:
-            self.patch_embed = PatchEmbed(
-                img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
-        num_patches = self.patch_embed.num_patches
-        self.num_patches = num_patches
+        # if hybrid_backbone is not None:
+        #     self.patch_embed = HybridEmbed(
+        #         hybrid_backbone, img_size=img_size, in_chans=in_chans, embed_dim=embed_dim)
+        # else:
+        #     self.patch_embed = PatchEmbed(
+        #         img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+            
+        # num_patches = self.patch_embed.num_patches
+        # self.num_patches = num_patches
 
 
         ## call the PointNet2SASSG_SL backbone for genearting point feature embedding    
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
 
-        if self.use_pos_embed:
-            self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
-            trunc_normal_(self.pos_embed, std=.02)
+        # if self.use_pos_embed:
+        #     self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
+        #     trunc_normal_(self.pos_embed, std=.02)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = ModuleList([
@@ -670,8 +677,8 @@ class ConViT3DDecoder(BaseModule):
 
         for u,blk in enumerate(self.blocks):
             print("No of Block#", u)
-            if u == self.local_up_to_layer :
-                x = torch.cat((cls_tokens, x), dim=1)
+            # if u == self.local_up_to_layer :
+            #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
 
         x = self.norm(x)
