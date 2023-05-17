@@ -224,7 +224,7 @@ model = dict(
                 ), # (head*embed_dim , output_dim)
     neck=dict(
         type='SECONDFPN',
-        in_channels=[16, 256],
+        in_channels=[128, 256],
         upsample_strides=[1, 2],
         out_channels=[256, 256]),
     bbox_head=dict(
