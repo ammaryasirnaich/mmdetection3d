@@ -12,20 +12,9 @@ from mmcv.cnn.bricks.transformer import FFN, build_dropout
 
 from mmengine.model import BaseModule, ModuleList
 from mmengine.registry import MODELS
-
 from mmengine.model.weight_init import trunc_normal_
 from mmengine.model import BaseModule, ModuleList
-
-# from mmcv.cnn.utils.weight_init import trunc_normal_
-# from mmcv.runner import BaseModule, ModuleList, _load_checkpoint
-
-# from mmcv.utils import to_2tuple
-
 from mmengine.utils import to_2tuple
-# from ..builder import BACKBONES
-# from mmdet3d.models.builder import BACKBONES
-# from ...utils import get_root_logger
-
 
 # from mmdet.models.utils.transformer import PatchEmbed, PatchMerging
 from mmdet3d.models.backbones import PointNet2SASSG
@@ -307,37 +296,6 @@ class GPSA(BaseModule):
         # print("Pass")
 
         
-    def get_rel_indices_3d(self, patches_loc=None,num_patches=None,dim=3):
-        if patches_loc is None:
-            assert num_patches is not None
-            grid_size = round(num_patches**(1/dim))
-            if dim==2:
-                xi,yi = np.meshgrid(np.arange(grid_size),np.arange(grid_size))
-                patches_loc = np.c_[xi.reshape(-1),yi.reshape(-1)]
-            else:
-                xi,yi,zi = np.meshgrid(np.arange(grid_size),np.arange(grid_size),np.arange(grid_size))
-                patches_loc = np.c_[xi.reshape(-1),yi.reshape(-1),zi.reshape(-1)]
-
-            patches_loc = torch.tensor(patches_loc)
-
-        else:
-            num_patches = patches_loc.shape[0]
-            dim = patches_loc.shape[1]
-            
-        rel_ind =[]
-        for i in range(dim):
-            Xi = patches_loc[:,i] - patches_loc[:,i][:,None]
-            rel_ind.append(Xi)
-
-        rel_ind = torch.stack(rel_ind).permute([1,2,0])
-        rel_ind = torch.cat([rel_ind, ((rel_ind**2).sum(2)).unsqueeze(2)],dim=2)
-        if dim==3: rel_ind = rel_ind[:,:,[2,0,1,3]]
-
-        device = self.qk.weight.device
-        self.rel_indices = rel_ind.to(device)
-
-
- 
  
 class MHSA(BaseModule):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
@@ -345,9 +303,10 @@ class MHSA(BaseModule):
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
+        self.drop_attn = attn_drop
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        self.attn_drop = nn.Dropout(attn_drop)
+        self.attn_drop = nn.Dropout(self.drop_attn)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
         self.apply(self._init_weights)
@@ -385,16 +344,18 @@ class MHSA(BaseModule):
             return dist
 
             
-    def forward(self, x):
+    def forward(self, x, _):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
-        attn = self.attn_drop(attn)
+        x = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
+        x = x.transpose(1, 2).reshape(B, N, C)
+        # attn = (q @ k.transpose(-2, -1)) * self.scale
+        # attn = attn.softmax(dim=-1)
+        # attn = self.attn_drop(attn)
+        # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
 
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -418,13 +379,7 @@ class Block(BaseModule):
         print("dim=",dim)
 
     def forward(self, x, voxel_coords):
-        print("x shape " , x.shape)
-        print("voxek_coords", voxel_coords.shape)
-        y = self.attn(self.norm1(x),voxel_coords)
-        print("x shape " , x.shape)
-        print("y shape " , y.shape)
-        x = x+y
-        # x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
+        x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
