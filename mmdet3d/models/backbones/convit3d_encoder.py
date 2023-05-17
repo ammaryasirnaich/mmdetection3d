@@ -120,12 +120,7 @@ class GPSA(BaseModule):
         
     def forward(self, x, voxel_coord):
         # x : voxel-wise feature (B,V,P,D)
-        print("voxel feature shape of input", x.shape)
-        print(" voxel coordinate shape",  voxel_coord.shape)
-
         # x = x.permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
-        print("reshaping input shape", x.shape)
-
         # voxel_coords
         # rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
 
@@ -263,7 +258,7 @@ class GPSA(BaseModule):
         the patch/block containing 1024     
         '''
         # start =0
-        print("shape of input", coord.shape)
+        # print("shape of input", coord.shape)
         last_limit = coord.shape[0]
         # print("last_limit",last_limit)
         stride = 1024
@@ -376,7 +371,6 @@ class Block(BaseModule):
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
-        print("dim=",dim)
 
     def forward(self, x, voxel_coords):
         x = x + self.drop_path(self.attn(self.norm1(x),voxel_coords)) 
@@ -505,7 +499,7 @@ class ConViT3DDecoder(BaseModule):
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
-                fp_channels = ((576,16)) # (head*embed_dim , output_dim)
+                fp_output_channel = 16 # embed_dim, num_classes
 
                 ):
         
@@ -519,7 +513,7 @@ class ConViT3DDecoder(BaseModule):
 
 
         ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
-        print("embed_dim=",embed_dim)
+        # print("embed_dim=",embed_dim)
 
         # if hybrid_backbone is not None:
         #     self.patch_embed = HybridEmbed(
@@ -556,8 +550,8 @@ class ConViT3DDecoder(BaseModule):
         self.norm = norm_layer(embed_dim)
 
         # Classifier head
-        self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
-        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        # self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
+        self.head = nn.Linear(embed_dim, fp_output_channel) #if num_classes > 0 else nn.Identity()
 
         trunc_normal_(self.cls_token, std=.02)
         self.head.apply(self._init_weights)
@@ -605,27 +599,17 @@ class ConViT3DDecoder(BaseModule):
         # B = xyz.shape[0]
 
         # pos = voxel_coors
-        # print("shape of voxel_coors", voxel_coors.shape)
         # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
         x = point_embeddings_dic["fp_features"] # (B,V,P,D)
         x = x[:,:,:1,:].squeeze(2)#
-        print("point_embeddings_dic[fp_features]", x.shape)
+        print("Input feature to Block:", x.shape)
+        print("Input voxel to Block:", voxel_coors.shape)
 
         B = x.shape[0]
 
         # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
-        cls_tokens = self.cls_token.expand(B, -1, -1)
+        # cls_tokens = self.cls_token.expand(B, -1, -1)
     
-        
-        # to-do, similar like
-        '''
-        pos = coords.permute(0, 2, 1)
-        rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
-        rel_pos = rel_pos.sum(dim=-1)  
-        fused_features = voxel_features + self.point_features(features, rel_pos)
-        
-        ''' 
-
         if self.use_pos_embed:
             x = x + self.pos_embed
         x = self.pos_drop(x)
@@ -635,13 +619,19 @@ class ConViT3DDecoder(BaseModule):
             # if u == self.local_up_to_layer :
             #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
+            print("Output from Block:",u," is of shape", x.shape)
+
 
         x = self.norm(x)
-        return x[:, 0]
-
+        print("Output after normalization", x.shape)
+        return x
+    
     def forward(self, x, voxel_coors):
-
+        print("Input to ConViT Model:")
+        print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
         x = self.forward_features(x, voxel_coors)
+
+        print(" shape of final output from the attention model", x.shape)
         
         x = self.head(x)
         return x
