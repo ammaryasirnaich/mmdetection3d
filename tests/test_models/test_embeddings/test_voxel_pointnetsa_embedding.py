@@ -188,7 +188,6 @@ def point_embedding_backbone():
     self = build_backbone(cfg)
     self.cuda()
 
-
     print("mean_point_xyz.shape", mean_point_xyz.shape)
     ret_dict = self(point_xyz, mean_point_xyz[...,:3] )  #, mean_point_xyz[...,:3] 
     
@@ -204,6 +203,8 @@ def point_embedding_backbone():
 
     print("fp_xyz[2].shape",fp_xyz[2].shape)
     print("fp_features[2].shape",fp_features[2].shape)
+
+
 
 
 

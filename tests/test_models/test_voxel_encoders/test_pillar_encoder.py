@@ -18,8 +18,8 @@ def test_pillar_feature_net():
         norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.01))
     pillar_feature_net = MODELS.build(pillar_feature_net_cfg)
 
-    features = torch.rand([97297, 20, 5])
     num_voxels = torch.randint(1, 100, [97297])
+    features = torch.rand([97297, 20, 5])
     coors = torch.randint(0, 100, [97297, 4])
 
     features = pillar_feature_net(features, num_voxels, coors)
