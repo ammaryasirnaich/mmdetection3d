@@ -579,7 +579,7 @@ class ConViT3DDecoder(BaseModule):
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
 
-    def forward_features(self, point_embeddings_dic, voxel_coors): # 
+    def forward_features(self, feat_dic, voxel_coors): # 
 
         # x = self.patch_embed(x)
 
@@ -600,7 +600,7 @@ class ConViT3DDecoder(BaseModule):
 
         # pos = voxel_coors
         # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
-        x = point_embeddings_dic["fp_features"] # (B,V,P,D)
+        x = feat_dic["fp_features"] # (B,V,P,D)
         x = x[:,:,:1,:].squeeze(2)#
         print("Input feature to Block:", x.shape)
         print("Input voxel to Block:", voxel_coors.shape)
@@ -621,19 +621,25 @@ class ConViT3DDecoder(BaseModule):
             x = blk(x,voxel_coors)
             print("Output from Block:",u," is of shape", x.shape)
 
-
         x = self.norm(x)
         print("Output after normalization", x.shape)
-        return x
+
+        #update the feature
+        feat_dic["fp_features"] = x
+        return feat_dic
     
     def forward(self, x, voxel_coors):
         print("Input to ConViT Model:")
         print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
         x = self.forward_features(x, voxel_coors)
 
-        print(" shape of final output from the attention model", x.shape)
-        
-        x = self.head(x)
+        # print(" shape of final output from the attention model", x.shape)
+        # feat_dict=[]       
+        # feat_dict['sa_xyz']= []
+        # feat_dict['sa_features']=x
+        # feat_dict['sa_indices']=[]
+        # x = self.head(x)
+
         return x
     
 
