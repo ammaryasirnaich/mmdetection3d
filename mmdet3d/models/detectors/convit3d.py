@@ -55,8 +55,7 @@ class ConVit3D(VoteNet):
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:]) 
         
-        
-        B,V,C = x.shape
+
         if self.with_neck:
             x = self.neck(x)
         return x
