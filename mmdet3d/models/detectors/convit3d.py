@@ -11,6 +11,9 @@ from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
 from .single_stage import SingleStage3DDetector
 from mmcv.ops import Voxelization
 
+from mmdet3d.models.middle_encoders.pillar_scatter import PointPillarsScatter
+
+
 @MODELS.register_module()
 class ConVit3D(SingleStage3DDetector):
     r"""for 3D detection."""
@@ -35,10 +38,13 @@ class ConVit3D(SingleStage3DDetector):
             init_cfg=init_cfg)
         self.voxel_encoder = MODELS.build(voxel_encoder)
         self.middle_encoder = MODELS.build(middle_encoder)
+        
+        
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""
         voxel_dict = batch_inputs_dict['voxels']
+        
 
         # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
@@ -49,6 +55,12 @@ class ConVit3D(SingleStage3DDetector):
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:]) 
+        B,V,C = x.shape
+        output_shape=[496, 432]
+        self.conver3D_2D = PointPillarsScatter(C,output_shape)
+        x = x.squeeze(0)
+        print(" shape of x", x.shape)
+        x = self.conver3D_2D(x,voxel_dict['coors'],B)
         
         if self.with_neck:
             x = self.neck(x)
