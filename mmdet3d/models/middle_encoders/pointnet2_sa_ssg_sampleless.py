@@ -120,9 +120,17 @@ class PointNet2SASSG_SL(BasePointNet):
             mean_point_xyz = mean_point_xyz.type(torch.float32)
 
         xyz, features = self._split_point_feats(point_xyz)
+
+        _, num_points = xyz.shape[:2]
+        indices = xyz.new_tensor(range(num_points)).unsqueeze(0).repeat(
+            batch_size, 1).long()
+ 
+
+
         sa_xyz = [xyz]
         sa_features = [features]
-        # sa_indices = [indices]
+        sa_indices = [indices]
+
         for i in range(self.num_sa):
     
             ## the first SA module takes the voxel mean coordinates as a target point  
@@ -131,21 +139,24 @@ class PointNet2SASSG_SL(BasePointNet):
         
             sa_xyz.append(cur_xyz)
             sa_features.append(cur_features)
+            sa_indices.append(sa_indices[-1])
+            # sa_indices.append(
+            #     torch.gather(sa_indices[-1], 1, indices.long()))
            
         fp_xyz = [sa_xyz[-1]]
         fp_features = [sa_features[-1]]
-        # fp_indices = [sa_indices[-1]]       
+        fp_indices = [sa_indices[-1]]       
 
         for i in range(self.num_fp):
             fp_features.append(self.FP_modules[i](
                 sa_xyz[self.num_sa - i - 1], sa_xyz[self.num_sa - i],
                 sa_features[self.num_sa - i - 1], fp_features[-1]))
             fp_xyz.append(sa_xyz[self.num_sa - i - 1])
-            # fp_indices.append(sa_indices[self.num_sa - i - 1])
+            fp_indices.append(sa_indices[self.num_sa - i - 1])
 
                # print("fp_features shape:",fp_features[-1].shape)
         fp_features[-1] = fp_features[-1].permute(0,2,1)
-        voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(batch_size,v,p,-1)
+        # voxel_feature = torch.cat((fp_xyz[-1],fp_features[-1]),dim=2).view(batch_size,v,p,-1)
         # print("fp_xyz[-1] ", fp_xyz[-1].shape)
         # print("fp_features[-1] ", fp_features[-1].shape)
         # print("voxel_feature ", voxel_feature.shape)
@@ -157,11 +168,11 @@ class PointNet2SASSG_SL(BasePointNet):
         ret = dict(
             fp_xyz=fp_xyz[-1].view(batch_size,v,p,-1),
             fp_features=fp_features[-1].view(batch_size,v,p,-1),
-            # fp_indices=fp_indices,
-            # sa_xyz=sa_xyz,
-            # sa_features=sa_features,
-            # sa_indices=sa_indices
-            voxels = voxel_feature
+            fp_indices=fp_indices,
+            sa_xyz=sa_xyz,
+            sa_features=sa_features,
+            sa_indices=sa_indices
+            # voxels = voxel_feature
             )
         return ret
 
