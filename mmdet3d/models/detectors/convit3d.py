@@ -13,8 +13,9 @@ from mmcv.ops import Voxelization
 
 from .votenet import VoteNet
 
+
 @MODELS.register_module()
-class ConVit3D(VoteNet):
+class ConVit3D(VoteNet):  #VoteNet
     r"""for 3D detection."""
 
     def __init__(self,
@@ -55,7 +56,6 @@ class ConVit3D(VoteNet):
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:]) 
         
-
         if self.with_neck:
             x = self.neck(x)
         return x

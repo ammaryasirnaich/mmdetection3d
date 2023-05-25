@@ -79,6 +79,9 @@ class SSD3DHead(VoteHead):
         self.vote_loss = MODELS.build(vote_loss)
         self.num_candidates = vote_module_cfg['num_points']
 
+
+        
+  
     def _get_cls_out_channels(self) -> int:
         """Return the channel number of classification outputs."""
         # Class numbers (k) + objectness (1)

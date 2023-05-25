@@ -221,15 +221,13 @@ model = dict(
                 init_cfg=None,
                 pretrained=None,
                 fp_output_channel = 16, 
-                ), # (head*embed_dim , output_dim)
-    # neck=dict(
-    #     type='SECONDFPN',
-    #     in_channels=[128, 256],
-    #     upsample_strides=[1, 2],
-    #     out_channels=[256, 256]),
-    bbox_head=dict(
-        type='SSD3DHead',
+                ),
+        
+     bbox_head=dict(
+        type='VoteHead',
         num_classes=1,
+        bbox_coder=dict(
+            type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         vote_module_cfg=dict(
             in_channels=256,
             num_points=256,
@@ -257,8 +255,6 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
-        bbox_coder=dict(
-            type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         objectness_loss=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
@@ -272,11 +268,17 @@ model = dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        corner_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        vote_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
-
+        # corner_loss=dict(
+        #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        # vote_loss=dict(
+        #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)
+            
+            ),
+    # neck=dict(
+    #     type='SECONDFPN',
+    #     in_channels=[128, 256],
+    #     upsample_strides=[1, 2],
+    #     out_channels=[256, 256]),
     # bbox_head=dict(
     #     type='Anchor3DHead',
     #     num_classes=1,
@@ -303,29 +305,31 @@ model = dict(
     #         type='mmdet.CrossEntropyLoss', use_sigmoid=False,
     #         loss_weight=0.2)),
 
+
+
     # model training and testing settings
-    # train_cfg=dict(
-    #  _delete_=True,
-    #     assigner=[
-    #         dict(  # for Car
-    #             type='Max3DIoUAssigner',
-    #             iou_calculator=dict(type='BboxOverlapsNearest3D'),
-    #             pos_iou_thr=0.6,
-    #             neg_iou_thr=0.45,
-    #             min_pos_iou=0.45,
-    #             ignore_iof_thr=-1),
-    #     ],
-    #     allowed_border=0,
-    #     pos_weight=-1,
-    #     debug=False),
-    # test_cfg=dict(
-    #     use_rotate_nms=True,
-    #     nms_across_levels=False,
-    #     nms_thr=0.01,
-    #     score_thr=0.1,
-    #     min_bbox_size=0,
-    #     nms_pre=100,
-    #     max_num=50))
+    train_cfg=dict(
+     _delete_=True,
+        assigner=[
+            dict(  # for Car
+                type='Max3DIoUAssigner',
+                iou_calculator=dict(type='BboxOverlapsNearest3D'),
+                pos_iou_thr=0.6,
+                neg_iou_thr=0.45,
+                min_pos_iou=0.45,
+                ignore_iof_thr=-1),
+        ],
+        allowed_border=0,
+        pos_weight=-1,
+        debug=False),
+    test_cfg=dict(
+        use_rotate_nms=True,
+        nms_across_levels=False,
+        nms_thr=0.01,
+        score_thr=0.1,
+        min_bbox_size=0,
+        nms_pre=100,
+        max_num=50))
 
 
 
@@ -452,16 +456,14 @@ param_scheduler = [
 # RepeatDataset with repeat ratio N, thus the actual max epoch
 # number could be Nx40
 train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
+val_cfg = dict()
+test_cfg = dict()
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=4)
-
-
 
 
 # Although the max_epochs is 40, this schedule is usually used we
