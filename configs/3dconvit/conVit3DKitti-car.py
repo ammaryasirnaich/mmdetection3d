@@ -224,7 +224,7 @@ model = dict(
                 ),
         
      bbox_head=dict(
-        type='VoteHead',
+        type='Convit3DHead',
         num_classes=1,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
@@ -268,8 +268,8 @@ model = dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         size_res_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        # corner_loss=dict(
-        #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+        corner_loss=dict(
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         # vote_loss=dict(
         #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)
             
