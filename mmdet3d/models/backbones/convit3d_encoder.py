@@ -602,8 +602,8 @@ class ConViT3DDecoder(BaseModule):
         # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
         x = feat_dic["fp_features"] # (B,V,P,D)
         x = x[:,:,:1,:].squeeze(2)#
-        print("Input feature to Block:", x.shape)
-        print("Input voxel to Block:", voxel_coors.shape)
+        # print("Input feature to Block:", x.shape)
+        # print("Input voxel to Block:", voxel_coors.shape)
 
         B = x.shape[0]
 
@@ -615,22 +615,22 @@ class ConViT3DDecoder(BaseModule):
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
-            print("No of Block#", u)
+            # print("No of Block#", u)
             # if u == self.local_up_to_layer :
             #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
-            print("Output from Block:",u," is of shape", x.shape)
+            # print("Output from Block:",u," is of shape", x.shape)
 
         x = self.norm(x)
-        print("Output after normalization", x.shape)
+        # print("Output after normalization", x.shape)
 
         #update the feature
         feat_dic["fp_features"] = x
         return feat_dic
     
     def forward(self, x, voxel_coors):
-        print("Input to ConViT Model:")
-        print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
+        # print("Input to ConViT Model:")
+        # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
         x = self.forward_features(x, voxel_coors)
 
         # print(" shape of final output from the attention model", x.shape)
