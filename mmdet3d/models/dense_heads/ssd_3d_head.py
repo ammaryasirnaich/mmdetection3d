@@ -202,20 +202,29 @@ class SSD3DHead(VoteHead):
             corner3d_targets.reshape(-1, 8, 3),
             weight=box_loss_weights.view(-1, 1, 1))
 
-        # calculate vote loss
-        vote_loss = self.vote_loss(
-            bbox_preds_dict['vote_offset'].transpose(1, 2),
-            vote_targets,
-            weight=vote_mask.unsqueeze(-1))
+        if self.vote_loss is not None:
+            # calculate vote loss
+            vote_loss = self.vote_loss(
+                bbox_preds_dict['vote_offset'].transpose(1, 2),
+                vote_targets,
+                weight=vote_mask.unsqueeze(-1))
 
-        losses = dict(
-            centerness_loss=centerness_loss,
-            center_loss=center_loss,
-            dir_class_loss=dir_class_loss,
-            dir_res_loss=dir_res_loss,
-            size_res_loss=size_loss,
-            corner_loss=corner_loss,
-            vote_loss=vote_loss)
+            losses = dict(
+                centerness_loss=centerness_loss,
+                center_loss=center_loss,
+                dir_class_loss=dir_class_loss,
+                dir_res_loss=dir_res_loss,
+                size_res_loss=size_loss,
+                corner_loss=corner_loss,
+                vote_loss=vote_loss)
+        else:
+             losses = dict(
+                centerness_loss=centerness_loss,
+                center_loss=center_loss,
+                dir_class_loss=dir_class_loss,
+                dir_res_loss=dir_res_loss,
+                size_res_loss=size_loss,
+                corner_loss=corner_loss) 
 
         return losses
 

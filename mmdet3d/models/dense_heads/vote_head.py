@@ -76,8 +76,18 @@ class VoteHead(BaseModule):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-        self.gt_per_seed = vote_module_cfg['gt_per_seed']
-        self.num_proposal = vote_aggregation_cfg['num_point']
+        if vote_aggregation_cfg is not None:
+            self.gt_per_seed = vote_module_cfg['gt_per_seed']
+            self.num_proposal = vote_aggregation_cfg['num_point']     
+            self.vote_module = VoteModule(**vote_module_cfg)
+            self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
+        else:
+            self.gt_per_seed = 0
+            self.num_proposal=0
+            self.vote_module =[]
+            self.vote_aggregation=[]
+
+
 
         self.loss_objectness = MODELS.build(objectness_loss)
         self.loss_center = MODELS.build(center_loss)
@@ -97,8 +107,10 @@ class VoteHead(BaseModule):
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
-        self.vote_module = VoteModule(**vote_module_cfg)
-        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
+
+
+        # self.vote_module = VoteModule(**vote_module_cfg)
+        # self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
         self.fp16_enabled = False
 
         # Bbox classification and regression
@@ -319,12 +331,20 @@ class VoteHead(BaseModule):
         # 1. generate vote_points from seed_points
         vote_points, vote_features, vote_offset = self.vote_module(
             seed_points, seed_features)
+        
+
+
+
         results = dict(
             seed_points=seed_points,
             seed_indices=seed_indices,
             vote_points=vote_points,
             vote_features=vote_features,
             vote_offset=vote_offset)
+        
+
+        print("seed_points dimension", seed_points.shape)
+        print("vote_points dimension", vote_points.shape)
 
         # 2. aggregate vote_points
         if self.sample_mode == 'vote':
@@ -361,6 +381,8 @@ class VoteHead(BaseModule):
 
         vote_aggregation_ret = self.vote_aggregation(**aggregation_inputs)
         aggregated_points, features, aggregated_indices = vote_aggregation_ret
+
+        print("vote_aggregation_ret feature",features.shape)
 
         results['aggregated_points'] = aggregated_points
         results['aggregated_features'] = features

@@ -228,27 +228,8 @@ model = dict(
         num_classes=1,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
-        vote_module_cfg=dict(
-            in_channels=256,
-            num_points=256,
-            gt_per_seed=1,
-            conv_channels=(128, ),
-            conv_cfg=dict(type='Conv1d'),
-            norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
-            with_res_feat=False,
-            vote_xyz_range=(3.0, 3.0, 2.0)),
-        vote_aggregation_cfg=dict(
-            type='PointSAModuleMSG',
-            num_point=256,
-            radii=(4.8, 6.4),
-            sample_nums=(16, 32),
-            mlp_channels=((256, 256, 256, 512), (256, 256, 512, 1024)),
-            norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
-            use_xyz=True,
-            normalize_xyz=False,
-            bias=True),
         pred_layer_cfg=dict(
-            in_channels=1536,
+            in_channels=16,    # feature dimention from ConViT3DDecoder
             shared_conv_channels=(512, 128),
             cls_conv_channels=(128, ),
             reg_conv_channels=(128, ),
@@ -274,62 +255,31 @@ model = dict(
         #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)
             
             ),
-    # neck=dict(
-    #     type='SECONDFPN',
-    #     in_channels=[128, 256],
-    #     upsample_strides=[1, 2],
-    #     out_channels=[256, 256]),
-    # bbox_head=dict(
-    #     type='Anchor3DHead',
-    #     num_classes=1,
-    #     in_channels=512,
-    #     feat_channels=512,
-    #     use_direction_classifier=True,
-    #     anchor_generator=dict(
-    #         type='Anchor3DRangeGenerator',
-    #         ranges=[[0, -40.0, -1.78, 70.4, 40.0, -1.78]],
-    #         sizes=[[3.9, 1.6, 1.56]],
-    #         rotations=[0, 1.57],
-    #         reshape_out=False),
-    #     diff_rad_by_sin=True,
-    #     bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),   
-    #    loss_cls=dict(
-    #         type='mmdet.FocalLoss',
-    #         use_sigmoid=True,
-    #         gamma=2.0,
-    #         alpha=0.25,
-    #         loss_weight=1.0),
-    #     loss_bbox=dict(
-    #         type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
-    #     loss_dir=dict(
-    #         type='mmdet.CrossEntropyLoss', use_sigmoid=False,
-    #         loss_weight=0.2)),
-
-
 
     # model training and testing settings
-    train_cfg=dict(
-     _delete_=True,
-        assigner=[
-            dict(  # for Car
-                type='Max3DIoUAssigner',
-                iou_calculator=dict(type='BboxOverlapsNearest3D'),
-                pos_iou_thr=0.6,
-                neg_iou_thr=0.45,
-                min_pos_iou=0.45,
-                ignore_iof_thr=-1),
-        ],
-        allowed_border=0,
-        pos_weight=-1,
-        debug=False),
+      train_cfg=dict(
+        by_epoch=True,
+          max_epochs=40, 
+          val_interval=1,
+          sample_mode='spec', 
+          pos_distance_thr=0.3, 
+          neg_distance_thr=0.6,
+          expand_dims_length=0.05
+          ) ,
+    
     test_cfg=dict(
+        nms_cfg=dict(type='nms', iou_thr=0.1),
         use_rotate_nms=True,
         nms_across_levels=False,
-        nms_thr=0.01,
-        score_thr=0.1,
+        nms_thr=0.25,
+        score_thr=0.0,
         min_bbox_size=0,
+        max_output_num=100,
         nms_pre=100,
-        max_num=50))
+        max_num=50,
+        per_class_proposal=True,)
+        
+    )
 
 
 
