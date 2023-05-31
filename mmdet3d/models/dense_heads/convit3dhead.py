@@ -70,6 +70,7 @@ class Convit3DHead(SSD3DHead):
             semantic_loss=None,
             init_cfg=init_cfg)
         self.corner_loss = MODELS.build(corner_loss)
+        self.vote_loss = None
         
   
 
@@ -135,7 +136,8 @@ class Convit3DHead(SSD3DHead):
                                                 seed_points)
         results.update(decode_res)
 
-        print("Keys", results.keys())
+        # print("Keys", results.keys())
+        
         return results
 
 
