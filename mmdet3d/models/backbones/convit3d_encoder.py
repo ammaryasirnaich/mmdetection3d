@@ -119,13 +119,19 @@ class GPSA(BaseModule):
             nn.init.constant_(m.weight, 1.0)
         
     def forward(self, x, voxel_coord):
+        
+        if x.shape[1]>16000:
+            print("Voxel shape", x.shape)
+            print("special check on large number of voxels")  
+            if hasattr(self, 'rel_indices'): print("self.rel_indices.size(1):",self.rel_indices.size(0))
         # x : voxel-wise feature (B,V,P,D)
         # x = x.permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
         # voxel_coords
         # rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
 
         B, N, C = x.shape   # batch, num_of_points, features
-        if not hasattr(self, 'rel_indices') or self.rel_indices.size(1)!=N:
+        if not hasattr(self, 'rel_indices') or self.rel_indices.size(0)!=N:
+
             # self.get_rel_indices(N)
             # self.get_rel_indices_3d(num_patches=N)
             self.get_patch_wise_relative_encoding(voxel_coord)
@@ -200,14 +206,10 @@ class GPSA(BaseModule):
         # print("pos_score shape ", pos_score.shape)
         # print("shape of gating", gating.shape)
 
-
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
         return attn
-
-
-
 
     def get_attention_map(self, x, return_map = False):
 
@@ -220,8 +222,8 @@ class GPSA(BaseModule):
         else:
             return dist
     
-    def local_init(self, locality_strength=1.):
-        
+    #Note: To be inspected
+    def local_init(self, locality_strength=1.):     
         self.v.weight.data.copy_(torch.eye(self.dim))
         locality_distance = 1 #max(1,1/locality_strength**.5)
         
@@ -248,6 +250,9 @@ class GPSA(BaseModule):
         device = self.qk.weight.device
         self.rel_indices = rel_indices.to(device)
 
+
+    
+    #Note: To be inspected
     def get_patch_wise_relative_encoding(self,coord: torch.tensor):
         '''
         Arg:
@@ -378,66 +383,66 @@ class Block(BaseModule):
         return x
 
 
-class PatchEmbed(BaseModule):
-    """ Image to Patch Embedding, from timm
-    """
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
-        super().__init__()
-        img_size = to_2tuple(img_size)
-        patch_size = to_2tuple(patch_size)
-        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
-        self.img_size = img_size
-        self.patch_size = patch_size
-        self.num_patches = num_patches
+# class PatchEmbed(BaseModule):
+#     """ Image to Patch Embedding, from timm
+#     """
+#     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+#         super().__init__()
+#         img_size = to_2tuple(img_size)
+#         patch_size = to_2tuple(patch_size)
+#         num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
+#         self.img_size = img_size
+#         self.patch_size = patch_size
+#         self.num_patches = num_patches
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
-        self.apply(self._init_weights)
-    def forward(self, x):
-        B, C, H, W = x.shape
-        assert H == self.img_size[0] and W == self.img_size[1], \
-            f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
-        x = self.proj(x).flatten(2).transpose(1, 2)
-        return x
-    def _init_weights(self, m):
-        if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=.02)
-            if isinstance(m, nn.Linear) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
-            nn.init.constant_(m.bias, 0)
-            nn.init.constant_(m.weight, 1.0)
+#         self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+#         self.apply(self._init_weights)
+#     def forward(self, x):
+#         B, C, H, W = x.shape
+#         assert H == self.img_size[0] and W == self.img_size[1], \
+#             f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+#         x = self.proj(x).flatten(2).transpose(1, 2)
+#         return x
+#     def _init_weights(self, m):
+#         if isinstance(m, nn.Linear):
+#             trunc_normal_(m.weight, std=.02)
+#             if isinstance(m, nn.Linear) and m.bias is not None:
+#                 nn.init.constant_(m.bias, 0)
+#         elif isinstance(m, nn.LayerNorm):
+#             nn.init.constant_(m.bias, 0)
+#             nn.init.constant_(m.weight, 1.0)
 
 
-class HybridEmbed(BaseModule):
-    """ CNN Feature Map Embedding, from timm
-    """
-    def __init__(self, backbone, img_size=224, feature_size=None, in_chans=3, embed_dim=768):
-        super().__init__()
-        assert isinstance(backbone, BaseModule)
-        img_size = to_2tuple(img_size)
-        self.img_size = img_size
-        self.backbone = backbone
-        if feature_size is None:
-            with torch.no_grad():
-                training = backbone.training
-                if training:
-                    backbone.eval()
-                o = self.backbone(torch.zeros(1, in_chans, img_size[0], img_size[1]))[-1]
-                feature_size = o.shape[-2:]
-                feature_dim = o.shape[1]
-                backbone.train(training)
-        else:
-            feature_size = to_2tuple(feature_size)
-            feature_dim = self.backbone.feature_info.channels()[-1]
-        self.num_patches = feature_size[0] * feature_size[1]
-        self.proj = nn.Linear(feature_dim, embed_dim)
-        self.apply(self._init_weights)
+# class HybridEmbed(BaseModule):
+#     """ CNN Feature Map Embedding, from timm
+#     """
+#     def __init__(self, backbone, img_size=224, feature_size=None, in_chans=3, embed_dim=768):
+#         super().__init__()
+#         assert isinstance(backbone, BaseModule)
+#         img_size = to_2tuple(img_size)
+#         self.img_size = img_size
+#         self.backbone = backbone
+#         if feature_size is None:
+#             with torch.no_grad():
+#                 training = backbone.training
+#                 if training:
+#                     backbone.eval()
+#                 o = self.backbone(torch.zeros(1, in_chans, img_size[0], img_size[1]))[-1]
+#                 feature_size = o.shape[-2:]
+#                 feature_dim = o.shape[1]
+#                 backbone.train(training)
+#         else:
+#             feature_size = to_2tuple(feature_size)
+#             feature_dim = self.backbone.feature_info.channels()[-1]
+#         self.num_patches = feature_size[0] * feature_size[1]
+#         self.proj = nn.Linear(feature_dim, embed_dim)
+#         self.apply(self._init_weights)
 
-    def forward(self, x):
-        x = self.backbone(x)[-1]
-        x = x.flatten(2).transpose(1, 2)
-        x = self.proj(x)
-        return x
+#     def forward(self, x):
+#         x = self.backbone(x)[-1]
+#         x = x.flatten(2).transpose(1, 2)
+#         x = self.proj(x)
+#         return x
 
 
 
@@ -510,6 +515,7 @@ class ConViT3DDecoder(BaseModule):
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.locality_strength = locality_strength
         self.use_pos_embed = use_pos_embed
+        self.entry_counter=0
 
 
         ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
@@ -527,7 +533,7 @@ class ConViT3DDecoder(BaseModule):
 
 
         ## call the PointNet2SASSG_SL backbone for genearting point feature embedding    
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         # if self.use_pos_embed:
@@ -553,7 +559,7 @@ class ConViT3DDecoder(BaseModule):
         # self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
         self.head = nn.Linear(embed_dim, fp_output_channel) #if num_classes > 0 else nn.Identity()
 
-        trunc_normal_(self.cls_token, std=.02)
+        # trunc_normal_(self.cls_token, std=.02)
         self.head.apply(self._init_weights)
     
 
@@ -580,6 +586,8 @@ class ConViT3DDecoder(BaseModule):
 
 
     def forward_features(self, feat_dic, voxel_coors): # 
+        self.entry_counter = self.entry_counter+1
+        print("No of Enteries into backbone:",self.entry_counter)
 
         # x = self.patch_embed(x)
 
@@ -615,7 +623,7 @@ class ConViT3DDecoder(BaseModule):
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
-            # print("No of Block#", u)
+            print("No of Block#", u)
             # if u == self.local_up_to_layer :
             #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)

@@ -230,9 +230,9 @@ model = dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         pred_layer_cfg=dict(
             in_channels=16,    # feature dimention from ConViT3DDecoder
-            shared_conv_channels=(512, 128),
-            cls_conv_channels=(128, ),
-            reg_conv_channels=(128, ),
+            shared_conv_channels=(256, 64),   # (512, 128)
+            cls_conv_channels=(64, ),         # (128, ), 
+            reg_conv_channels=(64, ),         # (128, ), 
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
@@ -251,9 +251,7 @@ model = dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
-        # vote_loss=dict(
-        #     type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)
-            
+          
             ),
 
     # model training and testing settings
@@ -280,8 +278,6 @@ model = dict(
         per_class_proposal=True,)
         
     )
-
-
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
@@ -321,14 +317,14 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
 )
 
-log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+log_processor = dict(type='LogProcessor', window_size=10, by_epoch=True)
 
 log_level = 'INFO'
 load_from = None
 resume = False
 
 
-# checkpoint_config = dict(interval=1,max_keep_ckpts=5,save_last=True)
+checkpoint_config = dict(interval=1,max_keep_ckpts=5,save_last=True)
 # log_config = dict(
 #     interval=50,
 #     hooks=[dict(type='TextLoggerHook'),
@@ -384,7 +380,7 @@ test_cfg = dict()
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=4)
+auto_scale_lr = dict(enable=False, base_batch_size=2)
 
 
 # Although the max_epochs is 40, this schedule is usually used we

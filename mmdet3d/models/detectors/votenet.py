@@ -67,7 +67,6 @@ class VoteNet(SingleStage3DDetector):
 
         # print("points input to loss", points.shape)
 
-
         losses = self.bbox_head.loss(points, feat_dict, batch_data_samples,
                                      **kwargs)
         return losses
