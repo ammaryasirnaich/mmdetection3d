@@ -383,69 +383,6 @@ class Block(BaseModule):
         return x
 
 
-# class PatchEmbed(BaseModule):
-#     """ Image to Patch Embedding, from timm
-#     """
-#     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
-#         super().__init__()
-#         img_size = to_2tuple(img_size)
-#         patch_size = to_2tuple(patch_size)
-#         num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
-#         self.img_size = img_size
-#         self.patch_size = patch_size
-#         self.num_patches = num_patches
-
-#         self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
-#         self.apply(self._init_weights)
-#     def forward(self, x):
-#         B, C, H, W = x.shape
-#         assert H == self.img_size[0] and W == self.img_size[1], \
-#             f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
-#         x = self.proj(x).flatten(2).transpose(1, 2)
-#         return x
-#     def _init_weights(self, m):
-#         if isinstance(m, nn.Linear):
-#             trunc_normal_(m.weight, std=.02)
-#             if isinstance(m, nn.Linear) and m.bias is not None:
-#                 nn.init.constant_(m.bias, 0)
-#         elif isinstance(m, nn.LayerNorm):
-#             nn.init.constant_(m.bias, 0)
-#             nn.init.constant_(m.weight, 1.0)
-
-
-# class HybridEmbed(BaseModule):
-#     """ CNN Feature Map Embedding, from timm
-#     """
-#     def __init__(self, backbone, img_size=224, feature_size=None, in_chans=3, embed_dim=768):
-#         super().__init__()
-#         assert isinstance(backbone, BaseModule)
-#         img_size = to_2tuple(img_size)
-#         self.img_size = img_size
-#         self.backbone = backbone
-#         if feature_size is None:
-#             with torch.no_grad():
-#                 training = backbone.training
-#                 if training:
-#                     backbone.eval()
-#                 o = self.backbone(torch.zeros(1, in_chans, img_size[0], img_size[1]))[-1]
-#                 feature_size = o.shape[-2:]
-#                 feature_dim = o.shape[1]
-#                 backbone.train(training)
-#         else:
-#             feature_size = to_2tuple(feature_size)
-#             feature_dim = self.backbone.feature_info.channels()[-1]
-#         self.num_patches = feature_size[0] * feature_size[1]
-#         self.proj = nn.Linear(feature_dim, embed_dim)
-#         self.apply(self._init_weights)
-
-#     def forward(self, x):
-#         x = self.backbone(x)[-1]
-#         x = x.flatten(2).transpose(1, 2)
-#         x = self.proj(x)
-#         return x
-
-
-
 @MODELS.register_module()
 class ConViT3DDecoder(BaseModule):
     """ 
@@ -454,8 +391,6 @@ class ConViT3DDecoder(BaseModule):
     
     """ ConViT3DDecoder
     Args:
-        img_size (int | tuple[int]): The size of input image when  pretrain. Defaults: 224.
-        patch_size: (int | tuple[int]): Patch size. Default: 4.
         in_chans: (int): The num of input channels. Defaults: 4. 
         num_classes:3 
         embed_dim (int): The feature dimension. Default: 96.
@@ -517,28 +452,7 @@ class ConViT3DDecoder(BaseModule):
         self.use_pos_embed = use_pos_embed
         self.entry_counter=0
 
-
-        ### Voxel Encoder will be doing the embedding, we will get the embedding in the form of voxel-features
-        # print("embed_dim=",embed_dim)
-
-        # if hybrid_backbone is not None:
-        #     self.patch_embed = HybridEmbed(
-        #         hybrid_backbone, img_size=img_size, in_chans=in_chans, embed_dim=embed_dim)
-        # else:
-        #     self.patch_embed = PatchEmbed(
-        #         img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
-            
-        # num_patches = self.patch_embed.num_patches
-        # self.num_patches = num_patches
-
-
-        ## call the PointNet2SASSG_SL backbone for genearting point feature embedding    
-        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
-
-        # if self.use_pos_embed:
-        #     self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
-        #     trunc_normal_(self.pos_embed, std=.02)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = ModuleList([
