@@ -76,8 +76,12 @@ class PointNetFPNeck(BaseModule):
         """
         sa_xyz, sa_features = self._extract_input(feat_dict)
 
+
         fp_feature = sa_features[-1]
         fp_xyz = sa_xyz[-1]
+
+
+        
 
         for i in range(self.num_fp):
             # consume the points in a bottom-up manner
@@ -85,5 +89,11 @@ class PointNetFPNeck(BaseModule):
                                             sa_features[-(i + 2)], fp_feature)
             fp_xyz = sa_xyz[-(i + 2)]
 
+ 
+        fp_feature = fp_feature.permute(0, 2, 1).contiguous()
+
         ret = dict(fp_xyz=fp_xyz, fp_features=fp_feature)
+
+
+
         return ret
