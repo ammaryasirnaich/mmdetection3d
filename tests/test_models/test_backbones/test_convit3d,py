@@ -15,8 +15,7 @@ class convit3d_module_test:
         self.num_voxels = torch.randint(1, 100, [45000])
         self.voxel_coord = torch.randint(0, 100, [45000, 3]).cuda()
         self.bck_point_xyz = torch.rand([45000, 20, 16]).cuda()
-
-        
+     
  
     def get_used_memory(self):
         free,total = torch.cuda.mem_get_info()
