@@ -168,10 +168,10 @@ class PointNet2SASSG_SL(BasePointNet):
         ret = dict(
             fp_xyz=fp_xyz[-1].view(batch_size,v,p,-1),
             fp_features=fp_features[-1].view(batch_size,v,p,-1),
-            fp_indices=fp_indices,
+            # fp_indices=fp_indices,
             sa_xyz=sa_xyz,
             sa_features=sa_features,
-            sa_indices=sa_indices
+            # sa_indices=sa_indices
             # voxels = voxel_feature
             )
         return ret
