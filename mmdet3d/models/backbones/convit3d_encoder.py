@@ -636,10 +636,10 @@ class ConViT3DDecoder(BaseModule):
         feat_dic["fp_features"] = x
         return feat_dic
     
-    def forward(self, x, voxel_coors):
+    def forward(self, feat_dic, voxel_coors):
         # print("Input to ConViT Model:")
         # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
-        x = self.forward_features(x, voxel_coors)
+        feat_dic = self.forward_features(feat_dic, voxel_coors)
 
         # print(" shape of final output from the attention model", x.shape)
         # feat_dict=[]       
@@ -648,7 +648,7 @@ class ConViT3DDecoder(BaseModule):
         # feat_dict['sa_indices']=[]
         # x = self.head(x)
 
-        return x
+        return feat_dic
     
 
  
