@@ -120,13 +120,14 @@ class PointRPNHead(BaseModule):
                 scores.
         """
         point_features = feat_dict['fp_features']
-        point_features = point_features.permute(0, 2, 1).contiguous()
+
         batch_size = point_features.shape[0]
         feat_cls = point_features.view(-1, point_features.shape[-1])
         feat_reg = point_features.view(-1, point_features.shape[-1])
-
+        
         point_cls_preds = self.cls_layers(feat_cls).reshape(
             batch_size, -1, self._get_cls_out_channels())
+        
         point_box_preds = self.reg_layers(feat_reg).reshape(
             batch_size, -1, self._get_reg_out_channels())
         return point_box_preds, point_cls_preds
@@ -159,6 +160,7 @@ class PointRPNHead(BaseModule):
         Returns:
             dict: Losses of PointRCNN RPN module.
         """
+
         targets = self.get_targets(points, batch_gt_instances_3d)
         (bbox_targets, mask_targets, positive_mask, negative_mask,
          box_loss_weights, point_targets) = targets

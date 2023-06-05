@@ -66,9 +66,8 @@ class ConVit3D(PointRCNN):  #VoteNet
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""
         voxel_dict = batch_inputs_dict['voxels']
-        points = batch_inputs_dict['points']
-        
-        print("keys",batch_inputs_dict.keys())
+    
+ 
 
         # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
@@ -80,7 +79,12 @@ class ConVit3D(PointRCNN):  #VoteNet
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:])
         # x['raw_points']=points 
-        
+
+        b = voxel_dict['voxels']
+        v,p,d = (b.shape)
+        points = b.reshape(v*p,d)
+        x['raw_points']=points 
+   
         if self.with_neck:
             x = self.neck(x)
         return x
