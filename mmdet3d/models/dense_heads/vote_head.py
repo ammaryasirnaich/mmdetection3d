@@ -107,11 +107,8 @@ class VoteHead(BaseModule):
         self.num_sizes = self.bbox_coder.num_sizes
         self.num_dir_bins = self.bbox_coder.num_dir_bins
 
-
-
-        # self.vote_module = VoteModule(**vote_module_cfg)
-        # self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
-        self.fp16_enabled = False
+        self.vote_module = VoteModule(**vote_module_cfg)
+        self.vote_aggregation = build_sa_module(vote_aggregation_cfg)
 
         # Bbox classification and regression
         self.conv_pred = BaseConvBboxHead(
