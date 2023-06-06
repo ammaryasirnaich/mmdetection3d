@@ -5,6 +5,7 @@
 from typing import Tuple
 
 from torch import Tensor
+import torch
 
 from mmdet3d.registry import MODELS
 from mmdet3d.utils import ConfigType, OptConfigType, OptMultiConfig
@@ -65,8 +66,9 @@ class ConVit3D(PointRCNN):  #VoteNet
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
         """Extract features from points."""
+       
+        
         voxel_dict = batch_inputs_dict['voxels']
-    
  
 
         # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
@@ -78,13 +80,12 @@ class ConVit3D(PointRCNN):  #VoteNet
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:])
-        # x['raw_points']=points 
-
-        b = voxel_dict['voxels']
-        v,p,d = (b.shape)
-        points = b.reshape(v*p,d)
+        
+        
+        
+        points = torch.stack(batch_inputs_dict['points'])
         x['raw_points']=points 
-   
+
         if self.with_neck:
             x = self.neck(x)
         return x
