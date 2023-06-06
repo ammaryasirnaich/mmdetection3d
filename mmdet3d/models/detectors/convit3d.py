@@ -68,10 +68,9 @@ class ConVit3D(PointRCNN):  #VoteNet
         """Extract features from points."""
        
         
-        voxel_dict = batch_inputs_dict['voxels']
- 
-
         # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
+        voxel_dict = batch_inputs_dict['voxels']
+
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
@@ -83,8 +82,8 @@ class ConVit3D(PointRCNN):  #VoteNet
         
         
         
-        points = torch.stack(batch_inputs_dict['points'])
-        x['raw_points']=points 
+        raw_points = torch.stack(batch_inputs_dict['points'])
+        x['raw_points']=raw_points   # (N,D(4))
 
         if self.with_neck:
             x = self.neck(x)
