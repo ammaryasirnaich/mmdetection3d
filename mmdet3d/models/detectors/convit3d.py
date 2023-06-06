@@ -70,7 +70,7 @@ class ConVit3D(PointRCNN):  #VoteNet
         
         # the voxel_feature (V,D(4)) is the mean voxel point(xyz)  
         voxel_dict = batch_inputs_dict['voxels']
-
+       
         voxel_features = self.voxel_encoder(voxel_dict['voxels'],
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
@@ -79,11 +79,9 @@ class ConVit3D(PointRCNN):  #VoteNet
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
         x = self.backbone(x,voxel_dict['coors'][:,1:])
-        
-        
-        
-        raw_points = torch.stack(batch_inputs_dict['points'])
-        x['raw_points']=raw_points   # (N,D(4))
+
+        voxel_raw_points = torch.stack(batch_inputs_dict['points'])
+        x['raw_points']=voxel_raw_points  # (V*P,D(4))
 
         if self.with_neck:
             x = self.neck(x)

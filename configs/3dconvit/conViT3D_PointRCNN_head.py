@@ -231,7 +231,7 @@ model = dict(
         
     rpn_head=dict(
         type='PointRPNHead',
-        num_classes=3,
+        num_classes=1,
         enlarge_width=0.1,
         pred_layer_cfg=dict(
             in_channels=16,
