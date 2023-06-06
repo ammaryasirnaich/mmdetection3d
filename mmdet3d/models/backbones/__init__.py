@@ -19,6 +19,6 @@ __all__ = [
     'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 'NoStemRegNet',
     'SECOND', 'DGCNNBackbone', 'PointNet2SASSG', 'PointNet2SAMSG',
     'MultiBackbone', 'DLANet', 'MinkResNet', 'Asymm3DSpconv',
-    'MinkUNetBackbone', 'SPVCNNBackbone', 'ConViT3DDecoder' 
+    'MinkUNetBackbone', 'SPVCNNBackbone', 'ConViT3DDecoder', 
     'MinkUNetBackbone', 'SPVCNNBackbone', 'MinkUNetBackboneV2'
 ]
