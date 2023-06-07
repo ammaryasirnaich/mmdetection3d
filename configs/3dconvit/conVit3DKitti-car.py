@@ -40,24 +40,26 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # x, y, z, intensity
+        load_dim=4,
         use_dim=4,
         backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='ObjectNoise',
         num_try=100,
         translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
         rot_range=[-0.78539816, 0.78539816]),
-    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointSample', num_points=16384, sample_range=40.0),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -83,7 +85,8 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            dict(type='PointSample', num_points=16384, sample_range=40.0)
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -119,6 +122,7 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
             backend_args=backend_args)))
+
 val_dataloader = dict(
     batch_size=2,
     num_workers=4,
@@ -136,6 +140,7 @@ val_dataloader = dict(
         metainfo=metainfo,
         box_type_3d='LiDAR',
         backend_args=backend_args))
+        
 test_dataloader = dict(
     batch_size=2,
     num_workers=4,
@@ -153,6 +158,7 @@ test_dataloader = dict(
         metainfo=metainfo,
         box_type_3d='LiDAR',
         backend_args=backend_args))
+
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
@@ -163,7 +169,6 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
-
 
 '''
 Model parameter settings
@@ -186,8 +191,9 @@ model = dict(
         voxel=True,
         voxel_layer=dict(
             max_num_points=9,  #35
-              point_cloud_range= point_cloud_range,
+            point_cloud_range= point_cloud_range,
             voxel_size=voxel_size,
+            # deterministic=False, 
             max_voxels=(16000, 40000))),
   
     voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE
