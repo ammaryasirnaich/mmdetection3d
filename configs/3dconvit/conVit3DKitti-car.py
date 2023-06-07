@@ -193,10 +193,9 @@ model = dict(
             max_num_points=9,  #35
             point_cloud_range= point_cloud_range,
             voxel_size=voxel_size,
-            # deterministic=False, 
             max_voxels=(16000, 40000))),
-  
     voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE
+    
     middle_encoder =  dict(
                 type='PointNet2SASSG_SL',
                 in_channels=4,
@@ -206,6 +205,7 @@ model = dict(
                 sa_channels=((8, 16), (16, 16)),    #((8, 16), (16, 16)),
                 fp_channels=((16, 16), (16, 16)),   #((16, 16), (16, 16))
                 norm_cfg=dict(type='BN2d')),
+
     backbone =  dict(
                 type='ConViT3DDecoder',
                 num_classes=3, 
