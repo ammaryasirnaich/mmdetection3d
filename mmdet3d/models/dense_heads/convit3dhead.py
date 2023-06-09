@@ -119,7 +119,7 @@ class Convit3DHead(SSD3DHead):
         
       
         # print("seed points shape", seed_points.shape)
-        print("feature input to head (aggregated_points) shape", aggregated_points.shape)
+        # print("feature input to head (aggregated_points) shape", aggregated_points.shape)
         
         # # 1. generate vote_points from seed_points
         # vote_points, vote_features, vote_offset = self.vote_module(
@@ -136,6 +136,7 @@ class Convit3DHead(SSD3DHead):
         results['aggregated_points'] = aggregated_points
         results['aggregated_features'] = aggregated_features
         # results['aggregated_indices'] = aggregated_indices
+        # print("aggregated_features",aggregated_features.shape)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(aggregated_features)

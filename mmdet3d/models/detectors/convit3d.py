@@ -22,9 +22,9 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
 
     def __init__(self,
                  voxel_encoder: ConfigType,
-                 middle_encoder: ConfigType,
+                 middle_encoder: None,
                  backbone: ConfigType,
-                 neck: OptConfigType = None,
+                 neck: OptConfigType = ConfigType,
                  bbox_head: OptConfigType = None,
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
@@ -32,7 +32,7 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
                  init_cfg: OptMultiConfig = None) -> None:
         super().__init__(
             backbone=backbone,
-            neck=None,
+            neck=neck,
             bbox_head=bbox_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
@@ -61,7 +61,9 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
     #         data_preprocessor=data_preprocessor)
         
         self.voxel_encoder = MODELS.build(voxel_encoder)
-        self.middle_encoder = MODELS.build(middle_encoder)
+        
+        if middle_encoder is not None:
+            self.middle_encoder = MODELS.build(middle_encoder)
    
 
     def extract_feat(self, batch_inputs_dict: dict) -> Tuple[Tensor]:
@@ -78,31 +80,27 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
         batch_size = voxel_dict['coors'][-1, 0].item() + 1       
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
         
-        print("voxel_features", voxel_features.shape)
+        # print("voxel_features", voxel_features.shape)
         
+        '''
+        Using below middle encoder for PointNet varient
+
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
-        
-       
-        '''
-        @ Note: Testing
-        force regular structure
-        '''
-        # print("Origional Feture from  middle encoder", x.keys())
-        # print("x['fp_features'] shape",x['fp_features'].shape)
-        # x['fp_features'] =  x['fp_features'][:,:10000,:,:]
-        # voxel_dict['coors'] = voxel_dict['coors'][:10000,:]
-        # print("Setting lower limit for testing...:",x['fp_features'].shape)
-
-        # print("pause")
-
-    
         x = self.backbone(x,voxel_dict['coors'][:,1:])
 
-        # voxel_raw_points = torch.stack(batch_inputs_dict['points'])
+        '''
+            
+        x = self.backbone(voxel_features)
+        
         x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
 
         if self.with_neck:
-            x = self.neck(x)
+            # Using Vamila PointNet++ as feature Embedding
+            fp_xyz = x['sa_xyz'][-1]
+            x = self.neck(x,fp_xyz)
+
+
+            # x = self.neck(x)
         return x
     
 
