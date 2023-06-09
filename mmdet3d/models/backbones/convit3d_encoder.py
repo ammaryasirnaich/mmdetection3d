@@ -120,10 +120,10 @@ class GPSA(BaseModule):
         
     def forward(self, x, voxel_coord):
         
-        if x.shape[1]>16000:
-            print("Voxel shape", x.shape)
-            print("special check on large number of voxels")  
-            if hasattr(self, 'rel_indices'): print("self.rel_indices.size(1):",self.rel_indices.size(0))
+        # if x.shape[1]>16000:
+        #     print("Voxel shape", x.shape)
+        #     print("special check on large number of voxels")  
+        #     if hasattr(self, 'rel_indices'): print("self.rel_indices.size(1):",self.rel_indices.size(0))
         # x : voxel-wise feature (B,V,P,D)
         # x = x.permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
         # voxel_coords
@@ -501,7 +501,7 @@ class ConViT3DDecoder(BaseModule):
 
     def forward_features(self, feat_dic, voxel_coors): # 
         self.entry_counter = self.entry_counter+1
-        print("No of Enteries into backbone:",self.entry_counter)
+        # print("No of Enteries into backbone:",self.entry_counter)
 
         # x = self.patch_embed(x)
 
@@ -537,7 +537,7 @@ class ConViT3DDecoder(BaseModule):
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
-            print("No of Block#", u)
+            # print("No of Block#", u)
             # if u == self.local_up_to_layer :
             #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)

@@ -114,16 +114,13 @@ class Convit3DHead(SSD3DHead):
         Returns:
             dict: Predictions of convit3d head.
         """
-
         aggregated_points, aggregated_features, seed_points = self._extract_input(
             feat_dict)
         
       
-        print("seed points shape", seed_points.shape)
-        print("aggregated_points shape", aggregated_points.shape)
+        # print("seed points shape", seed_points.shape)
+        print("feature input to head (aggregated_points) shape", aggregated_points.shape)
         
-
-
         # # 1. generate vote_points from seed_points
         # vote_points, vote_features, vote_offset = self.vote_module(
         #     seed_points, seed_features)

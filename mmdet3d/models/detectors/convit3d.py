@@ -77,7 +77,25 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
         
         batch_size = voxel_dict['coors'][-1, 0].item() + 1       
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
+        
+        print("voxel_features", voxel_features.shape)
+        
         x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
+        
+       
+        '''
+        @ Note: Testing
+        force regular structure
+        '''
+        # print("Origional Feture from  middle encoder", x.keys())
+        # print("x['fp_features'] shape",x['fp_features'].shape)
+        # x['fp_features'] =  x['fp_features'][:,:10000,:,:]
+        # voxel_dict['coors'] = voxel_dict['coors'][:10000,:]
+        # print("Setting lower limit for testing...:",x['fp_features'].shape)
+
+        # print("pause")
+
+    
         x = self.backbone(x,voxel_dict['coors'][:,1:])
 
         # voxel_raw_points = torch.stack(batch_inputs_dict['points'])
