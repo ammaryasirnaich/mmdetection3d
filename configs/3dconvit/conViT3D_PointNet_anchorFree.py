@@ -314,7 +314,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook'))
+    visualization=dict(type='Det3DVisualizationHook', draw=True))
 
 env_cfg = dict(
     cudnn_benchmark=False,
@@ -329,11 +329,12 @@ load_from = None
 resume = False
 
 
-checkpoint_config = dict(interval=1,max_keep_ckpts=5,save_last=True)
-# log_config = dict(
-#     interval=50,
-#     hooks=[dict(type='TextLoggerHook'),
-#            dict(type='TensorboardLoggerHook')])
+checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
+
+log_config = dict(
+    interval=50,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
 
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
