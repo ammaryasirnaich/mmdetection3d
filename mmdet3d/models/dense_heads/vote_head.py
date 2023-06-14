@@ -335,8 +335,8 @@ class VoteHead(BaseModule):
             vote_offset=vote_offset)
         
 
-        print("seed_points dimension", seed_points.shape)
-        print("vote_points dimension", vote_points.shape)
+        # print("seed_points dimension", seed_points.shape)
+        # print("vote_points dimension", vote_points.shape)
 
         # 2. aggregate vote_points
         if self.sample_mode == 'vote':
@@ -374,7 +374,7 @@ class VoteHead(BaseModule):
         vote_aggregation_ret = self.vote_aggregation(**aggregation_inputs)
         aggregated_points, features, aggregated_indices = vote_aggregation_ret
 
-        print("vote_aggregation_ret feature",features.shape)
+        # print("vote_aggregation_ret feature",features.shape)clear
 
         results['aggregated_points'] = aggregated_points
         results['aggregated_features'] = features
