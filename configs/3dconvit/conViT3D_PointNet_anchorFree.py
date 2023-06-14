@@ -260,29 +260,27 @@ model = dict(
             ),
 
     # model training and testing settings
-      train_cfg=dict(
-        by_epoch=True,
-          max_epochs=40, 
-          val_interval=1,
-          sample_mode='spec', 
-          pos_distance_thr=0.3, 
-          neg_distance_thr=0.6,
-          expand_dims_length=0.05
-          ) ,
+   train_cfg=dict(
+        sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
     
-    test_cfg=dict(
+     test_cfg=dict(
         nms_cfg=dict(type='nms', iou_thr=0.1),
-        use_rotate_nms=True,
-        nms_across_levels=False,
-        nms_thr=0.25,
+        sample_mode='spec',
         score_thr=0.0,
-        min_bbox_size=0,
-        max_output_num=100,
-        nms_pre=100,
-        max_num=50,
-        per_class_proposal=True,)
-        
-    )
+        per_class_proposal=True,
+        max_output_num=100))
+
+
+
+
+# Runtime settings，training schedule for 40e
+# Although the max_epochs is 40, this schedule is usually used we
+# RepeatDataset with repeat ratio N, thus the actual max epoch
+# number could be Nx40
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
@@ -377,13 +375,7 @@ param_scheduler = [
 ]
 
 
-# Runtime settings，training schedule for 40e
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40
-train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=1)
-val_cfg = dict()
-test_cfg = dict()
+
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
