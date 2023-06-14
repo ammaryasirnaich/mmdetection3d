@@ -286,7 +286,7 @@ test_cfg = dict(type='TestLoop')
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = '/workspace/working_dir'
+work_dir = './work_dirs/convit3d_pointnet_anchorfree'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -328,7 +328,7 @@ env_cfg = dict(
 )
 
 
-log_processor = dict(type='LogProcessor', window_size=10, by_epoch=True)
+log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
 load_from = None
