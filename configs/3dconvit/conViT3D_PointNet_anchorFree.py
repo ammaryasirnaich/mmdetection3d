@@ -1,6 +1,6 @@
 dataset_type = 'KittiDataset'
 data_root = '/workspace/data/kitti_detection/kitti/'
-class_names = ['Car']
+class_names = ['Pedestrian', 'Cyclist', 'Car']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(classes=class_names)
@@ -11,9 +11,9 @@ db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
     rate=1.0,
-    prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5)),
+    prepare=dict(filter_by_difficulty=[-1], filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
     classes=class_names,
-    sample_groups=dict(Car=15),
+    sample_groups=dict(Car=15, Pedestrian=6, Cyclist=6),
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -39,13 +39,13 @@ train_pipeline = [
         num_try=100,
         translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
-        rot_range=[-0.78539816, 0.78539816]),
+        rot_range=[-1.0471975511965976, 1.0471975511965976]),
     dict(
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
-        scale_ratio_range=[0.95, 1.05]),
+        scale_ratio_range=[0.9, 1.1]),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='PointSample', num_points=16384, sample_range=40.0),
+    dict(type='PointSample', num_points=16384),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -72,7 +72,7 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=16384, sample_range=40.0)
+            dict(type='PointSample', num_points=16384)
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -161,8 +161,8 @@ visualizer = dict(
 Model parameter settings
 '''
 
-voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
-# voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
+# voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
+voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # x=1408 , y=1600, z= 40
 
 # voxel_size = [0.05, 0.05, 0.1]
@@ -230,7 +230,7 @@ model = dict(
         
      bbox_head=dict(
         type='Convit3DHead',
-        num_classes=1,
+        num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         pred_layer_cfg=dict(
@@ -316,11 +316,19 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook', draw=True))
 
+log_config = dict(
+    interval=50,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+
+checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
+
 env_cfg = dict(
     cudnn_benchmark=False,
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
     dist_cfg=dict(backend='nccl'),
 )
+
 
 log_processor = dict(type='LogProcessor', window_size=10, by_epoch=True)
 
@@ -329,12 +337,7 @@ load_from = None
 resume = False
 
 
-checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
 
-log_config = dict(
-    interval=50,
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])
 
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
