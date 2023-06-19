@@ -110,8 +110,8 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -128,8 +128,8 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -273,8 +273,6 @@ model = dict(
         max_output_num=100))
 
 
-
-
 # Runtime settings，training schedule for 40e
 # Although the max_epochs is 40, this schedule is usually used we
 # RepeatDataset with repeat ratio N, thus the actual max epoch
@@ -386,11 +384,3 @@ param_scheduler = [
 auto_scale_lr = dict(enable=False, base_batch_size=2)
 
 
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40  
-# seed = 0
-# gpu_ids = range(1)
-# samples_per_gpu=1 # batch size per GPU
-# runner = dict(type='EpochBasedRunner', max_epochs=40)
-# runner = dict(type='IterBasedRunner', max_iters=100)
