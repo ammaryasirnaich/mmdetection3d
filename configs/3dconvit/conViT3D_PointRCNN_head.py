@@ -230,12 +230,12 @@ model = dict(
                 fp_output_channel = 512, 
                 ),
 
-    rpn_head=dict(
+    bbox_head=dict(
         type='PointRPNHead',
         num_classes=3,
         enlarge_width=0.1,
         pred_layer_cfg=dict(
-            in_channels=16,
+            in_channels=512,
             cls_linear_channels=(256, 256),
             reg_linear_channels=(256, 256)),
         cls_loss=dict(
