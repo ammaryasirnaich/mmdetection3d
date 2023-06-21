@@ -23,6 +23,10 @@ import numpy as np
 
 
 
+
+
+
+
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
@@ -378,6 +382,20 @@ class MHSA(BaseModule):
         x = self.proj_drop(x)
         return x
     
+class PatchEmbed(BaseModule):
+   
+   def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, **kwargs):
+        super().__init__() 
+        self.voxel_emb = nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=kernel_size // 2)
+    
+   def forward(self, x):
+        print("shape of input X", x.shape)
+        x = self.voxel_emb(x)
+        print("shape of voxel_emb", x.shape)
+        return x
+
+
+    
 class Block(BaseModule):
 
     def __init__(self, dim, num_heads,  mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
@@ -426,6 +444,7 @@ class ConViT3DNeck(BaseModule):
         local_up_to_layer (int): selecting initial layers to behave like convolution. Default10 
         locality_strength:1. 
         use_pos_embed:True
+        use_patch_embed:False
         init_cfg=None,
         pretrained=None
 
@@ -457,6 +476,7 @@ class ConViT3DNeck(BaseModule):
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
+                use_patch_embed=False,
                 fp_output_channel = 16 # embed_dim, num_classes
 
                 ):
@@ -482,8 +502,14 @@ class ConViT3DNeck(BaseModule):
         self.depth = depth
         self.fp_output_channel=fp_output_channel
         self.num_heads=num_heads
-
+        self.use_patch_embed= use_patch_embed
         self.pos_drop = nn.Dropout(p=drop_rate)
+
+
+        if use_patch_embed:
+            self.patch_embed = PatchEmbed(in_channels=in_chans,out_channels=64, kernel_size=3, stride=1)
+            self.num_features = self.embed_dim = 64
+            
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, self.depth)]  # stochastic depth decay rule
         self.blocks = ModuleList([
@@ -503,6 +529,8 @@ class ConViT3DNeck(BaseModule):
         # Classifier head
         # self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
         self.head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
+
+
 
         # trunc_normal_(self.cls_token, std=.02)
         self.head.apply(self._init_weights)
@@ -563,11 +591,14 @@ class ConViT3DNeck(BaseModule):
 
         B = x.shape[0]
 
-        # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
-        # cls_tokens = self.cls_token.expand(B, -1, -1)
+        if self.use_patch_embed:
+
+            x = self.patch_embed(x)
     
         if self.use_pos_embed:
             x = x + self.pos_embed
+
+
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):

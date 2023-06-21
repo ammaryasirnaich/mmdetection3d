@@ -227,10 +227,11 @@ model = dict(
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
+                use_patch_embed=False,
                 fp_output_channel = 512, 
                 ),
         
-     bbox_head=dict(
+    bbox_head=dict(
         type='Convit3DHead',
         num_classes=3,
         bbox_coder=dict(
@@ -265,12 +266,13 @@ model = dict(
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
     
-     test_cfg=dict(
+    test_cfg=dict(
         nms_cfg=dict(type='nms', iou_thr=0.1),
         sample_mode='spec',
         score_thr=0.0,
         per_class_proposal=True,
-        max_output_num=100))
+        max_output_num=100)
+        )
 
 
 
