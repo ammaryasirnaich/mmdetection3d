@@ -591,10 +591,11 @@ class ConViT3DNeck(BaseModule):
 
         B = x.shape[0]
 
+        
         if self.use_patch_embed:
-
             x = self.patch_embed(x)
     
+
         if self.use_pos_embed:
             x = x + self.pos_embed
 
