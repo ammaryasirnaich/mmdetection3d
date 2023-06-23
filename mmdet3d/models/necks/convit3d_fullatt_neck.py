@@ -132,7 +132,7 @@ class GPSA(BaseModule):
         B, N, C = x.shape   # batch, num_of_points, features
         # print("shape of x" , x.shape)
         # print("shape of feature", voxel_coord.shape)
-        if not hasattr(self, 'rel_indices') or self.rel_indices.size(0)!=N:
+        if not hasattr(self, 'rel_indices'):   #or self.rel_indices.size(0)!=N:
 
             # self.get_rel_indices(N)
             # self.get_rel_indices_3d(num_patches=N)
