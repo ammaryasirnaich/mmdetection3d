@@ -27,6 +27,7 @@ import numpy as np
 
 
 
+
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
@@ -389,6 +390,9 @@ class PatchEmbed(BaseModule):
         self.voxel_emb = nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=kernel_size // 2)
     
    def forward(self, x):
+        '''
+        x = input shape (B,C,D,H,W) e.g torch.Size([32, 4, 15, 15, 15])
+        '''
         print("shape of input X", x.shape)
         x = self.voxel_emb(x)
         print("shape of voxel_emb", x.shape)
@@ -477,6 +481,7 @@ class ConViT3DNeck(BaseModule):
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
+                bev_output=False,
                 fp_output_channel = 16 # embed_dim, num_classes
 
                 ):
@@ -504,6 +509,7 @@ class ConViT3DNeck(BaseModule):
         self.num_heads=num_heads
         self.use_patch_embed= use_patch_embed
         self.pos_drop = nn.Dropout(p=drop_rate)
+        self.bev_output = bev_output
 
 
         if use_patch_embed:
@@ -627,6 +633,12 @@ class ConViT3DNeck(BaseModule):
         # feat_dict['sa_features']=x
         # feat_dict['sa_indices']=[]
         # x = self.head(x)
+
+        if self.bev_output:
+            print("BEV calling")
+            # bev_pool()
+
+
 
         return feat_dic
     

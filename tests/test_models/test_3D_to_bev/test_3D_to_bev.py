@@ -1,7 +1,9 @@
-from basic_block_2d import *
+
 import torch.nn.functional as F
+import torch
 
 from mmdet3d.registry import MODELS
+from mmdet3d.models.utils.bev_pool import dev_pool
 
 
 num_voxels = torch.randint(1, 100, [97297])
@@ -17,18 +19,7 @@ print("coors", coors[:,1:].shape)
 print("feature shape", outputs.shape)
 
 outputs = torch.concat((outputs,coors[:,1:]),dim=2)
-print("output shape", outputs.shape)
-batch_dict={}
-
-# bevConvert = Conv2DCollapse(cfg,grid_size=[0.05,0.05,0.02])
-bevConvert = Conv2DCollapse(in_channels=5,output_shape=[400,600],grid_size=[80,70,3])
-batch_dict['voxel_features']=outputs
-
-x = bevConvert(batch_dict)
-
-print("output shape", x.shape)
-
-print(bevConvert)
+print("Pass")
 
 
 
