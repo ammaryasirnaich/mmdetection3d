@@ -208,7 +208,7 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='ConViT3DNeck',
+                type='FullConViT3DNeck', # FullConViT3DNeck  ,ConViT3DNeck
                 num_classes=3, 
                 in_chans=1024, #19
                 embed_dim=1024, #19

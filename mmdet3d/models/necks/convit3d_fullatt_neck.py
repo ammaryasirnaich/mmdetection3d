@@ -22,7 +22,6 @@ import numpy as np
 
 
 
-
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
@@ -176,9 +175,11 @@ class GPSA(BaseModule):
             # self.get_rel_indices(N)
             # self.get_rel_indices_3d(num_patches=N)
             # self.get_patch_wise_relative_encoding(voxel_coord)
-            rel_ind = self.embd_3d_encodding(voxel_coord)
-            self.rel_indices = rel_ind
+       
+            self.rel_indices = self.embd_3d_encodding(voxel_coord)
+             
 
+        # print("self.rel_indices",self.rel_indices.shape)
         attn = self.get_attention(x) 
         # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
@@ -205,9 +206,9 @@ class GPSA(BaseModule):
 
         # print("Q Dimension", q.size)
 
-        print("self.rel_indices.shape: ",self.rel_indices.shape)
+        # print("self.rel_indices.shape: ",self.rel_indices.shape)
         
-        pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        # pos_score = self.rel_indices
         
         # print("+ R dimension", pos_score.shape)
         # print("pos_score dimensions", pos_score.shape)
@@ -226,7 +227,7 @@ class GPSA(BaseModule):
         Self-attention Does Not Need O(n2) Memory
         '''
         
-        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        pos_score = self.pos_proj(self.rel_indices).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
         # print("pos_score shape",pos_score.shape)
         # print("shape of v", v.shape)
@@ -294,69 +295,7 @@ class GPSA(BaseModule):
         device = self.qk.weight.device
         self.rel_indices = rel_indices.to(device)
 
-    
-    #Note: To be inspected
-    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
-        '''
-        Arg:
-        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
-
-        Return:
-        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
-        the patch/block containing 1024     
-        '''
-        # start =0
-        # print("shape of input", coord.shape)
-        last_limit = coord.shape[1]
-        # print("last_limit",last_limit)
-      
-        stride = 1024
-   
-        if(stride>last_limit):
-            relative = coord[:, 0:last_limit, None, :] - coord[:, None, 0:last_limit, :]
-            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
-            B,V,P = relative_distance.shape
-            # print("B,V,P",B,V,P)
-            relative_distance = relative_distance.view(B,V,P,1)
-            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            # print("shape of indices",self.rel_indices.shape)  
-
-        else:
-
-            repeat_cycles = int(last_limit/stride)
-            # print("repeat_cycles",repeat_cycles)
-
-            relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
-
-            # print("shape of relative" , relative.shape)
-            
-            leftover = last_limit-(stride*repeat_cycles)
-            # print("remains of points", leftover)
-            
-            if(leftover!=0):
-                relative = relative.repeat(1, repeat_cycles+1, 1, 1)
-                relative = relative[:,:last_limit,:,:]
-                # print("final shape after clipping", relative.shape)
-            else:
-                relative = relative.repeat(-1, repeat_cycles, 1, 1)
-            # print("relative shape",relative.shape)
-            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
-            # print("relative_distance shape",relative_distance.shape)
-            # print("content value before view", relative_distance[1,:4])
-
-            B,V,P = relative_distance.shape
-            relative_distance = relative_distance.view(B,V,P,1)        
-            # print("relative_distance shape",relative_distance.shape)
-
-            # print("content value after view", relative_distance[1,:4,])
-            self.rel_indices = relative.unsqueeze(0)
-            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            # print("dist_rel_indices shape ",self.rel_indices.shape)
-            # print("Pass")
-    
-
-
-        
+     
  
 class MHSA(BaseModule):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
@@ -500,8 +439,8 @@ class FullConViT3DNeck(BaseModule):
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
+                use_patch_embed=False,
                 fp_output_channel = 16 # embed_dim, num_classes
-
                 ):
         
         super().__init__(init_cfg=init_cfg,
@@ -525,6 +464,7 @@ class FullConViT3DNeck(BaseModule):
         self.depth = depth
         self.fp_output_channel=fp_output_channel
         self.num_heads=num_heads
+        self.use_patch_embed = use_patch_embed
 
         self.pos_drop = nn.Dropout(p=drop_rate)
 

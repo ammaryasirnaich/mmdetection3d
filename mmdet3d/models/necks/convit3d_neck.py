@@ -170,7 +170,8 @@ class GPSA(BaseModule):
         # print("Q Dimension", q.size)
 
         # print("self.rel_indices.shape: ",self.rel_indices.shape)
-        pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        # pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        # print("spos_score shape: ",pos_score.shape)
         
         # print("+ R dimension", pos_score.shape)
         # print("pos_score dimensions", pos_score.shape)
@@ -188,7 +189,7 @@ class GPSA(BaseModule):
         Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         Self-attention Does Not Need O(n2) Memory
         '''
-        
+        pos_score = self.rel_indices
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
         # print("pos_score shape",pos_score.shape)
@@ -283,7 +284,7 @@ class GPSA(BaseModule):
             # print("B,V,P",B,V,P)
             relative_distance = relative_distance.view(B,V,P,1)
             self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            # print("shape of indices",self.rel_indices.shape)  
+            print("shape of indices",self.rel_indices.shape)  
 
         else:
 
@@ -315,7 +316,7 @@ class GPSA(BaseModule):
             # print("content value after view", relative_distance[1,:4,])
             self.rel_indices = relative.unsqueeze(0)
             self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            # print("dist_rel_indices shape ",self.rel_indices.shape)
+            print("dist_rel_indices shape ",self.rel_indices.shape)
             # print("Pass")
 
         
@@ -393,9 +394,9 @@ class PatchEmbed(BaseModule):
         '''
         x = input shape (B,C,D,H,W) e.g torch.Size([32, 4, 15, 15, 15])
         '''
-        print("shape of input X", x.shape)
+        # print("shape of input X", x.shape)
         x = self.voxel_emb(x)
-        print("shape of voxel_emb", x.shape)
+        # print("shape of voxel_emb", x.shape)
         return x
 
 
