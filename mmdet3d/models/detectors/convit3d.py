@@ -98,9 +98,6 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
             # Using Vamila PointNet++ as feature Embedding
             fp_xyz = x['sa_xyz'][-1]
             x = self.neck(x,fp_xyz)
-
-
-            # x = self.neck(x)
         return x
     
 

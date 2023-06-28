@@ -91,11 +91,11 @@ class Convit3DHead(SSD3DHead):
 
         aggregated_points = feat_dict['sa_xyz'][-1]
         aggregated_features = feat_dict['sa_features'][-1]
-        # aggregated_indices = feat_dict['sa_indices'][-1]
+        aggregated_indices = feat_dict['sa_indices'][-1]
 
         self.num_candidates = aggregated_points.shape[1]
 
-        return aggregated_points, aggregated_features, feat_dict['raw_points']
+        return aggregated_points, aggregated_features, aggregated_points
     
 
 
@@ -137,6 +137,10 @@ class Convit3DHead(SSD3DHead):
         results['aggregated_features'] = aggregated_features
         # results['aggregated_indices'] = aggregated_indices
         # print("aggregated_features",aggregated_features.shape)
+
+
+        aggregated_features = aggregated_features.permute(0,2,1)
+        # print("features shape", aggregated_features.shape)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(aggregated_features)

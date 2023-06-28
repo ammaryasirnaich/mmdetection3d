@@ -237,10 +237,10 @@ model = dict(
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         pred_layer_cfg=dict(
-            in_channels=1024,    # feature dimention from ConViT3DDecoder
-            shared_conv_channels=(512, 128),   # (512, 128)
-            cls_conv_channels=(128, ),         # (128, ), 
-            reg_conv_channels=(128, ),         # (128, ), 
+            in_channels=512,
+            shared_conv_channels=(512, 128),
+            cls_conv_channels=(128, ),
+            reg_conv_channels=(128, ),
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),

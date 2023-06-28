@@ -358,6 +358,7 @@ class MHSA(BaseModule):
 
         x = self.proj(x)
         x = self.proj_drop(x)
+
         return x
     
 class Block(BaseModule):
@@ -485,10 +486,10 @@ class FullConViT3DNeck(BaseModule):
 
         # Classifier head
         # self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
-        self.head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
+        self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
 
         # trunc_normal_(self.cls_token, std=.02)
-        self.head.apply(self._init_weights)
+        self.transformer_head.apply(self._init_weights)
     
 
     def _init_weights(self, m):
@@ -506,11 +507,11 @@ class FullConViT3DNeck(BaseModule):
         return {'pos_embed', 'cls_token'}
 
     def get_classifier(self):
-        return self.head
+        return self.transformer_head
 
     def reset_classifier(self, num_classes, global_pool=''):
         self.num_classes = num_classes
-        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        self.transformer_head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
 
     def forward_features(self, feat_dic, voxel_coors): # 
@@ -535,6 +536,7 @@ class FullConViT3DNeck(BaseModule):
         # B = xyz.shape[0]
 
         # pos = voxel_coors
+
         # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
         x = feat_dic["sa_features"][-1] # (B,V,P,D)
         # x = x[:,:,:1,:].squeeze(2)#
@@ -561,17 +563,16 @@ class FullConViT3DNeck(BaseModule):
             # print("Output from Block:",u," is of shape", x.shape)
 
         x = self.norm(x)
-        # print("Output after normalization", x.shape)
-
         #update the feature
-        feat_dic["fp_features"] = x
+        x = self.transformer_head(x)
+        feat_dic["sa_features"][-1] = x
         return feat_dic
     
     def forward(self, feat_dic, voxel_coors):
         # print("Input to ConViT Model:")
         # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
         feat_dic = self.forward_features(feat_dic, voxel_coors)
-
+        
         # print(" shape of final output from the attention model", x.shape)
         # feat_dict=[]       
         # feat_dict['sa_xyz']= []
