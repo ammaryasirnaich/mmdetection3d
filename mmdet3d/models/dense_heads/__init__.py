@@ -19,6 +19,7 @@ from .smoke_mono3d_head import SMOKEMono3DHead
 from .ssd_3d_head import SSD3DHead
 from .vote_head import VoteHead
 from .convit3dhead import Convit3DHead
+from .convit3Dheadtest import Convit3DHeadOld
 
 __all__ = [
     'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
@@ -26,5 +27,5 @@ __all__ = [
     'BaseMono3DDenseHead', 'AnchorFreeMono3DHead', 'FCOSMono3DHead',
     'GroupFree3DHead', 'PointRPNHead', 'SMOKEMono3DHead', 'PGDHead',
     'MonoFlexHead', 'Base3DDenseHead', 'FCAF3DHead', 'ImVoxelHead',
-    'Convit3DHead'
+    'Convit3DHead' , 'Convit3DHeadOld'
 ]

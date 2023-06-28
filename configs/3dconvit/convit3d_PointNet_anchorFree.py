@@ -230,17 +230,16 @@ model = dict(
                 use_patch_embed=False,
                 fp_output_channel = 512, 
                 ),
-        
     bbox_head=dict(
-        type='Convit3DHead',
+        type='Convit3DHeadOld',  #Convit3DHeadOld , Convit3DHead
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         pred_layer_cfg=dict(
-            in_channels=512,
-            shared_conv_channels=(512, 128),
-            cls_conv_channels=(128, ),
-            reg_conv_channels=(128, ),
+            in_channels=512,    # feature dimention from ConViT3DDecoder
+            shared_conv_channels=(512, 128),   # (512, 128)
+            cls_conv_channels=(128, ),         # (128, ), 
+            reg_conv_channels=(128, ),         # (128, ), 
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
@@ -258,10 +257,8 @@ model = dict(
         size_res_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         corner_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
-          
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),  
             ),
-
     # model training and testing settings
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
