@@ -41,6 +41,42 @@ def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: b
     return x * random_tensor
 
 
+
+class RelPositionalEncoding3D(nn.Module):
+    def __init__(self, input_dim, max_points):
+        super(RelPositionalEncoding3D, self).__init__()
+        self.input_dim = input_dim
+        self.max_points = max_points
+        
+        self.position_encoding = nn.Embedding(self.max_points, self.input_dim)
+
+    def forward(self, points):
+        '''
+        points: 3D point cloud (B,N,D)
+        return: relevant position encoding cooridnates(3) with pairwise eucliden distance(1) (B,N,N,4) 
+        
+        '''
+        batch_size, num_points, _ = points.size()
+        
+        # Compute relative coordinates
+        relative_coords = points[:, :, None, :] - points[:, None, :, :]
+        
+        # Compute pairwise distances
+        distances = torch.sqrt(torch.sum(relative_coords ** 2, dim=-1))  # Euclidean distance
+        
+        # Compute position encoding
+        position_indices = torch.arange(num_points, device=points.device).unsqueeze(0).expand(batch_size, -1)
+        position_encodings = self.position_encoding(position_indices)
+        
+        # Expand position encodings to match the shape of distances
+        position_encodings = position_encodings.unsqueeze(2).expand(-1, -1, num_points, -1)
+        
+        # Concatenate position encodings with distances
+        encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
+        
+        return encodings
+
+
 class DropPath(BaseModule):
     """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
     """
@@ -105,6 +141,9 @@ class GPSA(BaseModule):
         self.proj_drop = nn.Dropout(proj_drop)
         self.locality_strength = locality_strength
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
+
+        self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
+
         self.apply(self._init_weights)
         if use_local_init:
             self.local_init(locality_strength=locality_strength)
@@ -136,7 +175,9 @@ class GPSA(BaseModule):
 
             # self.get_rel_indices(N)
             # self.get_rel_indices_3d(num_patches=N)
-            self.get_patch_wise_relative_encoding(voxel_coord)
+            # self.get_patch_wise_relative_encoding(voxel_coord)
+            rel_ind = self.embd_3d_encodding(voxel_coord)
+            self.rel_indices = rel_ind
 
         attn = self.get_attention(x) 
         # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -164,7 +205,8 @@ class GPSA(BaseModule):
 
         # print("Q Dimension", q.size)
 
-        # print("self.rel_indices.shape: ",self.rel_indices.shape)
+        print("self.rel_indices.shape: ",self.rel_indices.shape)
+        
         pos_score = self.rel_indices.expand(B, -1, -1,-1)
         
         # print("+ R dimension", pos_score.shape)
@@ -252,7 +294,6 @@ class GPSA(BaseModule):
         device = self.qk.weight.device
         self.rel_indices = rel_indices.to(device)
 
-
     
     #Note: To be inspected
     def get_patch_wise_relative_encoding(self,coord: torch.tensor):
@@ -312,6 +353,8 @@ class GPSA(BaseModule):
             self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
             # print("dist_rel_indices shape ",self.rel_indices.shape)
             # print("Pass")
+    
+
 
         
  
