@@ -90,10 +90,20 @@ class Convit3DHead(SSD3DHead):
         """
 
         aggregated_points = feat_dict['sa_xyz'][-1]
-        aggregated_features = feat_dict['sa_features'][-1]
-        aggregated_indices = feat_dict['sa_indices'][-1]
+        # aggregated_features = feat_dict['sa_features'][-1][:,:512,:]
+        aggregated_features = feat_dict['attend_features']
+
+      
+
+        print("aggregated_features",aggregated_features.shape)
+        print("trans_features",feat_dict['attend_features'].shape)
+
+
+        # aggregated_indices = feat_dict['sa_indices'][-1]
 
         self.num_candidates = aggregated_points.shape[1]
+
+        # return aggregated_points, aggregated_features, feat_dict['raw_points']
 
         return aggregated_points, aggregated_features, aggregated_points
     
@@ -134,13 +144,23 @@ class Convit3DHead(SSD3DHead):
 
  
         results['aggregated_points'] = aggregated_points
+        
+        print("before permute aggregated_features",aggregated_features.shape)
+
+        
+        aggregated_features = aggregated_features.permute(0,2,1)
+        print("after permute aggregated_features",aggregated_features.shape)
+        
+        # aggregated_features = aggregated_features[:,:512,:]
+
         results['aggregated_features'] = aggregated_features
         # results['aggregated_indices'] = aggregated_indices
+        
+        # temp = torch.rand([4,512,64], device=aggregated_features.device)
+        # temp = temp.permute(0,2,1)
+        # print("device",aggregated_features.device)
         # print("aggregated_features",aggregated_features.shape)
-
-
-        aggregated_features = aggregated_features.permute(0,2,1)
-        # print("features shape", aggregated_features.shape)
+        # print("temp",temp.shape)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(aggregated_features)

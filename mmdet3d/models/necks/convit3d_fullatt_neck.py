@@ -157,29 +157,15 @@ class GPSA(BaseModule):
             nn.init.constant_(m.weight, 1.0)
         
     def forward(self, x, voxel_coord):
-        
-        # if x.shape[1]>16000:
-        #     print("Voxel shape", x.shape)
-        #     print("special check on large number of voxels")  
-        #     if hasattr(self, 'rel_indices'): print("self.rel_indices.size(1):",self.rel_indices.size(0))
-        # x : voxel-wise feature (B,V,P,D)
-        # x = x.permute(2,0,1,3).squeeze(0) # taking only one point from each voxel
-        # voxel_coords
-        # rel_pos = pos[:, :, None, :] - pos[:, None, :, :]
+
 
         B, N, C = x.shape   # batch, num_of_points, features
         # print("shape of x" , x.shape)
         # print("shape of feature", voxel_coord.shape)
-        if not hasattr(self, 'rel_indices'):   #or self.rel_indices.size(0)!=N:
-
-            # self.get_rel_indices(N)
-            # self.get_rel_indices_3d(num_patches=N)
+        if not hasattr(self, 'rel_indices'):
             # self.get_patch_wise_relative_encoding(voxel_coord)
-       
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
-             
 
-        # print("self.rel_indices",self.rel_indices.shape)
         attn = self.get_attention(x) 
         # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
@@ -207,8 +193,8 @@ class GPSA(BaseModule):
         # print("Q Dimension", q.size)
 
         # print("self.rel_indices.shape: ",self.rel_indices.shape)
-        
-        # pos_score = self.rel_indices
+        # pos_score = self.rel_indices.expand(B, -1, -1,-1)
+        # print("spos_score shape: ",pos_score.shape)
         
         # print("+ R dimension", pos_score.shape)
         # print("pos_score dimensions", pos_score.shape)
@@ -226,14 +212,14 @@ class GPSA(BaseModule):
         Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         Self-attention Does Not Need O(n2) Memory
         '''
-        
-        pos_score = self.pos_proj(self.rel_indices).permute(0,3,1,2)
+        pos_score = self.rel_indices
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
         # print("pos_score shape",pos_score.shape)
         # print("shape of v", v.shape)
         # print("truncted-shape of v", v[:,:,:pos_score.size(-1),:].shape)
-        pos_score = pos_score @ v[:,:,:pos_score.size(-1),:]
-        # print("pos_score @ V shape",pos_score.shape)
+        pos_score = pos_score @ v
+        print("pos_score @ V shape",pos_score.shape)
 
         # p = q.shape[-2]
         # print("I shape" , q.dtype)
@@ -255,6 +241,67 @@ class GPSA(BaseModule):
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
         return attn
+
+
+       #Note: To be inspected
+    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
+        '''
+        Arg:
+        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
+
+        Return:
+        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
+        the patch/block containing 1024     
+        '''
+        # start =0
+        # print("shape of input", coord.shape)
+        last_limit = coord.shape[1]
+        # print("last_limit",last_limit)
+      
+        stride = 1024
+   
+        if(stride>last_limit):
+            relative = coord[:, 0:last_limit, None, :] - coord[:, None, 0:last_limit, :]
+            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
+            B,V,P = relative_distance.shape
+            # print("B,V,P",B,V,P)
+            relative_distance = relative_distance.view(B,V,P,1)
+            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
+            print("shape of indices",self.rel_indices.shape)  
+
+        else:
+
+            repeat_cycles = int(last_limit/stride)
+            # print("repeat_cycles",repeat_cycles)
+
+            relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
+
+            # print("shape of relative" , relative.shape)
+            
+            leftover = last_limit-(stride*repeat_cycles)
+            # print("remains of points", leftover)
+            
+            if(leftover!=0):
+                relative = relative.repeat(1, repeat_cycles+1, 1, 1)
+                relative = relative[:,:last_limit,:,:]
+                # print("final shape after clipping", relative.shape)
+            else:
+                relative = relative.repeat(-1, repeat_cycles, 1, 1)
+            # print("relative shape",relative.shape)
+            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
+            # print("relative_distance shape",relative_distance.shape)
+            # print("content value before view", relative_distance[1,:4])
+
+            B,V,P = relative_distance.shape
+            relative_distance = relative_distance.view(B,V,P,1)        
+            # print("relative_distance shape",relative_distance.shape)
+
+            # print("content value after view", relative_distance[1,:4,])
+            self.rel_indices = relative.unsqueeze(0)
+            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
+            print("dist_rel_indices shape ",self.rel_indices.shape)
+            # print("Pass")
+
 
     def get_attention_map(self, x, return_map = False):
 
@@ -349,7 +396,8 @@ class MHSA(BaseModule):
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        x = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
+        with torch.backends.cuda.sdp_kernel(enable_math=False):
+            x = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
         x = x.transpose(1, 2).reshape(B, N, C)
         # attn = (q @ k.transpose(-2, -1)) * self.scale
         # attn = attn.softmax(dim=-1)
@@ -514,32 +562,9 @@ class FullConViT3DNeck(BaseModule):
         self.transformer_head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
 
-    def forward_features(self, feat_dic, voxel_coors): # 
-        # self.entry_counter = self.entry_counter+1
-        # print("No of Enteries into backbone:",self.entry_counter)
+    def forward_features(self, feat_dict, voxel_coors): # 
 
-        # x = self.patch_embed(x)
-
-        # embedding using single PointNet
-        # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
-        # x = self.point_embed(x,coors)
-
-        # xyz = point_embeddings["fp_xyz"][-1]  # (B,V*P,3)
-        # features = point_embeddings["fp_features"][-1].permute(0,2,1).contiguous()  # (B,V*P,D)
-        # print("xyz coordinates", xyz.shape)
-        # print("features dimensions", features.shape)
-        # x = torch.cat((xyz,features),dim=2)  # (B,V*P,3+D)
-        # print(" combined values" , x.shape)
-
-        # voxel = point_embeddings["voxels"]
-
-        # B = xyz.shape[0]
-
-        # pos = voxel_coors
-
-        # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
-        x = feat_dic["sa_features"][-1] # (B,V,P,D)
-        # x = x[:,:,:1,:].squeeze(2)#
+        x = feat_dict["sa_features"][-1] # (B,V,P,D)
         x = x.permute(0,2,1)
        
         # print("x feature", x.shape)
@@ -547,40 +572,30 @@ class FullConViT3DNeck(BaseModule):
         # print("Input voxel to Block:", voxel_coors.shape)
 
         B = x.shape[0]
-
-        # x = point_embeddings_dic["voxels"]   #.expand(B,-1,-1,-1)
-        # cls_tokens = self.cls_token.expand(B, -1, -1)
     
         if self.use_pos_embed:
             x = x + self.pos_embed
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
-            # print("No of Block#", u)
-            # if u == self.local_up_to_layer :
-            #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
             # print("Output from Block:",u," is of shape", x.shape)
 
         x = self.norm(x)
+
         #update the feature
         x = self.transformer_head(x)
-        feat_dic["sa_features"][-1] = x
-        return feat_dic
+        feat_dict["attend_features"]= x
+        return feat_dict
     
-    def forward(self, feat_dic, voxel_coors):
+    def forward(self, feat_dict, voxel_coors):
         # print("Input to ConViT Model:")
         # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
-        feat_dic = self.forward_features(feat_dic, voxel_coors)
-        
-        # print(" shape of final output from the attention model", x.shape)
-        # feat_dict=[]       
-        # feat_dict['sa_xyz']= []
-        # feat_dict['sa_features']=x
-        # feat_dict['sa_indices']=[]
-        # x = self.head(x)
+        feat_dict = self.forward_features(feat_dict, voxel_coors)
+        print("attend_features",feat_dict.keys())
+        feat_dict["attend_features"] = torch.rand([4,64,512], device=torch.device('cuda'))
 
-        return feat_dic
+        return feat_dict
     
 
  

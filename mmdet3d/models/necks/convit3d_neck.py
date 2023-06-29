@@ -22,12 +22,6 @@ import numpy as np
 
 
 
-
-
-
-
-
-
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
@@ -535,12 +529,12 @@ class ConViT3DNeck(BaseModule):
 
         # Classifier head
         # self.feature_info = [dict(num_chs=embed_dim, reduction=0, module='head')]
-        self.head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
+        self.trnf_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
 
 
 
         # trunc_normal_(self.cls_token, std=.02)
-        self.head.apply(self._init_weights)
+        self.trnf_head.apply(self._init_weights)
     
 
     def _init_weights(self, m):
@@ -558,40 +552,19 @@ class ConViT3DNeck(BaseModule):
         return {'pos_embed', 'cls_token'}
 
     def get_classifier(self):
-        return self.head
+        return self.trnf_head
 
     def reset_classifier(self, num_classes, global_pool=''):
         self.num_classes = num_classes
-        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        self.trnf_head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
 
     def forward_features(self, feat_dic, voxel_coors): # 
-        # self.entry_counter = self.entry_counter+1
-        # print("No of Enteries into backbone:",self.entry_counter)
-
-        # x = self.patch_embed(x)
-
-        # embedding using single PointNet
-        # Example, Branch   SA(512,0.4,[64,128,256]) , meansing using 512x4 points and using radius 0.4 and 
-        # x = self.point_embed(x,coors)
-
-        # xyz = point_embeddings["fp_xyz"][-1]  # (B,V*P,3)
-        # features = point_embeddings["fp_features"][-1].permute(0,2,1).contiguous()  # (B,V*P,D)
-        # print("xyz coordinates", xyz.shape)
-        # print("features dimensions", features.shape)
-        # x = torch.cat((xyz,features),dim=2)  # (B,V*P,3+D)
-        # print(" combined values" , x.shape)
-
-        # voxel = point_embeddings["voxels"]
-
-        # B = xyz.shape[0]
-
-        # pos = voxel_coors
-        # x = point_embeddings_dic["voxels"]  # (B,V,P,D(xyz(3)+feature(16)))
+  
         x = feat_dic["sa_features"][-1] # (B,V,P,D)
         # x = x[:,:,:1,:].squeeze(2)#
         x = x.permute(0,2,1)
-       
+    
         # print("x feature", x.shape)
         # print("Input feature to Block:", x.shape)
         # print("Input voxel to Block:", voxel_coors.shape)
@@ -610,9 +583,6 @@ class ConViT3DNeck(BaseModule):
         x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
-            # print("No of Block#", u)
-            # if u == self.local_up_to_layer :
-            #     x = torch.cat((cls_tokens, x), dim=1)
             x = blk(x,voxel_coors)
             # print("Output from Block:",u," is of shape", x.shape)
 
@@ -620,7 +590,8 @@ class ConViT3DNeck(BaseModule):
         # print("Output after normalization", x.shape)
 
         #update the feature
-        feat_dic["fp_features"] = x
+        feat_dic["sa_features"][-1] = x
+        
         return feat_dic
     
     def forward(self, feat_dic, voxel_coors):
@@ -633,10 +604,11 @@ class ConViT3DNeck(BaseModule):
         # feat_dict['sa_xyz']= []
         # feat_dict['sa_features']=x
         # feat_dict['sa_indices']=[]
-        # x = self.head(x)
 
-        if self.bev_output:
-            print("BEV calling")
+        feat_dic["sa_features"][-1] = self.head(feat_dic["sa_features"][-1])
+
+        # if self.bev_output:
+        #     print("BEV calling")
             # bev_pool()
 
 
