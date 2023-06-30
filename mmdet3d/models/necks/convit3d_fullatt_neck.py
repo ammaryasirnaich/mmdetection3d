@@ -527,6 +527,7 @@ class FullConViT3DNeck(BaseModule):
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer,
                 use_gpsa=False)
             for i in range(self.depth)])
+        
         self.norm = norm_layer(self.embed_dim)
 
         # Classifier head
@@ -561,7 +562,6 @@ class FullConViT3DNeck(BaseModule):
 
     def forward_features(self, feat_dict, voxel_coors): # 
 
-        x = feat_dict["sa_features"][-1] # (B,V,P,D)
         x = x.permute(0,2,1)
        
         # print("x feature", x.shape)
@@ -577,10 +577,10 @@ class FullConViT3DNeck(BaseModule):
         for u,blk in enumerate(self.blocks):
             x = blk(x,voxel_coors)
             print("Output from Block:",u," is of shape", x.shape)
+            # x = torch.rand([4,64,1024], device=torch.device('cuda'))
             
         
         # print("After x blk shape", x.shape)
-        x = torch.rand([4,64,1024], device=torch.device('cuda'))
 
         x = self.norm(x)
 
@@ -594,8 +594,10 @@ class FullConViT3DNeck(BaseModule):
     def forward(self, feat_dict, voxel_coors):
         # print("Input to ConViT Model:")
         # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
-        x = self.forward_features(feat_dict, voxel_coors)
-        feat_dict["attend_features"] = x
+        sa_feature = feat_dict["sa_features"][-1]
+       
+        sa_feature = self.forward_features(sa_feature, voxel_coors)
+        feat_dict["attend_features"] = sa_feature
         
         print("attend_features",feat_dict.keys())
         print("shape of processed feature",feat_dict["attend_features"].shape,"contains type of attend_features", type(feat_dict["attend_features"]),"on device", feat_dict["attend_features"].device)
