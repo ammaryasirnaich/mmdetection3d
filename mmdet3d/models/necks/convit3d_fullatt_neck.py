@@ -166,15 +166,16 @@ class GPSA(BaseModule):
             # self.get_patch_wise_relative_encoding(voxel_coord)
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
 
-        attn = self.get_attention(x) 
-        # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
-        # print("shape of attention", attn.shape)
-        x = attn.transpose(1, 2).reshape(B, N, C)
-        # print("shape of attention", x.shape)
+        x = self.get_attention(x) 
 
-        x = self.proj(x)
+        x = self.proj(x)   
         x = self.proj_drop(x)
+
+        # print("after pro_drop, x shape", x.shape, "x.type", x.type())
+
+
+
+
         return x
 
     def get_attention(self, x):
@@ -217,9 +218,8 @@ class GPSA(BaseModule):
         pos_score = pos_score.softmax(dim=-1)
         # print("pos_score shape",pos_score.shape)
         # print("shape of v", v.shape)
-        # print("truncted-shape of v", v[:,:,:pos_score.size(-1),:].shape)
         pos_score = pos_score @ v
-        print("pos_score @ V shape",pos_score.shape)
+        # print("pos_score @ V shape",pos_score.shape)
 
         # p = q.shape[-2]
         # print("I shape" , q.dtype)
@@ -228,8 +228,13 @@ class GPSA(BaseModule):
         # attn_qk = F.scaled_dot_product_attention(q,k,l1)
         # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # patch_score = F.scaled_dot_product_attention(attn_qk,l1*torch.sqrt(attn_qk.size(-1)),v)
+
+        # print("shape of q",q.type())
+        # print("shape of k",k.type())
+        # print("shape of v",v.type())
         
         patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
+        patch_score = patch_score.softmax(dim=-1)
 
         gating = self.gating_param.view(1,-1,1,1)
 
@@ -240,67 +245,58 @@ class GPSA(BaseModule):
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
+        attn = attn.transpose(1, 2).reshape(B, N, C)
         return attn
 
 
        #Note: To be inspected
-    def get_patch_wise_relative_encoding(self,coord: torch.tensor):
-        '''
-        Arg:
-        coord (tensor): (V,D) shape tensor containing the voxel cooridnates 
+    def get_attention_test(self, x):
+        
+        B, N, C = x.shape
+        
+        q = torch.rand(4, 4, 64, 256, dtype=torch.float32, device="cuda")
+        k = torch.rand(4, 4, 64, 256, dtype=torch.float32, device="cuda")
+        v = torch.rand(4, 4, 64, 256, dtype=torch.float32, device="cuda")
 
-        Return:
-        rel_indices (): (V,1024,D) shape tensor containing relative indices for each voxel relative to
-        the patch/block containing 1024     
-        '''
-        # start =0
-        # print("shape of input", coord.shape)
-        last_limit = coord.shape[1]
-        # print("last_limit",last_limit)
-      
-        stride = 1024
-   
-        if(stride>last_limit):
-            relative = coord[:, 0:last_limit, None, :] - coord[:, None, 0:last_limit, :]
-            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
-            B,V,P = relative_distance.shape
-            # print("B,V,P",B,V,P)
-            relative_distance = relative_distance.view(B,V,P,1)
-            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            print("shape of indices",self.rel_indices.shape)  
 
-        else:
+        pos_score = self.rel_indices
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        pos_score = pos_score.softmax(dim=-1)
 
-            repeat_cycles = int(last_limit/stride)
-            # print("repeat_cycles",repeat_cycles)
 
-            relative = coord[:, 0:stride, None, :] - coord[:, None, 0:stride, :]
+        # pos_score = pos_score @ v
+        # print("pos_score @ V shape",pos_score.shape)
+        
+        # patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
+        
 
-            # print("shape of relative" , relative.shape)
-            
-            leftover = last_limit-(stride*repeat_cycles)
-            # print("remains of points", leftover)
-            
-            if(leftover!=0):
-                relative = relative.repeat(1, repeat_cycles+1, 1, 1)
-                relative = relative[:,:last_limit,:,:]
-                # print("final shape after clipping", relative.shape)
-            else:
-                relative = relative.repeat(-1, repeat_cycles, 1, 1)
-            # print("relative shape",relative.shape)
-            relative_distance = relative.sum(dim=-1, dtype = torch.float32)
-            # print("relative_distance shape",relative_distance.shape)
-            # print("content value before view", relative_distance[1,:4])
+          # traditional attention method
+        patch_score = (q @ k.transpose(-2, -1)) * self.scale
 
-            B,V,P = relative_distance.shape
-            relative_distance = relative_distance.view(B,V,P,1)        
-            # print("relative_distance shape",relative_distance.shape)
 
-            # print("content value after view", relative_distance[1,:4,])
-            self.rel_indices = relative.unsqueeze(0)
-            self.rel_indices  = torch.concat([relative,relative_distance],dim=3)
-            print("dist_rel_indices shape ",self.rel_indices.shape)
-            # print("Pass")
+        patch_score = patch_score.softmax(dim=-1)
+        pos_score = pos_score.softmax(dim=-1)
+        
+        gating = self.gating_param.view(1,-1,1,1)
+
+        # print("patch_score shape ", patch_score.shape)
+        # print("pos_score shape ", pos_score.shape)
+        # print("shape of gating", gating.shape)
+
+        attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
+        attn /= attn.sum(dim=-1).unsqueeze(-1)
+        attn = self.attn_drop(attn)
+
+
+        attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
+
+        print("Intern attention shape", attn.shape, "type",attn.type())
+
+
+        attn = torch.rand(4, 64, 1024, dtype=torch.float32, device="cuda")
+
+        return attn
+
 
 
     def get_attention_map(self, x, return_map = False):
@@ -399,6 +395,7 @@ class MHSA(BaseModule):
         with torch.backends.cuda.sdp_kernel(enable_math=False):
             x = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
         x = x.transpose(1, 2).reshape(B, N, C)
+      
         # attn = (q @ k.transpose(-2, -1)) * self.scale
         # attn = attn.softmax(dim=-1)
         # attn = self.attn_drop(attn)
@@ -579,21 +576,32 @@ class FullConViT3DNeck(BaseModule):
 
         for u,blk in enumerate(self.blocks):
             x = blk(x,voxel_coors)
-            # print("Output from Block:",u," is of shape", x.shape)
+            print("Output from Block:",u," is of shape", x.shape)
+            
+        
+        # print("After x blk shape", x.shape)
+        x = torch.rand([4,64,1024], device=torch.device('cuda'))
 
         x = self.norm(x)
 
+        # print("printing of x after blk iteration", x.shape)
+        # x = torch.rand(4, 64, 1024, dtype=torch.float32, device="cuda")
+
         #update the feature
         x = self.transformer_head(x)
-        feat_dict["attend_features"]= x
-        return feat_dict
+        return x
     
     def forward(self, feat_dict, voxel_coors):
         # print("Input to ConViT Model:")
         # print("Voxel Feature of shape from pipline:",x["fp_features"].shape)
-        feat_dict = self.forward_features(feat_dict, voxel_coors)
+        x = self.forward_features(feat_dict, voxel_coors)
+        feat_dict["attend_features"] = x
+        
         print("attend_features",feat_dict.keys())
-        feat_dict["attend_features"] = torch.rand([4,64,512], device=torch.device('cuda'))
+        print("shape of processed feature",feat_dict["attend_features"].shape,"contains type of attend_features", type(feat_dict["attend_features"]),"on device", feat_dict["attend_features"].device)
+        
+        # feat_dict["attend_features"] = torch.rand([4,64,512], device=torch.device('cuda'))
+        # print("shape of default feature",feat_dict["attend_features"].shape,"required type attend_features", type(feat_dict["attend_features"]),"on device", feat_dict["attend_features"].device)
 
         return feat_dict
     

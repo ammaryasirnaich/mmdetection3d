@@ -95,8 +95,8 @@ class Convit3DHead(SSD3DHead):
 
       
 
-        print("aggregated_features",aggregated_features.shape)
-        print("trans_features",feat_dict['attend_features'].shape)
+        # print("aggregated_features",aggregated_features.shape)
+        # print("trans_features",feat_dict['attend_features'].shape)
 
 
         # aggregated_indices = feat_dict['sa_indices'][-1]
@@ -145,11 +145,11 @@ class Convit3DHead(SSD3DHead):
  
         results['aggregated_points'] = aggregated_points
         
-        print("before permute aggregated_features",aggregated_features.shape)
+        # print("before permute aggregated_features",aggregated_features.shape)
 
         
         aggregated_features = aggregated_features.permute(0,2,1)
-        print("after permute aggregated_features",aggregated_features.shape)
+        # print("after permute aggregated_features",aggregated_features.shape)
         
         # aggregated_features = aggregated_features[:,:512,:]
 
