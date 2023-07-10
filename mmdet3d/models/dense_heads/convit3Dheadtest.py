@@ -91,11 +91,12 @@ class Convit3DHeadOld(SSD3DHead):
 
         aggregated_points = feat_dict['sa_xyz'][-1]
         aggregated_features = feat_dict['sa_features'][-1]
-        # aggregated_indices = feat_dict['sa_indices'][-1]
+        aggregated_indices = feat_dict['sa_indices'][-1]
+        seeds = feat_dict['raw_points']
 
         self.num_candidates = aggregated_points.shape[1]
 
-        return aggregated_points, aggregated_features, feat_dict['raw_points']
+        return aggregated_points, aggregated_features, aggregated_indices
     
 
 
