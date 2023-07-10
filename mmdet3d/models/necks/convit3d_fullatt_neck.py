@@ -234,7 +234,8 @@ class GPSA(BaseModule):
         # print("shape of v",v.type())
         
         patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
-        patch_score = patch_score.softmax(dim=-1)
+        
+        # patch_score = patch_score.softmax(dim=-1)
 
         gating = self.gating_param.view(1,-1,1,1)
 
@@ -392,9 +393,9 @@ class MHSA(BaseModule):
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        with torch.backends.cuda.sdp_kernel(enable_math=False):
-            x = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
-        x = x.transpose(1, 2).reshape(B, N, C)
+        
+        attn = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
+        attn = attn.transpose(1, 2).reshape(B, N, C)
       
         # attn = (q @ k.transpose(-2, -1)) * self.scale
         # attn = attn.softmax(dim=-1)
@@ -559,7 +560,7 @@ class FullConViT3DNeck(BaseModule):
         self.transformer_head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
 
-    def forward_features(self, feat_dic, voxel_coors): # 
+    def forward_features(self, x, voxel_coors): # 
         # self.entry_counter = self.entry_counter+1
         # print("No of Enteries into backbone:",self.entry_counter)
 
@@ -615,11 +616,11 @@ class FullConViT3DNeck(BaseModule):
         sa_feature = feat_dict["sa_features"][-1]
        
         sa_feature = self.forward_features(sa_feature, voxel_coors)
-        feat_dict["attend_features"] = sa_feature
-        
-        print("attend_features",feat_dict.keys())
-        print("shape of processed feature",feat_dict["attend_features"].shape,"contains type of attend_features", type(feat_dict["attend_features"]),"on device", feat_dict["attend_features"].device)
-        
+        feat_dict["sa_features"][-1] = sa_feature
+
+        feat_dict["sa_features"][-1] = feat_dict["sa_features"][-1].permute(0,2,1)
+        print("sa_features shape", feat_dict["sa_features"][-1].shape)
+        print("sa_xyz shape", feat_dict["sa_xyz"][-1].shape)
         # feat_dict["attend_features"] = torch.rand([4,64,512], device=torch.device('cuda'))
         # print("shape of default feature",feat_dict["attend_features"].shape,"required type attend_features", type(feat_dict["attend_features"]),"on device", feat_dict["attend_features"].device)
 
