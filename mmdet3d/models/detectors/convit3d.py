@@ -94,6 +94,7 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
         
         x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
 
+
         if self.with_neck:
             # Using Vamila PointNet++ as feature Embedding
             fp_xyz = x['sa_xyz'][-1]
