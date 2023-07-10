@@ -22,7 +22,7 @@ from .ssd_3d_head import SSD3DHead
 
 # Convit3DHead
 @MODELS.register_module()
-class Convit3DHead(SSD3DHead):
+class Convit3DHeadOld(SSD3DHead):
     r"""Bbox head of `3DSSD <https://arxiv.org/abs/2002.10187>`_.
 
     Args:
@@ -90,22 +90,12 @@ class Convit3DHead(SSD3DHead):
         """
 
         aggregated_points = feat_dict['sa_xyz'][-1]
-        # aggregated_features = feat_dict['sa_features'][-1][:,:512,:]
-        aggregated_features = feat_dict['attend_features']
-
-      
-
-        # print("aggregated_features",aggregated_features.shape)
-        # print("trans_features",feat_dict['attend_features'].shape)
-
-
+        aggregated_features = feat_dict['sa_features'][-1]
         # aggregated_indices = feat_dict['sa_indices'][-1]
 
         self.num_candidates = aggregated_points.shape[1]
 
-        # return aggregated_points, aggregated_features, feat_dict['raw_points']
-
-        return aggregated_points, aggregated_features, aggregated_points
+        return aggregated_points, aggregated_features, feat_dict['raw_points']
     
 
 
@@ -144,23 +134,12 @@ class Convit3DHead(SSD3DHead):
 
  
         results['aggregated_points'] = aggregated_points
-        
-        # print("before permute aggregated_features",aggregated_features.shape)
-
-        
-        aggregated_features = aggregated_features.permute(0,2,1)
-        # print("after permute aggregated_features",aggregated_features.shape)
-        
-        # aggregated_features = aggregated_features[:,:512,:]
-
         results['aggregated_features'] = aggregated_features
         # results['aggregated_indices'] = aggregated_indices
-        
-        # temp = torch.rand([4,512,64], device=aggregated_features.device)
-        # temp = temp.permute(0,2,1)
-        # print("device",aggregated_features.device)
-        # print("aggregated_features",aggregated_features.shape)
-        # print("temp",temp.shape)
+        print("aggregated_features",aggregated_features.shape)
+
+
+        aggregated_features = aggregated_features.permute(0,2,1)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(aggregated_features)
@@ -309,4 +288,3 @@ class Convit3DHead(SSD3DHead):
                 dir_class_targets, dir_res_targets, mask_targets,
                 centerness_targets, corner3d_targets, vote_mask, positive_mask,
                 negative_mask)
-

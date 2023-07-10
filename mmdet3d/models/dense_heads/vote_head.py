@@ -112,6 +112,8 @@ class VoteHead(BaseModule):
             **pred_layer_cfg,
             num_cls_out_channels=self._get_cls_out_channels(),
             num_reg_out_channels=self._get_reg_out_channels())
+        
+        
 
     @property
     def sample_mode(self):
@@ -379,6 +381,10 @@ class VoteHead(BaseModule):
         results['aggregated_points'] = aggregated_points
         results['aggregated_features'] = features
         results['aggregated_indices'] = aggregated_indices
+
+
+        
+        print("features shape", features.shape)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(features)

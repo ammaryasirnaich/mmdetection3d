@@ -113,6 +113,7 @@ class BaseConvBboxHead(BaseModule):
             Tensor: Regression predictions
         """
         # shared part
+
         if len(self.shared_conv_channels) > 0:
             x = self.shared_convs(feats)
 

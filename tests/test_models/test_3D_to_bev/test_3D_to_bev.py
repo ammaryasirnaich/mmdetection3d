@@ -5,7 +5,31 @@ import matplotlib.pyplot as plt
 plt.matplotlib.use('TkAgg')
 from numba import njit
 import numpy as np
+import matplotlib.pyplot as plt
+plt.matplotlib.use('TkAgg')
+from numba import njit , jit
+import numba as nb
+import numpy as np
 from mmdet3d.registry import MODELS
+
+
+
+
+@njit(parallel=True)
+def pointcloud_to_bev(point_cloud, resolution, range_x, range_y, output_shape):
+    num_pixels_x = output_shape[1]
+    num_pixels_y = output_shape[0]
+    bev = np.zeros((num_pixels_y, num_pixels_x), dtype=np.float32)
+
+    for i in nb.prange(point_cloud.shape[0]):
+        x, y, z, intensity = point_cloud[i]
+        if range_x[0] <= x <= range_x[1] and range_y[0] <= y <= range_y[1]:
+            x_idx = int((x - range_x[0]) / resolution)
+            y_idx = int((y - range_y[0]) / resolution)
+            if 0 <= x_idx < num_pixels_x and 0 <= y_idx < num_pixels_y:
+                bev[y_idx, x_idx] = intensity
+
+    return bev
 
 
 
@@ -39,6 +63,12 @@ def kitti_to_bev(voxel_data, voxel_size, output_shape):
                 birdseye_view[bev_y, bev_x] = intensity
 
     return birdseye_view
+# Bird's eye view parameters
+resolution = 0.1  # Resolution of each cell in the BEV
+range_x = (0, 70)  # Range of X coordinates for the BEV
+range_y = (-40, 40)  # Range of Y coordinates for the BEV
+output_shape = (600, 800)  # Output shape of the BEV (y,x)
+
 
 
 # Example usage
@@ -58,37 +88,26 @@ print("element", voxel_data[1,:])
 
 voxel_size = 0.1  # Voxel size in meters
 output_shape = (100, 100)  # Output BEV shape in pixels (width, height)
+data = torch.load('pointclouds.pt',map_location=torch.device('cpu'))
+print("data", data.shape)
+b,v,d = data.shape
+point_cloud =   data.reshape(b*v,d).numpy()
 
-birdseye_view = kitti_to_bev(voxel_data, voxel_size, output_shape)
-print("birdseye_view",birdseye_view.shape)
+# Convert point cloud to BEV
+bev = pointcloud_to_bev(point_cloud, resolution, range_x, range_y, output_shape)
 
-# Display the bird's-eye view
-plt.imshow(birdseye_view, cmap='gray')
+# Plot the bird's eye view
+plt.imshow(bev, cmap='jet', extent=[range_x[0], range_x[1], range_y[0], range_y[1]], origin='lower')
+plt.colorbar()
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Bird\'s Eye View')
 plt.show()
+
+print("Pause")
+
+outputs = torch.concat((outputs,coors[:,1:]),dim=2)
 print("Pass")
-
-
-
-
-
-
-
-
-
-# num_voxels = torch.randint(1, 100, [97297])
-# features = torch.rand([97297, 20, 5])
-# coors = torch.randint(0, 100, [97297, 4])
-
-
-# hard_simple_VFE_cfg = dict(type='HardSimpleVFE', num_features=5)
-# hard_simple_VFE = MODELS.build(hard_simple_VFE_cfg)
-# outputs = hard_simple_VFE(features, num_voxels, None)
-
-# print("coors", coors[:,1:].shape)
-# print("feature shape", outputs.shape)
-
-# outputs = torch.concat((outputs,coors[:,1:]),dim=2)
-# print("Pass")
 
 
 
