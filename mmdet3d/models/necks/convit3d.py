@@ -130,6 +130,9 @@ class GPSA(nn.Module):
         patch_score = patch_score.softmax(dim=-1)
         pos_score = pos_score.softmax(dim=-1)
 
+        print("shape of pos_score", pos_score.shape)
+        print("shape of patch_score", patch_score.shape)
+
         gating = self.gating_param.view(1,-1,1,1)
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         attn /= attn.sum(dim=-1).unsqueeze(-1)
@@ -248,7 +251,7 @@ class Block(nn.Module):
         return x
     
 @MODELS.register_module()
-class VisionTransformer(BaseModule):
+class VisionTransformer(nn.Module):
     """ 
     FullConViT3DNeck: Using End-to-End Transformers paradigam which behaves also as convolution for early layers and fully attention at later layers
     It uses full attention between query,key and value while using relative positional encoding
@@ -306,7 +309,7 @@ class VisionTransformer(BaseModule):
                 use_patch_embed=False,
                 fp_output_channel = 16 # embed_dim, num_classes
                 ):
-        super(VisionTransformer,self).__init__(init_cfg=init_cfg)
+        super(VisionTransformer,self).__init__()
         self.num_classes = num_classes
         self.local_up_to_layer = local_up_to_layer
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
@@ -317,27 +320,9 @@ class VisionTransformer(BaseModule):
         self.fp_output_channel=fp_output_channel
         self.num_heads=num_heads
         self.use_patch_embed = use_patch_embed
-        
-
-        # if hybrid_backbone is not None:
-        #     self.patch_embed = HybridEmbed(
-        #         hybrid_backbone, img_size=img_size, in_chans=in_chans, embed_dim=embed_dim)
-        # else:
-        #     self.patch_embed = PatchEmbed(
-        #         img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
-        
-        # num_patches = self.patch_embed.num_patches
-        
-        # self.num_patches = num_patches
-        
-        
+              
         self.pos_drop = nn.Dropout(p=drop_rate)
 
-        # if self.use_pos_embed:
-        #     self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
-        #     trunc_normal_(self.pos_embed, std=.02)
-
-        # dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         
         self.blocks = nn.ModuleList([
             Block(
@@ -355,7 +340,6 @@ class VisionTransformer(BaseModule):
 
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
-
         self.transformer_head .apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -373,7 +357,7 @@ class VisionTransformer(BaseModule):
 
     def forward_features(self, x, voxel_coors):
         B = x.shape[0]
-        x = x.permute(0,2,1)
+        # x = x.permute(0,2,1)
 
         x = self.pos_drop(x)
 
@@ -381,22 +365,24 @@ class VisionTransformer(BaseModule):
             x = blk(x,voxel_coors)
 
         x = self.norm(x)
-        
-        #pass through transformer head
-        x = self.transformer_head(x)
-        
+
         return x
 
     def forward(self, feat_dict, voxel_coors):
         x = feat_dict["sa_features"][-1]
-        x = self.forward_features(x, voxel_coors)
+        attend= self.forward_features(x, voxel_coors)
+
+        print("output shape from forward_features",attend.shape)
+
+        #pass through transformer head
+        attend = self.transformer_head(attend)
         
         # create new feature 
-        feat_dict["tranformer_features"] = x
+        feat_dict["tranformer_features"] = attend
         
-        print(" tensor output shape from Transformer neck")
-        print("sa_features shape", feat_dict["tranformer_features"].shape)
-        print("sa_xyz shape", feat_dict["sa_xyz"][-1].shape)
+        # print(" tensor output shape from Transformer neck")
+        # print("sa_features shape", feat_dict["tranformer_features"].shape)
+        # print("sa_xyz shape", feat_dict["sa_xyz"][-1].shape)
         
         return feat_dict
     

@@ -38,27 +38,6 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
             test_cfg=test_cfg,
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
-
-    # def __init__(self,
-    #              voxel_encoder: ConfigType,
-    #              middle_encoder: ConfigType,
-    #              backbone: dict,
-    #              neck: Optional[dict] = None,
-    #              rpn_head: Optional[dict] = None,
-    #              roi_head: Optional[dict] = None,
-    #              train_cfg: Optional[dict] = None,
-    #              test_cfg: Optional[dict] = None,
-    #              init_cfg: Optional[dict] = None,
-    #              data_preprocessor: Optional[dict] = None) -> Optional:
-    #     super(PointRCNN, self).__init__(
-    #         backbone=backbone,
-    #         neck=neck,
-    #         rpn_head=rpn_head,
-    #         roi_head=roi_head,
-    #         train_cfg=train_cfg,
-    #         test_cfg=test_cfg,
-    #         init_cfg=init_cfg,
-    #         data_preprocessor=data_preprocessor)
         
         self.voxel_encoder = MODELS.build(voxel_encoder)
         
@@ -79,24 +58,15 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
         
         batch_size = voxel_dict['coors'][-1, 0].item() + 1       
         voxel_features = voxel_features.expand(batch_size,-1,-1)  #(B,V,D)
-        
-        # print("voxel_features", voxel_features.shape)
-        
-        '''
-        Using below middle encoder for PointNet varient
-
-        x = self.middle_encoder(voxel_dict['voxels'],voxel_features[:,:,:3]) # dic[voxels = voxel_feature] (B,V,P,D)       
-        x = self.backbone(x,voxel_dict['coors'][:,1:])
-
-        '''
-            
+                    
         x = self.backbone(voxel_features)
+
+        print("feature shape", x['sa_features'][-1].shape)
         
         x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
 
 
         if self.with_neck:
-            # Using Vamila PointNet++ as feature Embedding
             fp_xyz = x['sa_xyz'][-1]
             x = self.neck(x,fp_xyz)
         return x

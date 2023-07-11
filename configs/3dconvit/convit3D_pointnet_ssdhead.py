@@ -174,7 +174,7 @@ voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # voxel_size = [0.05, 0.05, 0.2]
 
 model = dict(
-    type='ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
+    type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
@@ -185,21 +185,18 @@ model = dict(
             max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE 
     middle_encoder = None,
-    backbone=dict(
+     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 1024, 1024, 1024),
-        radii=((0.1, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 4.0)),
-        num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
-        sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
-                                                                    128)),
-                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
-                                                          (256, 384, 512))),
-        fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (-1), (-1)),
-        aggregation_channels=(None, None, None, None),
-        dilated_group=(False, False, False, False),
-        out_indices=(0, 1, 2, 3),
+        num_points=(4096, 512, (256, 256)),
+        radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
+        num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
+        sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
+                     ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
+                     ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
+        aggregation_channels=(64, 128, 256),
+        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+        fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
             type='PointSAModuleMSG',
@@ -210,8 +207,8 @@ model = dict(
     neck =  dict(
                 type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
                 num_classes=3, 
-                in_chans=1024, #19
-                embed_dim=1024, #19
+                in_chans=512, #1024
+                embed_dim=512, #1024
                 depth = 6, #  Depths Transformer stage. Default 12
                 num_heads=4 ,  # 12
                 mlp_ratio=4,
@@ -230,6 +227,7 @@ model = dict(
                 use_patch_embed=False,
                 fp_output_channel = 256, 
                 ),  
+
    bbox_head=dict(
         type='TransHead',
         num_classes=3,
