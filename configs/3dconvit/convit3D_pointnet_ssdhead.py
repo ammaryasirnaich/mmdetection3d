@@ -208,7 +208,7 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='FullConViT3DNeck',    # FullConViT3DNeck  ,ConViT3DNeck
+                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
                 num_classes=3, 
                 in_chans=1024, #19
                 embed_dim=1024, #19
@@ -231,7 +231,7 @@ model = dict(
                 fp_output_channel = 256, 
                 ),  
    bbox_head=dict(
-        type='SSD3DHead',
+        type='TransHead',
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
