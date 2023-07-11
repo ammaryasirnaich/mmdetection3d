@@ -76,7 +76,7 @@ class RelPositionalEncoding3D(nn.Module):
         return encodings
 
 
-class DropPath(BaseModule):
+class DropPath(nn.Module):
     """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
     """
     def __init__(self, drop_prob: float = 0., scale_by_keep: bool = True):
@@ -91,7 +91,7 @@ class DropPath(BaseModule):
         return f'drop_prob={round(self.drop_prob,3):0.3f}'
 
 
-class Mlp(BaseModule):
+class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
         out_features = out_features or in_features
@@ -100,7 +100,7 @@ class Mlp(BaseModule):
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -120,7 +120,7 @@ class Mlp(BaseModule):
         return x
 
 
-class GPSA(BaseModule):
+class GPSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.,
                  locality_strength=1., use_local_init=True):
         super().__init__()
@@ -143,7 +143,7 @@ class GPSA(BaseModule):
 
         self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
 
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
         if use_local_init:
             self.local_init(locality_strength=locality_strength)
 
@@ -299,7 +299,6 @@ class GPSA(BaseModule):
         return attn
 
 
-
     def get_attention_map(self, x, return_map = False):
 
         attn_map = self.get_attention(x).mean(0) # average over batch
@@ -341,7 +340,7 @@ class GPSA(BaseModule):
 
      
  
-class MHSA(BaseModule):
+class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
         self.num_heads = num_heads
@@ -353,7 +352,7 @@ class MHSA(BaseModule):
         self.attn_drop = nn.Dropout(self.drop_attn)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -406,7 +405,7 @@ class MHSA(BaseModule):
         attn = self.proj_drop(attn)
         return attn
     
-class Block(BaseModule):
+class Block(nn.Module):
 
     def __init__(self, dim, num_heads,  mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, use_gpsa=True, **kwargs):
@@ -535,7 +534,7 @@ class FullConViT3DNeck(BaseModule):
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
 
         # trunc_normal_(self.cls_token, std=.02)
-        self.transformer_head.apply(self._init_weights)
+        # self.transformer_head.apply(self._init_weights)
     
 
     def _init_weights(self, m):
