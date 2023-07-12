@@ -110,6 +110,10 @@ class GPSA(nn.Module):
         
     def forward(self,  x, voxel_coord):
         B, N, C = x.shape
+
+        print("shape of x", x.shape)
+        print(" shape of voxel", voxel_coord.shape)
+     
         if not hasattr(self, 'rel_indices'):
             # self.get_patch_wise_relative_encoding(voxel_coord)
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
@@ -122,10 +126,12 @@ class GPSA(nn.Module):
         return x
 
     def get_attention(self, x):
-        B, N, C = x.shape        
+        B, N, C = x.shape 
+        val =  C // self.num_heads       
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k = qk[0], qk[1]
         pos_score = self.rel_indices
+        print("shape of pos_score", pos_score.shape)
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
         patch_score = (q @ k.transpose(-2, -1)) * self.scale
         patch_score = patch_score.softmax(dim=-1)
@@ -219,6 +225,9 @@ class MHSA(nn.Module):
             
     def forward(self,  x, _ ):
         B, N, C = x.shape
+
+        print("C // self.num_heads",C // self.num_heads)
+
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
@@ -360,9 +369,13 @@ class VisionTransformer(nn.Module):
 
     def forward_features(self, x, voxel_coors):
         B = x.shape[0]
-        # x = x.permute(0,2,1)
+        x = x.permute(0,2,1)
 
         x = self.pos_drop(x)
+
+
+        print("shape of x", x.shape)
+        print("shape of vox coo",voxel_coors.shape )
 
         for u,blk in enumerate(self.blocks):
             x = blk(x,voxel_coors)

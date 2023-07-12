@@ -90,7 +90,7 @@ class Convit3DHead(SSD3DHead):
         """
 
         aggregated_points = feat_dict['sa_xyz'][-1]
-        aggregated_features = feat_dict['attend_features']
+        aggregated_features = feat_dict["sa_features"][-1].permute(0,2,1)
         aggregated_indices = feat_dict['sa_indices'][-1]
 
         self.num_candidates = aggregated_points.shape[1]
@@ -349,7 +349,10 @@ class Convit3DHead(SSD3DHead):
         
         results = dict(aggregated_features=aggregated_features)
         
-        # results['aggregated_indices'] = aggregated_indices
+        results['aggregated_indices'] = aggregated_indices
+        results['aggregated_points'] = aggregated_points
+        results['seed_points'] = aggregated_points
+       
         
         # temp = torch.rand([4,512,64], device=aggregated_features.device)
         # temp = temp.permute(0,2,1)
