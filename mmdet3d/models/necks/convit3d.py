@@ -94,7 +94,8 @@ class GPSA(nn.Module):
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
         self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
         
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
+        
         if use_local_init:
             self.local_init(locality_strength=locality_strength)
 
@@ -180,7 +181,8 @@ class MHSA(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
-        self.apply(self._init_weights)
+        
+        # self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -340,7 +342,8 @@ class VisionTransformer(nn.Module):
 
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
-        self.transformer_head .apply(self._init_weights)
+       
+        # self.transformer_head .apply(self._init_weights)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
