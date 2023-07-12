@@ -81,37 +81,23 @@ class RelPositionalEncoding3D(nn.Module):
         super(RelPositionalEncoding3D, self).__init__()
         self.input_dim = input_dim
         self.max_points = max_points
-        self.position_encoding = nn.Parameter(torch.zeros(self.max_points, self.input_dim))
+
+        # self.position_encodings = nn.Parameter(torch.randn(max_points, input_dim))
 
     def forward(self, points):
-        '''
-        points: 3D point cloud (B,N,D)
-        return: relevant position encoding cooridnates(3) with pairwise eucliden distance(1) (B,N,N,4) 
         
-        '''
         batch_size, num_points, _ = points.size()
-        
-        # Compute relative coordinates
-        relative_coords = points[:, :, None, :] - points[:, None, :, :]
-        
-        # Compute pairwise distances
-        distances = torch.sqrt(torch.sum(relative_coords ** 2, dim=-1))  # Euclidean distance
-        
-        # Compute position encoding
-        position_indices = torch.arange(num_points, device=points.device).unsqueeze(0).expand(batch_size, -1)
-        
-        position_encodings = self.position_encoding[position_indices.view(-1)]
-        print("position_encodings", position_encodings.shape)
-        
-        
-        # Expand position encodings to match the shape of distances
-        position_encodings = position_encodings.unsqueeze(2).expand(-1, -1, num_points, -1)
-        
-        # Concatenate position encodings with distances
-        encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
-        self.register_buffer("encodings", encodings)   
-        return encodings
+       # Compute relative positions
+        points_1 = points.unsqueeze(1).expand(-1, num_points, -1, -1)
+        points_2 = points.unsqueeze(2).expand(-1, -1, num_points, -1)
+        positions = points_1 - points_2
 
+        # Compute pairwise distances
+        distances = torch.norm(positions, dim=-1)
+
+        # Concatenate positions and distances
+        encodings = torch.cat([positions, distances.unsqueeze(-1)], dim=-1)
+        return encodings
 
 
 class GPSA(nn.Module):
@@ -133,10 +119,7 @@ class GPSA(nn.Module):
         self.locality_strength = locality_strength
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
         self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
-
-
-        
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
         
         if use_local_init:
             self.local_init(locality_strength=locality_strength)
@@ -232,8 +215,7 @@ class MHSA(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
-        
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -395,7 +377,7 @@ class VisionTransformer(nn.Module):
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
        
-        # self.transformer_head .apply(self._init_weights)
+        self.transformer_head .apply(self._init_weights)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -417,8 +399,8 @@ class VisionTransformer(nn.Module):
         x = self.pos_drop(x)
 
 
-        print("shape of x", x.shape)
-        print("shape of vox coo",voxel_coors.shape )
+        # print("shape of x", x.shape)
+        # print("shape of vox coo",voxel_coors.shape )
 
         for u,blk in enumerate(self.blocks):
             x = blk(x,voxel_coors)
@@ -431,7 +413,7 @@ class VisionTransformer(nn.Module):
         x = feat_dict["sa_features"][-1]
         attend= self.forward_features(x, voxel_coors)
 
-        print("output shape from forward_features",attend.shape)
+        # print("output shape from forward_features",attend.shape)
 
         #pass through transformer head
         attend = self.transformer_head(attend)

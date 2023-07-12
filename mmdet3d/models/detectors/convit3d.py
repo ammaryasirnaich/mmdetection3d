@@ -61,7 +61,7 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
                     
         x = self.backbone(voxel_features)
 
-        print("feature shape", x['sa_features'][-1].shape)
+        # print("feature shape", x['sa_features'][-1].shape)
         
         x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
 

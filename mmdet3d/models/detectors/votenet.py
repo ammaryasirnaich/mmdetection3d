@@ -65,8 +65,8 @@ class VoteNet(SingleStage3DDetector):
         feat_dict = self.extract_feat(batch_inputs_dict)
         points = batch_inputs_dict['points']
 
-        print("feat_dict keys", feat_dict.keys())
-        print("feature[sa_features]",feat_dict["sa_features"][-1].shape)
+        # print("feat_dict keys", feat_dict.keys())
+        # print("feature[sa_features]",feat_dict["sa_features"][-1].shape)
 
         losses = self.bbox_head.loss(points, feat_dict, batch_data_samples,
                                      **kwargs)
