@@ -88,7 +88,7 @@ eval_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -110,7 +110,7 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=1,
+    batch_size=2,
     num_workers=1,
     persistent_workers=True,
     drop_last=False,
@@ -128,7 +128,7 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=1,
+    batch_size=2,
     num_workers=1,
     persistent_workers=True,
     drop_last=False,
@@ -188,7 +188,7 @@ model = dict(
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 1024, 256, 64),
+        num_points= (4096, 1024, 256, 64), # (4096, 3072, 2048, 512)
         radii=((0.1, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 4.0)),
         num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
         sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,

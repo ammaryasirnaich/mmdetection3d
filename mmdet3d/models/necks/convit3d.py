@@ -141,13 +141,8 @@ class GPSA(nn.Module):
             # self.get_patch_wise_relative_encoding(voxel_coord)
 
             # dumy_rel= torch.randn(4,64,64,4, device='cuda')
-
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
-            
-            # self.rel_indices = dumy_rel
-            # print("self.rel_indices", self.rel_indices.shape)
-            # print("stop")
-            
+
 
 
         attn = self.get_attention(x)
@@ -158,6 +153,7 @@ class GPSA(nn.Module):
         return x
 
     def get_attention(self, x):
+
         B, N, C = x.shape 
         val =  C // self.num_heads       
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
@@ -172,7 +168,36 @@ class GPSA(nn.Module):
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         attn = self.attn_drop(attn)
+
+                # print("shape of input in get_attention",x.shape)
+        # print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
+      
+        # B, N, C = x.shape      
+        # qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
+        
+        # q, k = qk[0], qk[1]
+
+        # '''
+        # Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
+        # Self-attention Does Not Need O(n2) Memory
+        # '''
+        # pos_score = self.rel_indices
+        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        # pos_score = pos_score.softmax(dim=-1)
+        # pos_score = pos_score @ v
+        # patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
+        # patch_score = patch_score.softmax(dim=-1)
+        # gating = self.gating_param.view(1,-1,1,1)
+
+        # attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
+        # attn /= attn.sum(dim=-1).unsqueeze(-1)
+        # attn = self.attn_drop(attn)
+        # attn = attn.transpose(1, 2).reshape(B, N, C)
         return attn
+
+
+    
 
     
     def local_init(self, locality_strength=1.):
@@ -210,12 +235,12 @@ class MHSA(nn.Module):
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
-
+        self.drop_attn = attn_drop
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -263,6 +288,19 @@ class MHSA(nn.Module):
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
         x = self.proj_drop(x)
+
+        # B, N, C = x.shape
+        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # q, k, v = qkv[0], qkv[1], qkv[2]
+
+        
+        # attn = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
+        # x = attn.softmax(dim=-1)
+        # x = self.attn_drop(x)
+        # x = attn.transpose(1, 2).reshape(B, N, C)
+        
+        # x = self.proj(x)
+        # x = self.proj_drop(x)
         return x
     
 class Block(nn.Module):
@@ -377,7 +415,7 @@ class VisionTransformer(nn.Module):
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
        
-        self.transformer_head .apply(self._init_weights)
+        # self.transformer_head .apply(self._init_weights)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -388,9 +426,6 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    @torch.jit.ignore
-    def no_weight_decay(self):
-        return {'pos_embed', 'cls_token'}
 
     def forward_features(self, x, voxel_coors):
         B = x.shape[0]
@@ -419,12 +454,7 @@ class VisionTransformer(nn.Module):
         attend = self.transformer_head(attend)
         
         # create new feature 
-        feat_dict["tranformer_features"] = attend
-        
-        # print(" tensor output shape from Transformer neck")
-        # print("sa_features shape", feat_dict["tranformer_features"].shape)
-        # print("sa_xyz shape", feat_dict["sa_xyz"][-1].shape)
-        
+        feat_dict["tranformer_features"] = attend        
         return feat_dict
     
     
