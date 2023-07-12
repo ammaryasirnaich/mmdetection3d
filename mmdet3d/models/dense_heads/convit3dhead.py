@@ -90,7 +90,7 @@ class Convit3DHead(SSD3DHead):
         """
 
         aggregated_points = feat_dict['sa_xyz'][-1]
-        aggregated_features = feat_dict["sa_features"][-1].permute(0,2,1)
+        aggregated_features = feat_dict["tranformer_features"]
         aggregated_indices = feat_dict['sa_indices'][-1]
 
         self.num_candidates = aggregated_points.shape[1]

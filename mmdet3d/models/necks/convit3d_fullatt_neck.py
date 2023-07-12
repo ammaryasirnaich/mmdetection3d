@@ -73,6 +73,8 @@ class RelPositionalEncoding3D(nn.Module):
         # Concatenate position encodings with distances
         encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
         
+        self.register_buffer("encodings", encodings)
+
         return encodings
 
 

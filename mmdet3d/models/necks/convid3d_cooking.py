@@ -11,16 +11,40 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 
 
+class RelPositionalEncoding3D():
+    def __init__(self, input_dim, max_points):
+        super(RelPositionalEncoding3D, self).__init__()
+        self.input_dim = input_dim
+        self.max_points = max_points
+    def getrelpositions(self,cloudpoints):
+        batch_size, num_points, _ = cloudpoints.size()
+        # Compute pairwise squared Euclidean distances
+        pairwise_distances = torch.sum((cloudpoints.unsqueeze(1) - cloudpoints) ** 2, dim=-1)
+        # Compute the relevant encoding
+
+        position_indices = torch.arange(num_points, device=cloudpoints.device).unsqueeze(0).expand(batch_size, -1)
+        # position_encodings = self.position_encoding(position_indices)
+        
+        # Expand position encodings to match the shape of distances
+        position_encodings = position_indices.unsqueeze(2).expand(-1, -1, num_points, -1)
+        
+        # Concatenate position encodings with distances
+        encodings = torch.cat([position_encodings, pairwise_distances.unsqueeze(-1)], dim=-1)
+        return encodings
+
+
+
+
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
-        super().__init__()
+        super(Mlp,self).__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
-        self.apply(self._init_weights)
+        # self.apply(self._init_weights)
         
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -38,50 +62,15 @@ class Mlp(nn.Module):
         x = self.fc2(x)
         x = self.drop(x)
         return x
-
-# class RelPositionalEncoding3D(nn.Module):
-#     def __init__(self, input_dim, max_points):
-#         super(RelPositionalEncoding3D, self).__init__()
-#         self.input_dim = input_dim
-#         self.max_points = max_points
-        
-#         self.position_encoding = nn.Embedding(self.max_points, self.input_dim)
-#         
-
-#     def forward(self, points):
-#         '''
-#         points: 3D point cloud (B,N,D)
-#         return: relevant position encoding cooridnates(3) with pairwise eucliden distance(1) (B,N,N,4) 
-        
-#         '''
-#         batch_size, num_points, _ = points.size()
-        
-#         # Compute relative coordinates
-#         relative_coords = points[:, :, None, :] - points[:, None, :, :]
-        
-#         # Compute pairwise distances
-#         distances = torch.sqrt(torch.sum(relative_coords ** 2, dim=-1))  # Euclidean distance
-        
-#         # Compute position encoding
-#         position_indices = torch.arange(num_points, device=points.device).unsqueeze(0).expand(batch_size, -1)
-        
-#         # position_encodings = self.position_encoding(position_indices)
-        
-        
-#         # Expand position encodings to match the shape of distances
-#         position_encodings = position_encodings.unsqueeze(2).expand(-1, -1, num_points, -1)
-        
-#         # Concatenate position encodings with distances
-#         encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
-#         self.register_buffer("encodings", encodings)   
-#         return encodings
+    
 
 class RelPositionalEncoding3D(nn.Module):
     def __init__(self, input_dim, max_points):
         super(RelPositionalEncoding3D, self).__init__()
         self.input_dim = input_dim
         self.max_points = max_points
-        self.position_encoding = nn.Parameter(torch.zeros(self.max_points, self.input_dim))
+        
+        self.position_encoding = nn.Embedding(self.max_points, self.input_dim)
 
     def forward(self, points):
         '''
@@ -99,25 +88,23 @@ class RelPositionalEncoding3D(nn.Module):
         
         # Compute position encoding
         position_indices = torch.arange(num_points, device=points.device).unsqueeze(0).expand(batch_size, -1)
-        
-        position_encodings = self.position_encoding[position_indices.view(-1)]
-        print("position_encodings", position_encodings.shape)
-        
+        position_encodings = self.position_encoding(position_indices)
         
         # Expand position encodings to match the shape of distances
         position_encodings = position_encodings.unsqueeze(2).expand(-1, -1, num_points, -1)
         
         # Concatenate position encodings with distances
         encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
-        self.register_buffer("encodings", encodings)   
-        return encodings
 
+        self.register_buffer("encodings", encodings)
+        
+        return encodings
 
 
 class GPSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.,
                  locality_strength=1., use_local_init=True):
-        super().__init__()
+        super(GPSA,self).__init__()
         self.num_heads = num_heads
         self.dim = dim
         head_dim = dim // num_heads
@@ -133,8 +120,6 @@ class GPSA(nn.Module):
         self.locality_strength = locality_strength
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
         self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
-
-
         
         # self.apply(self._init_weights)
         
@@ -153,19 +138,13 @@ class GPSA(nn.Module):
     def forward(self,  x, voxel_coord):
         B, N, C = x.shape
 
-
+        print("shape of x", x.shape)
+        print(" shape of voxel", voxel_coord.shape)
+     
         if not hasattr(self, 'rel_indices'):
             # self.get_patch_wise_relative_encoding(voxel_coord)
-
-            # dumy_rel= torch.randn(4,64,64,4, device='cuda')
-
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
-            
-            # self.rel_indices = dumy_rel
-            # print("self.rel_indices", self.rel_indices.shape)
-            # print("stop")
-            
-
+            print("shape of rel_indices", self.rel_indices.shape)
 
         attn = self.get_attention(x)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
@@ -180,10 +159,14 @@ class GPSA(nn.Module):
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k = qk[0], qk[1]
         pos_score = self.rel_indices
+        print("shape of pos_score", pos_score.shape)
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
         patch_score = (q @ k.transpose(-2, -1)) * self.scale
         patch_score = patch_score.softmax(dim=-1)
         pos_score = pos_score.softmax(dim=-1)
+
+        print("shape of pos_score", pos_score.shape)
+        print("shape of patch_score", patch_score.shape)
 
         gating = self.gating_param.view(1,-1,1,1)
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
@@ -223,7 +206,7 @@ class GPSA(nn.Module):
  
 class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
-        super().__init__()
+        super(MHSA,self).__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
@@ -271,6 +254,8 @@ class MHSA(nn.Module):
     def forward(self,  x, _ ):
         B, N, C = x.shape
 
+        print("C // self.num_heads",C // self.num_heads)
+
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
@@ -287,7 +272,7 @@ class Block(nn.Module):
 
     def __init__(self, dim, num_heads,  mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, use_gpsa=True, **kwargs):
-        super().__init__()
+        super(Block,self).__init__()
         self.norm1 = norm_layer(dim)
         self.use_gpsa = use_gpsa
         if self.use_gpsa:
@@ -305,7 +290,7 @@ class Block(nn.Module):
         return x
     
 @MODELS.register_module()
-class VisionTransformer(nn.Module):
+class VisionTransformerCooking(nn.Module):
     """ 
     FullConViT3DNeck: Using End-to-End Transformers paradigam which behaves also as convolution for early layers and fully attention at later layers
     It uses full attention between query,key and value while using relative positional encoding
@@ -363,7 +348,7 @@ class VisionTransformer(nn.Module):
                 use_patch_embed=False,
                 fp_output_channel = 16 # embed_dim, num_classes
                 ):
-        super(VisionTransformer,self).__init__()
+        super(VisionTransformerCooking,self).__init__()
         self.num_classes = num_classes
         self.local_up_to_layer = local_up_to_layer
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models

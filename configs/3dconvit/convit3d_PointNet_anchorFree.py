@@ -208,7 +208,7 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
+                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck ,VisionTransformerCooking, VisionTransformer
                 num_classes=3, 
                 in_chans=1024, #19
                 embed_dim=1024, #19
