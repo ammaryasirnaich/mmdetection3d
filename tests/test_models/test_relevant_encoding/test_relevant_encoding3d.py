@@ -92,33 +92,30 @@ def test_positional_encoding_3d():
     print("Pass")
 
 
-class RelPositionalEncoding3D():
+class RelPositionalEncoding3D(nn.Module):
     def __init__(self, input_dim, max_points):
         super(RelPositionalEncoding3D, self).__init__()
         self.input_dim = input_dim
         self.max_points = max_points
-        self.position_encoding = torch.ones(self.max_points, self.input_dim)
-    def getrelpositions(self,cloudpoints):
-        batch_size, num_points, _ = cloudpoints.size()
+
+        # self.position_encodings = nn.Parameter(torch.randn(max_points, input_dim))
+
+    def forward(self, points):
         
-        # Compute relative coordinates
-        relative_coords = cloudpoints[:, :, None, :] - cloudpoints[:, None, :, :]
-      
+        batch_size, num_points, _ = points.size()
+       # Compute relative positions
+        points_1 = points.unsqueeze(1).expand(-1, num_points, -1, -1)
+        points_2 = points.unsqueeze(2).expand(-1, -1, num_points, -1)
+        positions = points_1 - points_2
+
         # Compute pairwise distances
-        distances = torch.sqrt(torch.sum(relative_coords ** 2, dim=-1))  # Euclidean distance
-        
-        position_indices = torch.arange(num_points, device=cloudpoints.device).unsqueeze(0).expand(batch_size, -1)
-        # print("position_indices",position_indices.shape)
-        position_encodings = self.position_encoding*position_indices
-        print("shape of relative_coords ", relative_coords.shape)
-        print("shape of distance",distances.shape)
-        
-        # Expand position encodings to match the shape of distances
-        # position_indices = relative_coords.unsqueeze(2).expand(-1, -1, num_points, -1)
-        
-        # Concatenate position encodings with distances
-        encodings = torch.cat([relative_coords, distances], dim=-1)
+        distances = torch.norm(positions, dim=-1)
+
+        # Concatenate positions and distances
+        encodings = torch.cat([positions, distances.unsqueeze(-1)], dim=-1)
+
         return encodings
+
 
 
 def visualize():
@@ -146,9 +143,17 @@ def visualize():
 def calling_functionTest():
     max_seq_len = 100
     points = torch.randn(1,max_seq_len, 3)  # Example input tensor of shape (batch_size, num_heads, max_seq_len, 3)
-    encoding = RelPositionalEncoding3D(3,max_seq_len)
-    code = encoding.getrelpositions(points)
-    print("code postion", code.shape)
+    print("Input shape", points.shape)
+    pos_encoding = RelPositionalEncoding3D(3,100)
+    output = pos_encoding(points)
+    print("output",output.shape)
+    distance_feature = output[:,:,:,3]
+    #optional to use exp or not
+    # distance_feature = torch.exp(-distance_feature)
+
+    # print("output",distance_feature.squeeze(0).shape)
+    plt.imshow(distance_feature.squeeze(0).detach().numpy())
+    print("pass")
 
 if __name__ == "__main__":
     # test_RelPositionalEncoding()
