@@ -286,6 +286,7 @@ class MHSA(nn.Module):
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+
         x = self.proj(x)
         x = self.proj_drop(x)
 
@@ -294,13 +295,14 @@ class MHSA(nn.Module):
         # q, k, v = qkv[0], qkv[1], qkv[2]
 
         
-        # attn = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p= self.drop_attn)
-        # x = attn.softmax(dim=-1)
+        # attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
+        # # x = attn.softmax(dim=-1)
         # x = self.attn_drop(x)
         # x = attn.transpose(1, 2).reshape(B, N, C)
         
         # x = self.proj(x)
         # x = self.proj_drop(x)
+        
         return x
     
 class Block(nn.Module):
