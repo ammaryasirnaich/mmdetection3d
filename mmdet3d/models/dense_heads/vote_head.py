@@ -384,7 +384,7 @@ class VoteHead(BaseModule):
 
 
         
-        print("features shape", features.shape)
+        # print("features shape", features.shape)
 
         # 3. predict bbox and score
         cls_predictions, reg_predictions = self.conv_pred(features)

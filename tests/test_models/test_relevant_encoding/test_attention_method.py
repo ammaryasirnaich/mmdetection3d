@@ -4,7 +4,7 @@ import torch.optim as optim
 import math
 import torch.nn.functional as F
 
-# Define the SelfAttention layer
+# Define the SelfAttention layer using simple torch.matmul functions
 class CausalSelfAttention(nn.Module):
     def __init__(self, hidden_dim, num_heads):
         super(CausalSelfAttention, self).__init__()
@@ -51,7 +51,7 @@ class CausalSelfAttention(nn.Module):
         return attention_output
     
 
-# Define the SelfAttention layer
+# Define the ScaledSelfAttention layer using F.scaled_dot_product_attention
 class ScaledSelfAttention(nn.Module):
     def __init__(self, hidden_dim, num_heads):
         super(ScaledSelfAttention, self).__init__()
@@ -81,8 +81,6 @@ class ScaledSelfAttention(nn.Module):
         value = value.transpose(1, 2)
         
         
-        # Apply causal mask to attention scores
-        causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool().unsqueeze(0).unsqueeze(0)
         # Compute attention scores
         attention_output = F.scaled_dot_product_attention(query, key, value)
         attention_output = torch.einsum('bijk->bjik', attention_output)
@@ -97,8 +95,10 @@ class Transformer(nn.Module):
         super(Transformer, self).__init__()
         self.encoder = nn.Embedding(input_dim, hidden_dim)
         self.positional_encoder = PositionalEncoder(hidden_dim)
-        self.attention = CausalSelfAttention(hidden_dim, num_heads)
-        # self.attention = ScaledSelfAttention(hidden_dim, num_heads)
+
+        # self.attention = CausalSelfAttention(hidden_dim, num_heads)
+        self.attention = ScaledSelfAttention(hidden_dim, num_heads)
+        
         self.fc = nn.Linear(hidden_dim, hidden_dim)
     
     def forward(self, src):
