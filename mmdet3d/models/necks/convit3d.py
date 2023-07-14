@@ -215,6 +215,8 @@ class GPSA(nn.Module):
         pos_score = torch.einsum('bijk->bjik', pos_score)
         B,N,H,D = patch_score.shape
         patch_score =patch_score.reshape(B,N,H*D)
+
+        B,N,H,D = patch_score.shape
         pos_score =pos_score.reshape(B,N,H*D)
              
         gating = self.gating_param.view(1,-1,1,1)
@@ -331,15 +333,10 @@ class MHSA(nn.Module):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-
-        
         attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
         attn = torch.einsum('bijk->bjik', attn)
         B,N,H,D = attn.shape
-        attn =attn.reshape(B,N,H*D)   
-        # x = self.attn_drop(x)
-        # x = attn.transpose(1, 2).reshape(B, N, C)
-        
+        attn =attn.reshape(B,N,H*D)    
         x = self.proj(x)
         x = self.proj_drop(x)
         
@@ -473,11 +470,7 @@ class VisionTransformer(nn.Module):
         B = x.shape[0]
         x = x.permute(0,2,1)
 
-        x = self.pos_drop(x)
-
-
-        # print("shape of x", x.shape)
-        # print("shape of vox coo",voxel_coors.shape )
+        # x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
             x = blk(x,voxel_coors)
