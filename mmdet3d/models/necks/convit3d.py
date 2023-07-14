@@ -216,7 +216,7 @@ class GPSA(nn.Module):
         B,N,H,D = patch_score.shape
         patch_score =patch_score.reshape(B,N,H*D)
 
-        B,N,H,D = patch_score.shape
+        B,N,H,D = pos_score.shape
         pos_score =pos_score.reshape(B,N,H*D)
              
         gating = self.gating_param.view(1,-1,1,1)
