@@ -496,7 +496,8 @@ class VisionTransformer(nn.Module):
         attend = self.transformer_head(attend)
         
         # create new feature 
-        feat_dict["tranformer_features"] = attend        
+        # feat_dict["tranformer_features"]= attend 
+        feat_dict["sa_features"][-1] = attend       
         return feat_dict
     
     

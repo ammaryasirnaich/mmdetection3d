@@ -106,9 +106,14 @@ class TransHead(VoteHead):
             torch.Tensor: Indices of input points.
         """
         seed_points = feat_dict['sa_xyz'][-1]
-        # seed_features = feat_dict["tranformer_features"].permute(0,2,1)
-        seed_features = feat_dict["sa_features"][-1]
+        # seed_features_2 = feat_dict["tranformer_features"].permute(0,2,1)
+        seed_features = feat_dict["sa_features"][-1].permute(0,2,1)
         seed_indices = feat_dict['sa_indices'][-1]
+
+
+        # print("shape of seed_features",seed_features.shape)
+        # print("shape of seed_features_2",seed_features_2.shape)
+
 
         return seed_points, seed_features, seed_indices
 
