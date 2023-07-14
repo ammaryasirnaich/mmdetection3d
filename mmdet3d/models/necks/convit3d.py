@@ -132,68 +132,105 @@ class GPSA(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
-        
+
+    '''      
     def forward(self,  x, voxel_coord):
         B, N, C = x.shape
 
 
         if not hasattr(self, 'rel_indices'):
             # self.get_patch_wise_relative_encoding(voxel_coord)
-
             # dumy_rel= torch.randn(4,64,64,4, device='cuda')
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
-
-
 
         attn = self.get_attention(x)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+
+        x = self.proj(x)
+        x = self.proj_drop(x)
+        return x
+    '''
+
+    def forward(self,  x, voxel_coord):
+        "forward with scaled dot attention mechanism"
+        B, N, C = x.shape
+
+        if not hasattr(self, 'rel_indices'):
+            self.rel_indices = self.embd_3d_encodding(voxel_coord)
+
+        attn = self.get_attention(x)
+       
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
 
+
     def get_attention(self, x):
 
-        B, N, C = x.shape 
-        val =  C // self.num_heads       
-        qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k = qk[0], qk[1]
-        pos_score = self.rel_indices
-        pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
-        patch_score = (q @ k.transpose(-2, -1)) * self.scale
-        patch_score = patch_score.softmax(dim=-1)
-        pos_score = pos_score.softmax(dim=-1)
+        # B, N, C = x.shape  
+        # qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # q, k = qk[0], qk[1]
+        # pos_score = self.rel_indices
+        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
+        # patch_score = (q @ k.transpose(-2, -1)) * self.scale
 
-        gating = self.gating_param.view(1,-1,1,1)
-        attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
-        attn /= attn.sum(dim=-1).unsqueeze(-1)
-        attn = self.attn_drop(attn)
 
-                # print("shape of input in get_attention",x.shape)
+        # patch_score = patch_score.softmax(dim=-1)
+        # pos_score = pos_score.softmax(dim=-1)
+
+        # gating = self.gating_param.view(1,-1,1,1)
+
+
+        # if(patch_score.shape!=pos_score.shape):
+        #     print("patch_score shape", patch_score.shape)
+        #     print("Pos_score shape",pos_score.shape)
+        #     print("gating shape", gating.shape)
+         
+
+        # attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
+        # attn /= attn.sum(dim=-1).unsqueeze(-1)
+        # attn = self.attn_drop(attn)
+
+        # print("shape of input in get_attention",x.shape)
         # print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
       
-        # B, N, C = x.shape      
-        # qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        # v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
+        B, N, C = x.shape      
+        qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
         
-        # q, k = qk[0], qk[1]
+        q, k = qk[0], qk[1]
 
         # '''
         # Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         # Self-attention Does Not Need O(n2) Memory
         # '''
-        # pos_score = self.rel_indices
-        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
-        # pos_score = pos_score.softmax(dim=-1)
-        # pos_score = pos_score @ v
-        # patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
+        pos_score = self.rel_indices
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        pos_score = pos_score.softmax(dim=-1)
+        pos_score = pos_score @ v
+        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
         # patch_score = patch_score.softmax(dim=-1)
-        # gating = self.gating_param.view(1,-1,1,1)
+        patch_score = torch.einsum('bijk->bjik', patch_score)
+        pos_score = torch.einsum('bijk->bjik', pos_score)
+        B,N,H,D = patch_score.shape
+        patch_score =patch_score.reshape(B,N,H*D)
+        pos_score =pos_score.reshape(B,N,H*D)
+             
+        gating = self.gating_param.view(1,-1,1,1)
 
-        # attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
-        # attn /= attn.sum(dim=-1).unsqueeze(-1)
+        if(patch_score.shape!=pos_score.shape):
+            print("patch_score shape",patch_score.shape)
+            print("pos_score shape", pos_score.shape)
+            print("gating shape", gating.shape)
+
+
+        attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
+        attn /= attn.sum(dim=-1).unsqueeze(-1)
         # attn = self.attn_drop(attn)
         # attn = attn.transpose(1, 2).reshape(B, N, C)
+
+
         return attn
 
 
@@ -283,11 +320,10 @@ class MHSA(nn.Module):
 
         # attn = (q @ k.transpose(-2, -1)) * self.scale
         # attn = attn.softmax(dim=-1)
-        # attn = self.attn_drop(attn)
-
+        # attn = self.attn_drop(attn)    
         # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        
 
-        # print("MHSA att shape", x.shape)
 
         # x = self.proj(x)
         # x = self.proj_drop(x)
@@ -300,9 +336,7 @@ class MHSA(nn.Module):
         attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
         attn = torch.einsum('bijk->bjik', attn)
         B,N,H,D = attn.shape
-        attn =attn.reshape(B,N,H*D)  
-        # print("MHSA att", attn.shape)
-       
+        attn =attn.reshape(B,N,H*D)   
         # x = self.attn_drop(x)
         # x = attn.transpose(1, 2).reshape(B, N, C)
         
