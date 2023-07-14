@@ -156,9 +156,9 @@ class GPSA(nn.Module):
         "forward with scaled dot attention mechanism"
         B, N, C = x.shape
 
-        if not hasattr(self, 'rel_indices'):
+        if not hasattr(self, 'rel_indices') :
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
-
+           
         attn = self.get_attention(x)
        
         x = self.proj(x)
@@ -201,6 +201,8 @@ class GPSA(nn.Module):
         
         q, k = qk[0], qk[1]
 
+ 
+
         # '''
         # Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         # Self-attention Does Not Need O(n2) Memory
@@ -213,11 +215,11 @@ class GPSA(nn.Module):
         # patch_score = patch_score.softmax(dim=-1)
         patch_score = torch.einsum('bijk->bjik', patch_score)
         pos_score = torch.einsum('bijk->bjik', pos_score)
-        B,N,H,D = patch_score.shape
-        patch_score =patch_score.reshape(B,N,H*D)
+        p_B,p_N,p_H,p_D = patch_score.shape
+        patch_score =patch_score.reshape(p_B,p_N,p_H*p_D)
 
-        B,N,H,D = pos_score.shape
-        pos_score =pos_score.reshape(B,N,H*D)
+        s_B,s_N,s_H,s_D = pos_score.shape
+        pos_score =pos_score.reshape(s_B,s_N,s_H*s_D)
              
         gating = self.gating_param.view(1,-1,1,1)
 
@@ -225,6 +227,12 @@ class GPSA(nn.Module):
             print("patch_score shape",patch_score.shape)
             print("pos_score shape", pos_score.shape)
             print("gating shape", gating.shape)
+            print("self.rel_indices shaoe",self.rel_indices.shape)
+            print("q.shape: ", q.shape)
+            print("k.shape: ", k.shape)
+            print("v.shape: ", v.shape)
+            print("Wait")
+
 
 
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
@@ -232,11 +240,7 @@ class GPSA(nn.Module):
         # attn = self.attn_drop(attn)
         # attn = attn.transpose(1, 2).reshape(B, N, C)
 
-
         return attn
-
-
-    
 
     
     def local_init(self, locality_strength=1.):
@@ -253,19 +257,6 @@ class GPSA(nn.Module):
                 self.pos_proj.weight.data[position,1] = 2*(h1-center)*locality_distance
                 self.pos_proj.weight.data[position,0] = 2*(h2-center)*locality_distance
         self.pos_proj.weight.data *= locality_strength
-
-    def get_rel_indices(self, num_patches):
-        img_size = int(num_patches**.5)
-        rel_indices   = torch.zeros(1, num_patches, num_patches, 3)
-        ind = torch.arange(img_size).view(1,-1) - torch.arange(img_size).view(-1, 1)
-        indx = ind.repeat(img_size,img_size)
-        indy = ind.repeat_interleave(img_size,dim=0).repeat_interleave(img_size,dim=1)
-        indd = indx**2 + indy**2
-        rel_indices[:,:,:,2] = indd.unsqueeze(0)
-        rel_indices[:,:,:,1] = indy.unsqueeze(0)
-        rel_indices[:,:,:,0] = indx.unsqueeze(0)
-        device = self.qk.weight.device
-        self.rel_indices = rel_indices.to(device)
 
  
 class MHSA(nn.Module):
