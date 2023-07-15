@@ -77,6 +77,8 @@ test_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
+# construct a pipeline for data and gt loading in show function
+# please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -86,6 +88,7 @@ eval_pipeline = [
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
 
 train_dataloader = dict(
     batch_size=4,
@@ -108,8 +111,9 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR',
             backend_args=backend_args)))
+
 val_dataloader = dict(
-    batch_size=1,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -125,8 +129,9 @@ val_dataloader = dict(
         metainfo=metainfo,
         box_type_3d='LiDAR',
         backend_args=backend_args))
+        
 test_dataloader = dict(
-    batch_size=1,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -142,34 +147,18 @@ test_dataloader = dict(
         metainfo=metainfo,
         box_type_3d='LiDAR',
         backend_args=backend_args))
+
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
+
 test_evaluator = val_evaluator
 
-
-
-
-train_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
-    dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-
-
-
-# Runtime settings，training schedule for 40e
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40
-# training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-
 
 
 vis_backends = [dict(type='LocalVisBackend'),
@@ -315,7 +304,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_transformerNeck_ssdhead'
+work_dir = './work_dirs/convit3d_tansformerHead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -371,6 +360,7 @@ resume = False
 #                         schedule = dict( wait=1,warmup=1,active=2),
 #                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
 #                         # with_stack =True,
+
 
 
 '''
