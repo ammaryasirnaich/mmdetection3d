@@ -156,7 +156,7 @@ class GPSA(nn.Module):
         "forward with scaled dot attention mechanism"
         B, N, C = x.shape
 
-        if not hasattr(self, 'rel_indices') :
+        if not hasattr(self, 'rel_indices') or self.rel_indices.shape[0]!=B:
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
            
         attn = self.get_attention(x)
@@ -201,6 +201,10 @@ class GPSA(nn.Module):
         
         q, k = qk[0], qk[1]
 
+        # print("q.shape: ", q.shape)
+        # print("k.shape: ", k.shape)
+        # print("v.shape: ", v.shape)
+
  
 
         # '''
@@ -241,7 +245,6 @@ class GPSA(nn.Module):
         # attn = attn.transpose(1, 2).reshape(B, N, C)
 
         return attn
-
     
     def local_init(self, locality_strength=1.):
         
@@ -458,8 +461,13 @@ class VisionTransformer(nn.Module):
 
 
     def forward_features(self, x, voxel_coors):
-        B = x.shape[0]
+        
+        # print("input to visualTransformer shape", x.shape)
+          
         x = x.permute(0,2,1)
+
+        # print("input after permute", x.shape)
+
 
         # x = self.pos_drop(x)
 
