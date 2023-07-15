@@ -76,8 +76,7 @@ test_pipeline = [
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-# construct a pipeline for data and gt loading in show function
-# please keep its loading function consistent with test_pipeline (e.g. client)
+
 eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -87,78 +86,89 @@ eval_pipeline = [
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
-# train_dataloader = dict(
-#     batch_size=4,
-#     num_workers=4,
-#     persistent_workers=True,
-#     sampler=dict(type='DefaultSampler', shuffle=True),
-#     dataset=dict(
-#         type='RepeatDataset',
-#         times=2,
-#         dataset=dict(
-#             type=dataset_type,
-#             data_root=data_root,
-#             ann_file='kitti_infos_train.pkl',
-#             data_prefix=dict(pts='training/velodyne_reduced'),
-#             pipeline=train_pipeline,
-#             modality=input_modality,
-#             test_mode=False,
-#             metainfo=metainfo,
-#             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-#             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-#             box_type_3d='LiDAR',
-#             backend_args=backend_args)))
-
-# val_dataloader = dict(
-#     batch_size=1,
-#     num_workers=1,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         data_prefix=dict(pts='training/velodyne_reduced'),
-#         ann_file='kitti_infos_val.pkl',
-#         pipeline=test_pipeline,
-#         modality=input_modality,
-#         test_mode=True,
-#         metainfo=metainfo,
-#         box_type_3d='LiDAR',
-#         backend_args=backend_args))
-        
-# test_dataloader = dict(
-#     batch_size=1,
-#     num_workers=1,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         data_prefix=dict(pts='training/velodyne_reduced'),
-#         ann_file='kitti_infos_val.pkl',
-#         pipeline=test_pipeline,
-#         modality=input_modality,
-#         test_mode=True,
-#         metainfo=metainfo,
-#         box_type_3d='LiDAR',
-#         backend_args=backend_args))
-
-# val_evaluator = dict(
-#     type='KittiMetric',
-#     ann_file=data_root + 'kitti_infos_val.pkl',
-#     metric='bbox',
-#     backend_args=backend_args)
-
-# test_evaluator = val_evaluator
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=4,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
+        type='RepeatDataset',
+        times=2,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            ann_file='kitti_infos_train.pkl',
+            data_prefix=dict(pts='training/velodyne_reduced'),
+            pipeline=train_pipeline,
+            modality=input_modality,
+            test_mode=False,
+            metainfo=metainfo,
+            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
+            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
+            box_type_3d='LiDAR',
+            backend_args=backend_args)))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=4,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(pts='training/velodyne_reduced'),
+        ann_file='kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        modality=input_modality,
+        test_mode=True,
+        metainfo=metainfo,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=4,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(pts='training/velodyne_reduced'),
+        ann_file='kitti_infos_val.pkl',
+        pipeline=test_pipeline,
+        modality=input_modality,
+        test_mode=True,
+        metainfo=metainfo,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+val_evaluator = dict(
+    type='KittiMetric',
+    ann_file=data_root + 'kitti_infos_val.pkl',
+    metric='bbox',
+    backend_args=backend_args)
+test_evaluator = val_evaluator
+
+
+
+
+train_dataloader = dict(
+    batch_size=4,
     num_workers=4,
     dataset=dict(dataset=dict(pipeline=train_pipeline, metainfo=metainfo)))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
-eval_dataloader = dict(dataset=dict(pipeline=test_pipeline, metainfo=metainfo))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
+
+
+# Runtime settings，training schedule for 40e
+# Although the max_epochs is 40, this schedule is usually used we
+# RepeatDataset with repeat ratio N, thus the actual max epoch
+# number could be Nx40
+# training schedule for 1x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
 
 
@@ -299,13 +309,6 @@ model = dict(
         )
 
 
-# Runtime settings，training schedule for 40e
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
 
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
