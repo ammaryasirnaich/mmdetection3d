@@ -156,15 +156,22 @@ val_evaluator = dict(
 
 test_evaluator = val_evaluator
 
+
+train_dataloader = dict(
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
+
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
 
-vis_backends = [dict(type='LocalVisBackend'),
-                dict(type='TensorboardVisBackend')]
-visualizer = dict(
-    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+# vis_backends = [dict(type='LocalVisBackend'),
+#                 dict(type='TensorboardVisBackend')]
+# visualizer = dict(
+#     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 '''
 Model parameter settings
@@ -330,7 +337,8 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook', draw=True))
+    # visualization=dict(type='Det3DVisualizationHook', draw=True)
+    )
 
 log_config = dict(
     interval=50,

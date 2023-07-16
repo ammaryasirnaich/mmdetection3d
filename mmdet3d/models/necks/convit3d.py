@@ -223,6 +223,7 @@ class GPSA(nn.Module):
         gating = self.gating_param.view(1,-1,1,1)
 
         if(patch_score.shape!=pos_score.shape):
+            print("Dimension mismatched")
             print("patch_score shape",patch_score.shape)
             print("pos_score shape", pos_score.shape)
             print("gating shape", gating.shape)
@@ -233,6 +234,7 @@ class GPSA(nn.Module):
             print("Wait")
 
         if(gating.shape[1]!= patch_score.shape[0]):
+            print("Error generated for different batch size")
             print("patch_score shape",patch_score.shape)
             print("pos_score shape", pos_score.shape)
             print("gating shape", gating.shape)
