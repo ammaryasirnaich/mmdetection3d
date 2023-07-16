@@ -159,7 +159,8 @@ class GPSA(nn.Module):
         if not hasattr(self, 'rel_indices') or self.rel_indices.shape[0]!=B:
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
            
-        attn = self.get_attention(x)
+        x = self.get_attention(x)
+        # print(" x attn", x.shape)
        
         x = self.proj(x)
         x = self.proj_drop(x)
@@ -201,12 +202,6 @@ class GPSA(nn.Module):
         
         q, k = qk[0], qk[1]
 
-        # print("q.shape: ", q.shape)
-        # print("k.shape: ", k.shape)
-        # print("v.shape: ", v.shape)
-
- 
-
         # '''
         # Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         # Self-attention Does Not Need O(n2) Memory
@@ -240,7 +235,10 @@ class GPSA(nn.Module):
 
 
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
+        # print("attn shape", attn.shape)
         attn /= attn.sum(dim=-1).unsqueeze(-1)
+        attn = attn.squeeze(0)
+        # print("attn shape after unsqueeze", attn.shape)
         # attn = self.attn_drop(attn)
         # attn = attn.transpose(1, 2).reshape(B, N, C)
 
@@ -327,10 +325,10 @@ class MHSA(nn.Module):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
-        attn = torch.einsum('bijk->bjik', attn)
-        B,N,H,D = attn.shape
-        attn =attn.reshape(B,N,H*D)    
+        x = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
+        x = torch.einsum('bijk->bjik', x)
+        B,N,H,D = x.shape
+        x =x.reshape(B,N,H*D)    
         x = self.proj(x)
         x = self.proj_drop(x)
         
@@ -465,13 +463,10 @@ class VisionTransformer(nn.Module):
         # print("input to visualTransformer shape", x.shape)
           
         x = x.permute(0,2,1)
-
-        # print("input after permute", x.shape)
-
-
         # x = self.pos_drop(x)
 
         for u,blk in enumerate(self.blocks):
+            # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
 
         x = self.norm(x)
