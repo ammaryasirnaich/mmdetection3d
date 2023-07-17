@@ -502,8 +502,8 @@ class VisionTransformer(nn.Module):
     def forward_features(self, x, voxel_coors):
         
           
-        print("input to visualTransformer shape", x.shape)
-        print("voxel_coors to visualTransformer shape", voxel_coors.shape)
+        # print("input to visualTransformer shape", x.shape)
+        # print("voxel_coors to visualTransformer shape", voxel_coors.shape)
 
         x = x.permute(0,2,1)
         # x = self.pos_drop(x)
