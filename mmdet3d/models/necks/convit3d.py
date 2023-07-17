@@ -233,16 +233,6 @@ class GPSA(nn.Module):
             print("v.shape: ", v.shape)
             print("Wait")
 
-        if(gating.shape[1]!= patch_score.shape[0]):
-            print("Error generated for different batch size")
-            print("patch_score shape",patch_score.shape)
-            print("pos_score shape", pos_score.shape)
-            print("gating shape", gating.shape)
-            print("self.rel_indices shaoe",self.rel_indices.shape)
-            print("q.shape: ", q.shape)
-            print("k.shape: ", k.shape)
-            print("v.shape: ", v.shape)
-            print("Wait")
 
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         # print("attn shape", attn.shape)

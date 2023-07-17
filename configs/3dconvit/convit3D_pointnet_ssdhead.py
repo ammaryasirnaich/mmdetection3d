@@ -157,10 +157,10 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 
-train_dataloader = dict(
-    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+# train_dataloader = dict(
+#     batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+# test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
