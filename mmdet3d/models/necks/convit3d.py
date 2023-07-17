@@ -353,8 +353,9 @@ class MHSA(nn.Module):
         q, k, v = qkv[0], qkv[1], qkv[2]
         attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
         attn = torch.einsum('bijk->bjik', attn)
-        B_t,N_t,H_t,D_t = attn.shape
-        attn =attn.reshape(B_t,N_t,H_t*D_t)    
+        # B_t,N_t,H_t,D_t = attn.shape
+        # attn =attn.reshape(B_t,N_t,H_t*D_t)   
+        attn = attn.transpose(1, 2).reshape(B, N, C) 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
 
