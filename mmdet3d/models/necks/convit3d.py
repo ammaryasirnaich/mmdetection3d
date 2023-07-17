@@ -208,7 +208,7 @@ class GPSA(nn.Module):
         
         q, k = qk[0], qk[1]
 
-        print("input shape to attention GPSA", x.shape)
+        # print("input shape to attention GPSA", x.shape)
        
 
         # '''
@@ -218,18 +218,23 @@ class GPSA(nn.Module):
         pos_score = self.rel_indices
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
-        pos_score = pos_score @ v
-        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0)
+        pos_score = (pos_score @ v).permute(0,2,1,3)
+        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0).permute(0,2,1,3)
         # patch_score = patch_score.softmax(dim=-1)
-        patch_score = torch.einsum('bijk->bjik', patch_score)
-        pos_score = torch.einsum('bijk->bjik', pos_score)
-        p_B,p_N,p_H,p_D = patch_score.shape
-        patch_score =patch_score.reshape(p_B,p_N,p_H*p_D)
 
-        s_B,s_N,s_H,s_D = pos_score.shape
-        pos_score =pos_score.reshape(s_B,s_N,s_H*s_D)
+        # patch_score = torch.einsum('bijk->bjik', patch_score)
+
+        # pos_score = torch.einsum('bijk->bjik', pos_score)
+
+
+
+        # p_B,p_N,p_H,p_D = patch_score.shape
+        # patch_score =patch_score.reshape(p_B,p_N,p_H*p_D)
+
+        # s_B,s_N,s_H,s_D = pos_score.shape
+        # pos_score =pos_score.reshape(s_B,s_N,s_H*s_D)
              
-        gating = self.gating_param.view(1,-1,1,1)
+        gating = self.gating_param.view(1,1,-1,1)
 
         if(patch_score.shape[0]!=pos_score.shape[0]!=B):
             print("Dimension mismatched")
@@ -259,12 +264,9 @@ class GPSA(nn.Module):
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
-        # attn = self.attn_drop(attn)
-        attn = attn.transpose(1, 2).reshape(B, N, C)
+      
+        attn=attn.transpose(1,2).reshape(B,N,C)
 
-        # attn = torch.einsum('bijk->bjik', attn)
-        # attn_B,attn_H,attn_C,attn_D = attn.shape
-        # attn =attn.reshape(attn_B,attn_C,attn_H*attn_D)
 
         # print("attn shape after rearranging", attn.shape)
 
@@ -343,21 +345,27 @@ class MHSA(nn.Module):
         # attn = self.attn_drop(attn)    
         # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         
-
-
         # x = self.proj(x)
         # x = self.proj_drop(x)
 
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
-        attn = torch.einsum('bijk->bjik', attn)
-        # B_t,N_t,H_t,D_t = attn.shape
-        # attn =attn.reshape(B_t,N_t,H_t*D_t)   
-        attn = attn.transpose(1, 2).reshape(B, N, C) 
+        attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True).permute(0,2,1,3)
+        
+        # print("attn shape after scaled attention", attn.shape)
+        
+        # attn = torch.einsum('bijk->bjik', attn)
+        # print("attn shape", attn.shape)
+        B_t,N_t,H_t,D_t = attn.shape
+        attn =attn.reshape(B_t,N_t,H_t*D_t)   
+        # attn = attn.transpose(1, 2).reshape(B, N, C) 
+        # print("attn shape after reshape", attn.shape)
+        
+
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
+
 
         if(B!= attn.shape[0]):
             print("Batch mismatched occured in MHSA")
@@ -500,12 +508,6 @@ class VisionTransformer(nn.Module):
         x = x.permute(0,2,1)
         # x = self.pos_drop(x)
 
-        if(self.i==0):
-            x = torch.randn([4,512,256],device='cuda')
-            self.i+=1
-        else:
-            x = torch.randn([1,512,256],device='cuda')
-            voxel_coors = torch.randn([1,512,3],device='cuda')
             
         for u,blk in enumerate(self.blocks):
             # print("input after permute", x.shape)
