@@ -159,12 +159,18 @@ class GPSA(nn.Module):
         if not hasattr(self, 'rel_indices') or self.rel_indices.shape[0]!=B:
             self.rel_indices = self.embd_3d_encodding(voxel_coord)
            
-        x = self.get_attention(x)
+        attn = self.get_attention(x)
         # print(" x attn", x.shape)
        
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
+        attn = self.proj(attn)
+        attn = self.proj_drop(attn)
+
+        if(B!= x.shape[0]):
+            print("Batch mismatched occured in GPSA")
+            print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
+            print("Voxelcoord shape:", voxel_coord.shape)
+
+        return attn
 
 
     def get_attention(self, x):
@@ -222,7 +228,7 @@ class GPSA(nn.Module):
              
         gating = self.gating_param.view(1,-1,1,1)
 
-        if(patch_score.shape!=pos_score.shape):
+        if(patch_score.shape[0]!=pos_score.shape[0]):
             print("Dimension mismatched")
             print("patch_score shape",patch_score.shape)
             print("pos_score shape", pos_score.shape)
@@ -325,14 +331,19 @@ class MHSA(nn.Module):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        x = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
-        x = torch.einsum('bijk->bjik', x)
-        B,N,H,D = x.shape
-        x =x.reshape(B,N,H*D)    
-        x = self.proj(x)
-        x = self.proj_drop(x)
+        attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True)
+        attn = torch.einsum('bijk->bjik', attn)
+        B_t,N_t,H_t,D_t = attn.shape
+        attn =attn.reshape(B_t,N_t,H_t*D_t)    
+        attn = self.proj(attn)
+        attn = self.proj_drop(attn)
+
+        if(B!= attn.shape[0]):
+            print("Batch mismatched occured in MHSA")
+            print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
+            print("Voxelcoord shape:", _.shape)
         
-        return x
+        return attn
     
 class Block(nn.Module):
 
