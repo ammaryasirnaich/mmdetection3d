@@ -165,7 +165,7 @@ class GPSA(nn.Module):
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
 
-        if(B!= x.shape[0]):
+        if(B!= attn.shape[0]):
             print("Batch mismatched occured in GPSA")
             print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
             print("Voxelcoord shape:", voxel_coord.shape)
@@ -208,6 +208,9 @@ class GPSA(nn.Module):
         
         q, k = qk[0], qk[1]
 
+        print("input shape to attention GPSA", x.shape)
+       
+
         # '''
         # Memory Efficient Attention Pytorch: https://arxiv.org/abs/2112.05682
         # Self-attention Does Not Need O(n2) Memory
@@ -228,7 +231,7 @@ class GPSA(nn.Module):
              
         gating = self.gating_param.view(1,-1,1,1)
 
-        if(patch_score.shape[0]!=pos_score.shape[0]):
+        if(patch_score.shape[0]!=pos_score.shape[0]!=B):
             print("Dimension mismatched")
             print("patch_score shape",patch_score.shape)
             print("pos_score shape", pos_score.shape)
@@ -240,13 +243,30 @@ class GPSA(nn.Module):
             print("Wait")
 
 
+        # print("Dimension mismatched")
+        # print("patch_score shape",patch_score.shape)
+        # print("pos_score shape", pos_score.shape)
+        # print("gating shape", gating.shape)
+        # print("self.rel_indices shaoe",self.rel_indices.shape)
+        # print("q.shape: ", q.shape)
+        # print("k.shape: ", k.shape)
+        # print("v.shape: ", v.shape)
+        # print("Wait")
+
+
         attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
         # print("attn shape", attn.shape)
         attn /= attn.sum(dim=-1).unsqueeze(-1)
-        attn = attn.squeeze(0)
+        # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
         # attn = self.attn_drop(attn)
-        # attn = attn.transpose(1, 2).reshape(B, N, C)
+        attn = attn.transpose(1, 2).reshape(B, N, C)
+
+        # attn = torch.einsum('bijk->bjik', attn)
+        # attn_B,attn_H,attn_C,attn_D = attn.shape
+        # attn =attn.reshape(attn_B,attn_C,attn_H*attn_D)
+
+        # print("attn shape after rearranging", attn.shape)
 
         return attn
     
@@ -438,6 +458,7 @@ class VisionTransformer(nn.Module):
         self.use_patch_embed = use_patch_embed
               
         self.pos_drop = nn.Dropout(p=drop_rate)
+        self.i = 0
 
         
         self.blocks = nn.ModuleList([
@@ -471,11 +492,20 @@ class VisionTransformer(nn.Module):
 
     def forward_features(self, x, voxel_coors):
         
-        # print("input to visualTransformer shape", x.shape)
           
+        print("input to visualTransformer shape", x.shape)
+        print("voxel_coors to visualTransformer shape", voxel_coors.shape)
+
         x = x.permute(0,2,1)
         # x = self.pos_drop(x)
 
+        if(self.i==0):
+            x = torch.randn([4,512,256],device='cuda')
+            self.i+=1
+        else:
+            x = torch.randn([1,512,256],device='cuda')
+            voxel_coors = torch.randn([1,512,3],device='cuda')
+            
         for u,blk in enumerate(self.blocks):
             # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
