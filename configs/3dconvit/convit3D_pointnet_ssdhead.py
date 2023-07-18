@@ -233,7 +233,7 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=3 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
@@ -311,7 +311,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_tansformerHead'
+work_dir = './workspace/data/kitti_detection/models_to_test/convit3d_tansformerHead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
