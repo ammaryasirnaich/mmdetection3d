@@ -218,15 +218,13 @@ class GPSA(nn.Module):
         pos_score = self.rel_indices
         pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
         pos_score = pos_score.softmax(dim=-1)
-        pos_score = (pos_score @ v).permute(0,2,1,3)
-        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0).permute(0,2,1,3)
+
+
+        I = torch.eye(k.shape[-2],k.shape[-2],device='cuda')
+        # print("shape of !",I.shape)
+
+        patch_score = F.scaled_dot_product_attention(q,k,I,scale=self.scale ,dropout_p=0.0)
         # patch_score = patch_score.softmax(dim=-1)
-
-        # patch_score = torch.einsum('bijk->bjik', patch_score)
-
-        # pos_score = torch.einsum('bijk->bjik', pos_score)
-
-
 
         # p_B,p_N,p_H,p_D = patch_score.shape
         # patch_score =patch_score.reshape(p_B,p_N,p_H*p_D)
@@ -234,19 +232,7 @@ class GPSA(nn.Module):
         # s_B,s_N,s_H,s_D = pos_score.shape
         # pos_score =pos_score.reshape(s_B,s_N,s_H*s_D)
              
-        gating = self.gating_param.view(1,1,-1,1)
-
-        if(patch_score.shape[0]!=pos_score.shape[0]!=B):
-            print("Dimension mismatched")
-            print("patch_score shape",patch_score.shape)
-            print("pos_score shape", pos_score.shape)
-            print("gating shape", gating.shape)
-            print("self.rel_indices shaoe",self.rel_indices.shape)
-            print("q.shape: ", q.shape)
-            print("k.shape: ", k.shape)
-            print("v.shape: ", v.shape)
-            print("Wait")
-
+        gating = self.gating_param.view(1,-1,1,1)
 
         # print("Dimension mismatched")
         # print("patch_score shape",patch_score.shape)
@@ -264,8 +250,11 @@ class GPSA(nn.Module):
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
+
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
       
-        attn=attn.transpose(1,2).reshape(B,N,C)
+        # attn=attn.transpose(1,2).reshape(B,N,C)
 
 
         # print("attn shape after rearranging", attn.shape)
