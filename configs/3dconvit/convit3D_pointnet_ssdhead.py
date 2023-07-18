@@ -311,7 +311,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/data/kitti_detection/models_to_test/convit3d_tansformerHead'
+work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_tansformerHead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
