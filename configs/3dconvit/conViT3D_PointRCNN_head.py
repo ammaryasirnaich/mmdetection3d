@@ -76,6 +76,7 @@ test_pipeline = [
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
@@ -87,6 +88,8 @@ eval_pipeline = [
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
+
 train_dataloader = dict(
     batch_size=4,
     num_workers=4,
@@ -110,8 +113,8 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -128,8 +131,8 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -154,17 +157,28 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 
-vis_backends = [dict(type='LocalVisBackend'),
-                dict(type='TensorboardVisBackend')]
-visualizer = dict(
-    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+# train_dataloader = dict(
+#     batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+# test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
+
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+
+# vis_backends = [dict(type='LocalVisBackend'),
+#                 dict(type='TensorboardVisBackend')]
+# visualizer = dict(
+#     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 '''
 Model parameter settings
 '''
 
-voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
-# voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
+# voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
+voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # x=1408 , y=1600, z= 40
 
 # voxel_size = [0.05, 0.05, 0.1]
@@ -174,7 +188,7 @@ voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
 # voxel_size = [0.05, 0.05, 0.2]
 
 model = dict(
-    type='ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
+    type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
@@ -185,21 +199,18 @@ model = dict(
             max_voxels=(16000, 40000))),
     voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE 
     middle_encoder = None,
-    backbone=dict(
+     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 1024, 256, 64),
-        radii=((0.1, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 4.0)),
-        num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
-        sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
-                                                                    128)),
-                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
-                                                          (256, 384, 512))),
-        fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (-1), (-1)),
-        aggregation_channels=(None, None, None, None),
-        dilated_group=(False, False, False, False),
-        out_indices=(0, 1, 2, 3),
+        num_points=(4096, 1024, (256, 256)),
+        radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
+        num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
+        sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
+                     ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
+                     ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
+        aggregation_channels=(64, 128, 256),
+        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+        fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
             type='PointSAModuleMSG',
@@ -208,10 +219,10 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='ConViT3DNeck',
+                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
                 num_classes=3, 
-                in_chans=1024, #19
-                embed_dim=1024, #19
+                in_chans=256, #1024
+                embed_dim=256, #1024
                 depth = 6, #  Depths Transformer stage. Default 12
                 num_heads=4 ,  # 12
                 mlp_ratio=4,
@@ -222,20 +233,20 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=4 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
-                fp_output_channel = 512, 
-                ),
-
-    bbox_head=dict(
+                use_patch_embed=False,
+                fp_output_channel = 256, 
+                ),  
+    rpn_head=dict(
         type='PointRPNHead',
         num_classes=3,
         enlarge_width=0.1,
         pred_layer_cfg=dict(
-            in_channels=512,
+            in_channels=128,
             cls_linear_channels=(256, 256),
             reg_linear_channels=(256, 256)),
         cls_loss=dict(
@@ -258,86 +269,27 @@ model = dict(
             use_mean_size=True,
             mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
                                                             1.73]])),
-    
 
     # model training and testing settings
-     train_cfg=dict(
-        pos_distance_thr=10.0,
-        rpn=dict(
-            rpn_proposal=dict(
-                use_rotate_nms=True,
-                score_thr=None,
-                iou_thr=0.8,
-                nms_pre=9000,
-                nms_post=512)),
-        rcnn=dict(
-            assigner=[
-                dict(  # for Pedestrian
-                    type='Max3DIoUAssigner',
-                    iou_calculator=dict(
-                        type='BboxOverlaps3D', coordinate='lidar'),
-                    pos_iou_thr=0.55,
-                    neg_iou_thr=0.55,
-                    min_pos_iou=0.55,
-                    ignore_iof_thr=-1,
-                    match_low_quality=False),
-                dict(  # for Cyclist
-                    type='Max3DIoUAssigner',
-                    iou_calculator=dict(
-                        type='BboxOverlaps3D', coordinate='lidar'),
-                    pos_iou_thr=0.55,
-                    neg_iou_thr=0.55,
-                    min_pos_iou=0.55,
-                    ignore_iof_thr=-1,
-                    match_low_quality=False),
-                dict(  # for Car
-                    type='Max3DIoUAssigner',
-                    iou_calculator=dict(
-                        type='BboxOverlaps3D', coordinate='lidar'),
-                    pos_iou_thr=0.55,
-                    neg_iou_thr=0.55,
-                    min_pos_iou=0.55,
-                    ignore_iof_thr=-1,
-                    match_low_quality=False)
-            ],
-            sampler=dict(
-                type='IoUNegPiecewiseSampler',
-                num=128,
-                pos_fraction=0.5,
-                neg_piece_fractions=[0.8, 0.2],
-                neg_iou_piece_thrs=[0.55, 0.1],
-                neg_pos_ub=-1,
-                add_gt_as_proposals=False,
-                return_iou=True),
-            cls_pos_thr=0.7,
-            cls_neg_thr=0.25)),
-     test_cfg=dict(
-        rpn=dict(
-            nms_cfg=dict(
-                use_rotate_nms=True,
-                iou_thr=0.85,
-                nms_pre=9000,
-                nms_post=512,
-                score_thr=None)),
-        rcnn=dict(use_rotate_nms=True, nms_thr=0.1, score_thr=0.1))
+   train_cfg=dict(
+        sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
     
-    )
+    test_cfg=dict(
+        nms_cfg=dict(type='nms', iou_thr=0.1),
+        sample_mode='spec',
+        score_thr=0.0,
+        per_class_proposal=True,
+        max_output_num=100)
+        )
 
 
-# Runtime settings，training schedule for 40e
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
 
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_pointnet_rpn'
+work_dir = './work_dirs/convit3d_tansformerHead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -363,7 +315,8 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook', draw=True))
+    # visualization=dict(type='Det3DVisualizationHook', draw=True)
+    )
 
 log_config = dict(
     interval=50,
@@ -385,9 +338,6 @@ log_level = 'INFO'
 load_from = None
 resume = False
 
-
-
-
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
 
@@ -396,6 +346,7 @@ resume = False
 #                         schedule = dict( wait=1,warmup=1,active=2),
 #                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
 #                         # with_stack =True,
+
 
 
 '''
@@ -426,12 +377,10 @@ param_scheduler = [
 ]
 
 
-
-
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=2)
+# auto_scale_lr = dict(enable=False, base_batch_size=2)
 
 
