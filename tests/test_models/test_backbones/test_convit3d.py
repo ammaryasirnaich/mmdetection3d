@@ -15,6 +15,7 @@ class convit3d_module_test:
         self.num_voxels = torch.randint(1, 100, [45000])
         self.voxel_coord = torch.randint(0, 100, [45000, 3]).cuda()
         self.bck_point_xyz = torch.rand([45000, 20, 16]).cuda()
+        self.bck_sa_feature = torch.rand([45000, 16, 20]).cuda()
      
  
     def get_used_memory(self):
@@ -56,12 +57,12 @@ class convit3d_module_test:
             pytest.skip()
         # DGCNNGF used in segmentation
             
-        cfg = dict( type='ConViT3DDecoder',
+        cfg = dict( type='VisionTransformer',
                     num_classes=3, 
                     in_chans=16, #19
                     embed_dim=16, #19
                     depth = 6, #  Depths Transformer stage. Default 12
-                    num_heads=4 ,  # 12
+                    num_heads=12 ,  # 12
                     mlp_ratio=4,
                     qkv_bias=False ,
                     qk_scale=None ,
@@ -82,9 +83,9 @@ class convit3d_module_test:
         backbone.cuda()
 
         feat_dic=[]
-        self.bck_point_xyz = self.bck_point_xyz.expand(1,-1, -1,-1)
+        # self.bck_point_xyz = self.bck_point_xyz.expand(1,-1, -1,-1)
         # print("point_xyz shape",self.point_xyz.shape)
-        feat_dic = dict(fp_features=self.bck_point_xyz)
+        feat_dic = dict(sa_features=self.bck_sa_feature)
         ret_dict = backbone(feat_dic, self.voxel_coord)
         print("keys", ret_dict.keys())
         print("Backbone test Pass")
@@ -104,5 +105,5 @@ class convit3d_module_test:
 
 if __name__ == "__main__":
     cpnt = convit3d_module_test()
-    cpnt.test_middle_encoder()
+    # cpnt.test_middle_encoder()
     cpnt.test_convit3d_backbone()
