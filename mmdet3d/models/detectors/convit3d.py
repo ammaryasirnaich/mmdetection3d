@@ -63,8 +63,8 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
 
         # print("feature shape", x['sa_features'][-1].shape)
         
-        x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
-
+        # x['raw_points']=torch.stack(batch_inputs_dict['points'])[:,:,:3]  # (N,D(3))
+        x['raw_points']=torch.stack(batch_inputs_dict['points'])
 
         if self.with_neck:
             sa_xyz = x['sa_xyz'][-1]

@@ -251,12 +251,6 @@ class MHSA(nn.Module):
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
-
-
-        if(B!= attn.shape[0]):
-            print("Batch mismatched occured in MHSA")
-            print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
-            print("Voxelcoord shape:", _.shape)
         
         return attn
     

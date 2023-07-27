@@ -163,7 +163,7 @@ test_evaluator = val_evaluator
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -223,8 +223,8 @@ model = dict(
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
-                depth = 6, #  Depths Transformer stage. Default 12
-                num_heads=4 ,  # 12
+                depth = 12, #  Depths Transformer stage. Default 12
+                num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -241,6 +241,7 @@ model = dict(
                 use_patch_embed=False,
                 fp_output_channel = 256, 
                 ),  
+
     rpn_head=dict(
         type='PointRPNHead',
         num_classes=3,
@@ -270,18 +271,66 @@ model = dict(
             mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
                                                             1.73]])),
 
-    # model training and testing settings
-   train_cfg=dict(
-        sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
-    
+# model training and testing settings
+    train_cfg=dict(
+        pos_distance_thr=10.0,
+        rpn=dict(
+            rpn_proposal=dict(
+                use_rotate_nms=True,
+                score_thr=None,
+                iou_thr=0.8,
+                nms_pre=9000,
+                nms_post=512)),
+        rcnn=dict(
+            assigner=[
+                dict(  # for Pedestrian
+                    type='Max3DIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1,
+                    match_low_quality=False),
+                dict(  # for Cyclist
+                    type='Max3DIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1,
+                    match_low_quality=False),
+                dict(  # for Car
+                    type='Max3DIoUAssigner',
+                    iou_calculator=dict(
+                        type='BboxOverlaps3D', coordinate='lidar'),
+                    pos_iou_thr=0.55,
+                    neg_iou_thr=0.55,
+                    min_pos_iou=0.55,
+                    ignore_iof_thr=-1,
+                    match_low_quality=False)
+            ],
+            sampler=dict(
+                type='IoUNegPiecewiseSampler',
+                num=128,
+                pos_fraction=0.5,
+                neg_piece_fractions=[0.8, 0.2],
+                neg_iou_piece_thrs=[0.55, 0.1],
+                neg_pos_ub=-1,
+                add_gt_as_proposals=False,
+                return_iou=True),
+            cls_pos_thr=0.7,
+            cls_neg_thr=0.25)),
     test_cfg=dict(
-        nms_cfg=dict(type='nms', iou_thr=0.1),
-        sample_mode='spec',
-        score_thr=0.0,
-        per_class_proposal=True,
-        max_output_num=100)
-        )
-
+        rpn=dict(
+            nms_cfg=dict(
+                use_rotate_nms=True,
+                iou_thr=0.85,
+                nms_pre=9000,
+                nms_post=512,
+                score_thr=None)),
+        rcnn=dict(use_rotate_nms=True, nms_thr=0.1, score_thr=0.1)))
 
 
 
@@ -289,7 +338,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_pointnet_rpn'
+work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_rpnhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
