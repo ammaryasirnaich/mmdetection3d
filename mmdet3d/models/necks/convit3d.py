@@ -39,43 +39,6 @@ class Mlp(nn.Module):
         x = self.drop(x)
         return x
 
-# class RelPositionalEncoding3D(nn.Module):
-#     def __init__(self, input_dim, max_points):
-#         super(RelPositionalEncoding3D, self).__init__()
-#         self.input_dim = input_dim
-#         self.max_points = max_points
-        
-#         self.position_encoding = nn.Embedding(self.max_points, self.input_dim)
-#         
-
-#     def forward(self, points):
-#         '''
-#         points: 3D point cloud (B,N,D)
-#         return: relevant position encoding cooridnates(3) with pairwise eucliden distance(1) (B,N,N,4) 
-        
-#         '''
-#         batch_size, num_points, _ = points.size()
-        
-#         # Compute relative coordinates
-#         relative_coords = points[:, :, None, :] - points[:, None, :, :]
-        
-#         # Compute pairwise distances
-#         distances = torch.sqrt(torch.sum(relative_coords ** 2, dim=-1))  # Euclidean distance
-        
-#         # Compute position encoding
-#         position_indices = torch.arange(num_points, device=points.device).unsqueeze(0).expand(batch_size, -1)
-        
-#         # position_encodings = self.position_encoding(position_indices)
-        
-        
-#         # Expand position encodings to match the shape of distances
-#         position_encodings = position_encodings.unsqueeze(2).expand(-1, -1, num_points, -1)
-        
-#         # Concatenate position encodings with distances
-#         encodings = torch.cat([position_encodings, distances.unsqueeze(-1)], dim=-1)
-#         self.register_buffer("encodings", encodings)   
-#         return encodings
-
 class RelPositionalEncoding3D(nn.Module):
     def __init__(self, input_dim, max_points):
         super(RelPositionalEncoding3D, self).__init__()
@@ -122,7 +85,8 @@ class GPSA(nn.Module):
         self.apply(self._init_weights)
         
         if use_local_init:
-            self.local_init(locality_strength=locality_strength)
+            # self.local_init(locality_strength=locality_strength) # for 2d image data
+            self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -162,46 +126,18 @@ class GPSA(nn.Module):
         attn = self.get_attention(x)
         # print(" x attn", x.shape)
        
-        attn = self.proj(attn)
+        attn = self.proj(attn) 
         attn = self.proj_drop(attn)
 
-        if(B!= attn.shape[0]):
-            print("Batch mismatched occured in GPSA")
-            print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
-            print("Voxelcoord shape:", voxel_coord.shape)
+        # if(B!= attn.shape[0]):
+        #     print("Batch mismatched occured in GPSA")
+        #     print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
+        #     print("Voxelcoord shape:", voxel_coord.shape)
 
         return attn
 
 
-    def get_attention(self, x):
-
-        # B, N, C = x.shape  
-        # qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        # q, k = qk[0], qk[1]
-        # pos_score = self.rel_indices
-        # pos_score = self.pos_proj(pos_score).permute(0,3,1,2) 
-        # patch_score = (q @ k.transpose(-2, -1)) * self.scale
-
-
-        # patch_score = patch_score.softmax(dim=-1)
-        # pos_score = pos_score.softmax(dim=-1)
-
-        # gating = self.gating_param.view(1,-1,1,1)
-
-
-        # if(patch_score.shape!=pos_score.shape):
-        #     print("patch_score shape", patch_score.shape)
-        #     print("Pos_score shape",pos_score.shape)
-        #     print("gating shape", gating.shape)
-         
-
-        # attn = (1.-torch.sigmoid(gating)) * patch_score + torch.sigmoid(gating) * pos_score
-        # attn /= attn.sum(dim=-1).unsqueeze(-1)
-        # attn = self.attn_drop(attn)
-
-        # print("shape of input in get_attention",x.shape)
-        # print("Q/k Dimension input :",self.dim,"output: ",self.dim*2)
-      
+    def get_attention(self, x):    
         B, N, C = x.shape      
         qk = self.qk(x).reshape(B, N, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)   
@@ -216,37 +152,15 @@ class GPSA(nn.Module):
         # Self-attention Does Not Need O(n2) Memory
         # '''
         pos_score = self.rel_indices
-        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)
+        pos_score = self.pos_proj(pos_score).permute(0,3,1,2)  # V_pos*(r)
         pos_score = pos_score.softmax(dim=-1)
-        pos_score = (pos_score @ v).permute(0,2,1,3)
-        patch_score = F.scaled_dot_product_attention(q,k,v,scale=self.scale ,dropout_p=0.0).permute(0,2,1,3)
-        # patch_score = patch_score.softmax(dim=-1)
-
-        # patch_score = torch.einsum('bijk->bjik', patch_score)
-
-        # pos_score = torch.einsum('bijk->bjik', pos_score)
 
 
+        I = torch.eye(k.shape[-2],k.shape[-2],device='cuda')
+        # print("shape of !",I.shape)
 
-        # p_B,p_N,p_H,p_D = patch_score.shape
-        # patch_score =patch_score.reshape(p_B,p_N,p_H*p_D)
-
-        # s_B,s_N,s_H,s_D = pos_score.shape
-        # pos_score =pos_score.reshape(s_B,s_N,s_H*s_D)
-             
-        gating = self.gating_param.view(1,1,-1,1)
-
-        if(patch_score.shape[0]!=pos_score.shape[0]!=B):
-            print("Dimension mismatched")
-            print("patch_score shape",patch_score.shape)
-            print("pos_score shape", pos_score.shape)
-            print("gating shape", gating.shape)
-            print("self.rel_indices shaoe",self.rel_indices.shape)
-            print("q.shape: ", q.shape)
-            print("k.shape: ", k.shape)
-            print("v.shape: ", v.shape)
-            print("Wait")
-
+        patch_score = F.scaled_dot_product_attention(q,k,I,scale=self.scale ,dropout_p=0.0)            
+        gating = self.gating_param.view(1,-1,1,1)
 
         # print("Dimension mismatched")
         # print("patch_score shape",patch_score.shape)
@@ -264,12 +178,9 @@ class GPSA(nn.Module):
         attn /= attn.sum(dim=-1).unsqueeze(-1)
         # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
-      
-        attn=attn.transpose(1,2).reshape(B,N,C)
 
-
-        # print("attn shape after rearranging", attn.shape)
-
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
         return attn
     
     def local_init(self, locality_strength=1.):
@@ -287,7 +198,27 @@ class GPSA(nn.Module):
                 self.pos_proj.weight.data[position,0] = 2*(h2-center)*locality_distance
         self.pos_proj.weight.data *= locality_strength
 
- 
+    
+        
+    def local_init_3d(self, locality_strength=1.):
+        position=0
+        self.v.weight.data.copy_(torch.eye(self.dim))
+        locality_distance = 1 #max(1,1/locality_strength**.5) 
+        kernel_size = int(self.num_heads**(1/3))
+        center = (kernel_size-1)/2 if kernel_size%2==0 else kernel_size//2
+        for h1 in range(kernel_size):
+            for h2 in range(kernel_size):
+                for h3 in range(kernel_size):    
+                    print(position,h1,h2,h3)
+                    self.pos_proj.weight.data[position,3] = -1
+                    self.pos_proj.weight.data[position,2] = 2*(h3-center)*locality_distance
+                    self.pos_proj.weight.data[position,1] = 2*(h2-center)*locality_distance
+                    self.pos_proj.weight.data[position,0] = 2*(h1-center)*locality_distance
+                    position +=1
+        self.pos_proj.weight.data *= locality_strength
+
+
+
 class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
@@ -309,59 +240,14 @@ class MHSA(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
-
-    def get_attention_map(self, x, return_map = False):
-        B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]
-        attn_map = (q @ k.transpose(-2, -1)) * self.scale
-        attn_map = attn_map.softmax(dim=-1).mean(0)
-
-        img_size = int(N**.5)
-        ind = torch.arange(img_size).view(1,-1) - torch.arange(img_size).view(-1, 1)
-        indx = ind.repeat(img_size,img_size)
-        indy = ind.repeat_interleave(img_size,dim=0).repeat_interleave(img_size,dim=1)
-        indd = indx**2 + indy**2
-        distances = indd**.5
-        distances = distances.to('cuda')
-
-        dist = torch.einsum('nm,hnm->h', (distances, attn_map))
-        dist /= N
-        
-        if return_map:
-            return dist, attn_map
-        else:
-            return dist
-
             
     def forward(self,  x, _ ):
-        # B, N, C = x.shape
-
-        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        # q, k, v = qkv[0], qkv[1], qkv[2]
-
-        # attn = (q @ k.transpose(-2, -1)) * self.scale
-        # attn = attn.softmax(dim=-1)
-        # attn = self.attn_drop(attn)    
-        # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
-        
-        # x = self.proj(x)
-        # x = self.proj_drop(x)
-
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
         attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=True).permute(0,2,1,3)
-        
-        # print("attn shape after scaled attention", attn.shape)
-        
-        # attn = torch.einsum('bijk->bjik', attn)
-        # print("attn shape", attn.shape)
         B_t,N_t,H_t,D_t = attn.shape
         attn =attn.reshape(B_t,N_t,H_t*D_t)   
-        # attn = attn.transpose(1, 2).reshape(B, N, C) 
-        # print("attn shape after reshape", attn.shape)
-        
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
@@ -430,8 +316,8 @@ class VisionTransformer(nn.Module):
 
     """
     def __init__(self,
-                img_size=224 ,
-                patch_size=16 ,
+                # img_size=224 ,
+                # patch_size=16 ,
                 in_chans=4 ,
                 num_classes=3 ,
                 embed_dim=48 ,
@@ -527,7 +413,6 @@ class VisionTransformer(nn.Module):
         attend = self.transformer_head(attend)
         
         # create new feature 
-        # feat_dict["tranformer_features"]= attend 
         feat_dict["sa_features"][-1] = attend       
         return feat_dict
     

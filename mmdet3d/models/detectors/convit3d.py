@@ -67,8 +67,8 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
 
 
         if self.with_neck:
-            fp_xyz = x['sa_xyz'][-1]
-            x = self.neck(x,fp_xyz)
+            sa_xyz = x['sa_xyz'][-1]
+            x = self.neck(x,sa_xyz)
         return x
     
 

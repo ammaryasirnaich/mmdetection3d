@@ -223,7 +223,7 @@ model = dict(
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
-                depth = 12, #  Depths Transformer stage. Default 12
+                depth = 6, #  Depths Transformer stage. Default 12
                 num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
@@ -311,7 +311,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_tansformerHead'
+work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_sdssd'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
