@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -113,7 +113,7 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -131,7 +131,7 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -158,7 +158,7 @@ test_evaluator = val_evaluator
 
 
 # train_dataloader = dict(
-#     batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+#     batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 # test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -223,7 +223,7 @@ model = dict(
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
-                depth = 6, #  Depths Transformer stage. Default 12
+                depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
