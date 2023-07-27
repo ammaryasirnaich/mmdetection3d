@@ -163,7 +163,7 @@ test_evaluator = val_evaluator
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -223,8 +223,8 @@ model = dict(
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
-                depth = 6, #  Depths Transformer stage. Default 12
-                num_heads=4 ,  # 12
+                depth = 12, #  Depths Transformer stage. Default 12
+                num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -233,7 +233,7 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=3 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,

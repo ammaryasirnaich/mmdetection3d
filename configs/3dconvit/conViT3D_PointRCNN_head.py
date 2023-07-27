@@ -208,12 +208,12 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='ConViT3DNeck',
+                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
                 num_classes=3, 
-                in_chans=1024, #19
-                embed_dim=1024, #19
-                depth = 6, #  Depths Transformer stage. Default 12
-                num_heads=4 ,  # 12
+                in_chans=256, #1024
+                embed_dim=256, #1024
+                depth = 12, #  Depths Transformer stage. Default 12
+                num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -222,13 +222,14 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=4 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
-                fp_output_channel = 512, 
-                ),
+                use_patch_embed=False,
+                fp_output_channel = 256, 
+                ),  
 
     bbox_head=dict(
         type='PointRPNHead',
@@ -258,7 +259,6 @@ model = dict(
             use_mean_size=True,
             mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
                                                             1.73]])),
-    
 
     # model training and testing settings
      train_cfg=dict(
@@ -337,7 +337,7 @@ test_cfg = dict(type='TestLoop')
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_pointnet_rpn'
+work_dir = './work_dirs/convit3d_pointnet_rpnhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -432,6 +432,6 @@ param_scheduler = [
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=2)
+# auto_scale_lr = dict(enable=False, base_batch_size=2)
 
 
