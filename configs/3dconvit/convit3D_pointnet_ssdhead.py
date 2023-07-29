@@ -163,7 +163,7 @@ test_evaluator = val_evaluator
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=2)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -219,7 +219,7 @@ model = dict(
             normalize_xyz=False)),
 
     neck =  dict(
-                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
+                type='VisionTransformer',   
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
@@ -243,7 +243,7 @@ model = dict(
                 ),  
 
    bbox_head=dict(
-        type='TransHead',
+        type='TransHead',    #SSD3DHead , TransHead
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),

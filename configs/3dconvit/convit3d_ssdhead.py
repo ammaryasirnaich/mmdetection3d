@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -113,7 +113,7 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=2,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -131,7 +131,7 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=2,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -157,13 +157,9 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 
-# train_dataloader = dict(
-#     batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
-# test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -197,12 +193,12 @@ model = dict(
             point_cloud_range= point_cloud_range,
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
-    voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE 
+    voxel_encoder=None,      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
     middle_encoder = None,
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 1024, (256, 256)),
+        num_points=(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
@@ -218,32 +214,32 @@ model = dict(
             use_xyz=True,
             normalize_xyz=False)),
             
-    neck =  dict(
-                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
-                num_classes=3, 
-                in_chans=256, #1024
-                embed_dim=256, #1024
-                depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=8 ,  # 12
-                mlp_ratio=4,
-                qkv_bias=False ,
-                qk_scale=None ,
-                drop_rate=0,
-                attn_drop_rate=0,
-                drop_path_rate=0, 
-                hybrid_backbone=None ,
-                global_pool=None,
-                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=1,
-                use_pos_embed=False,
-                init_cfg=None,
-                pretrained=None,
-                use_patch_embed=False,
-                fp_output_channel = 256, 
-                ),  
+    # neck =  dict(
+    #             type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
+    #             num_classes=3, 
+    #             in_chans=256, #1024
+    #             embed_dim=256, #1024
+    #             depth = 12, #  Depths Transformer stage. Default 12
+    #             num_heads=8 ,  # 12
+    #             mlp_ratio=4,
+    #             qkv_bias=False ,
+    #             qk_scale=None ,
+    #             drop_rate=0,
+    #             attn_drop_rate=0,
+    #             drop_path_rate=0, 
+    #             hybrid_backbone=None ,
+    #             global_pool=None,
+    #             local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
+    #             locality_strength=1,
+    #             use_pos_embed=False,
+    #             init_cfg=None,
+    #             pretrained=None,
+    #             use_patch_embed=False,
+    #             fp_output_channel = 256, 
+    #             ), 
 
    bbox_head=dict(
-        type='SSD3DHead',
+        type='SSD3DHead',    #SSD3DHead , TransHead
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
@@ -309,7 +305,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_sdssd'
+work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_sdssd_withtransformer'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
