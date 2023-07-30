@@ -193,7 +193,7 @@ model = dict(
             point_cloud_range= point_cloud_range,
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
-    voxel_encoder=None,      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
+    voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
     middle_encoder = None,
     backbone=dict(
         type='PointNet2SAMSG',
@@ -215,7 +215,7 @@ model = dict(
             normalize_xyz=False)),
             
     # neck =  dict(
-    #             type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
+    #             type='VisionTransformer',   
     #             num_classes=3, 
     #             in_chans=256, #1024
     #             embed_dim=256, #1024
@@ -305,7 +305,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_sdssd_withtransformer'
+work_dir = './work_dirs/convit3d_sdssd_no_transformer'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)

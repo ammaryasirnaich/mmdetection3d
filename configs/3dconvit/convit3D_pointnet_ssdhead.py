@@ -311,7 +311,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_sdssd'
+work_dir = './work_dirs/convit3d_sdssd_with_transformer'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
