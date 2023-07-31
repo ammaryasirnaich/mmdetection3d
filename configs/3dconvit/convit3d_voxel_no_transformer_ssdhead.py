@@ -305,7 +305,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3d_sdssd_no_transformer'
+work_dir = './work_dirs/convit3d_no_voxel_sdssd_no_transformer'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -397,6 +397,6 @@ param_scheduler = [
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=2)
+# auto_scale_lr = dict(enable=False, base_batch_size=4)
 
 
