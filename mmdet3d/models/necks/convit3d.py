@@ -401,13 +401,11 @@ class VisionTransformer(nn.Module):
         x = feat_dict["sa_features"][-1]
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
-        attend = self.transformer_head(attend)
-        
+        # print("attend output shape before head",attend.shape)
+        attend = self.transformer_head(attend)  
         # create new feature 
         feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
-        print("output shape from forward_features",attend.shape)
-
-
+        # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
         return feat_dict
     
     
