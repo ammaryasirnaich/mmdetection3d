@@ -1,0 +1,1 @@
+python tools/test.py /workspace/data/kitti_detection/model_output_results/convit3d_tansformerHead/convit3D_pointnet_ssdhead.py /workspace/data/kitti_detection/model_output_results/convit3d_tansformerHead/epoch_80.pth --show --show-dir /workspace/mmdetection3d/working_dir/d3ssd
