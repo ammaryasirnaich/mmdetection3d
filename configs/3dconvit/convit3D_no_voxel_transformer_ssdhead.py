@@ -164,11 +164,6 @@ val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
 
-vis_backends = [dict(type='LocalVisBackend'),
-                dict(type='TensorboardVisBackend')]
-visualizer = dict(
-    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
-
 '''
 Model parameter settings
 '''
@@ -332,13 +327,18 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook', draw=True)
+    # visualization=dict(type='Det3DVisualizationHook', draw=True)
     )
 
-log_config = dict(
-    interval=50,
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])
+
+# vis_backends = [dict(type='LocalVisBackend')]
+# visualizer = dict(
+#     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+# log_config = dict(
+#     interval=50,
+#     hooks=[dict(type='TextLoggerHook'),
+#            dict(type='TensorboardLoggerHook')])
 
 checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
 
