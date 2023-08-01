@@ -2,7 +2,7 @@ dataset_type = 'KittiDataset'
 data_root = '/workspace/data/kitti_detection/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-input_modality = dict(use_lidar=True, use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=True)
 metainfo = dict(classes=class_names)
 
 backend_args = None
@@ -345,7 +345,7 @@ log_config = dict(
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=1,max_keep_ckpts=3)
+checkpoint_config = dict(interval=1)
 
 env_cfg = dict(
     cudnn_benchmark=False,
