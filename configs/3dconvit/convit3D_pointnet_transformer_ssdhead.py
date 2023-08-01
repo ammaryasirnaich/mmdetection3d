@@ -301,10 +301,10 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_Novoxel_PointNet_transformer_ssdhead'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead'
 load_from = None
 resume_from = None
-workflow = [('train', 1)]   # , ('val', 1)
+workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded
 opencv_num_threads = 0
@@ -327,7 +327,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    # visualization=dict(type='Det3DVisualizationHook', draw=True)
+    visualization=dict(type='Det3DVisualizationHook')
     )
 
 
@@ -335,12 +335,17 @@ default_hooks = dict(
 # visualizer = dict(
 #     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
-# log_config = dict(
-#     interval=50,
-#     hooks=[dict(type='TextLoggerHook'),
-#            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
+vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+log_config = dict(
+    interval=50,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+
+checkpoint_config = dict(interval=1,max_keep_ckpts=3)
 
 env_cfg = dict(
     cudnn_benchmark=False,

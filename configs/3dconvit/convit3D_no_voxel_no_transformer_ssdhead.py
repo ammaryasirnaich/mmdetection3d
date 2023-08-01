@@ -340,7 +340,7 @@ log_config = dict(
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
+checkpoint_config = dict(interval=1,max_keep_ckpts=3)
 
 env_cfg = dict(
     cudnn_benchmark=False,
