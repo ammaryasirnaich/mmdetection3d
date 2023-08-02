@@ -28,8 +28,8 @@ SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
 #     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 #     --task lidar_det --show-dir /workspace/conVit3D/show_results
 
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show-dir ${SHOW_DIR}
-
+# python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det
 
 
 
