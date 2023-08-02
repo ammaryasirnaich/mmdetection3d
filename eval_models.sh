@@ -15,17 +15,29 @@
 #     --show --show-dir /workspace/pointrcnn/show_results
 
 
-
+#  ===== Running evalution of ConViT3D
 # python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
 #     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 #     --task lidar_det --show --show-dir /workspace/conVit3D/show_results
 
 
+CONFIG_FILE="/workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py"
+CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth"
+SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
+# python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
+#     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
+#     --task lidar_det --show-dir /workspace/conVit3D/show_results
+
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show-dir ${SHOW_DIR}
+
+
+
+
 
 #----------------------------- benchmark evalutation for FPS
 # ConViT3D FPS ~ 15.8
-python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
-           /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
+# python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
+#            /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 
 
 # PV-RCNN FPS ~ 12.6
