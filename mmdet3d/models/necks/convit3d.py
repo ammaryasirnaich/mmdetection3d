@@ -209,7 +209,7 @@ class GPSA(nn.Module):
         for h1 in range(kernel_size):
             for h2 in range(kernel_size):
                 for h3 in range(kernel_size):    
-                    print(position,h1,h2,h3)
+                    # print(position,h1,h2,h3)
                     self.pos_proj.weight.data[position,3] = -1
                     self.pos_proj.weight.data[position,2] = 2*(h3-center)*locality_distance
                     self.pos_proj.weight.data[position,1] = 2*(h2-center)*locality_distance
