@@ -23,9 +23,9 @@
 
 
 #----------------------------- benchmark evalutation for FPS
-# ConViT3D FPS ~ 7.8
-# python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
-#            /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
+# ConViT3D FPS ~ 15.8
+python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
+           /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 
 
 # PV-RCNN FPS ~ 12.6
@@ -33,5 +33,5 @@
 #            /workspace/data/kitti_detection/models_to_test/PV_RCNN/pv_rcnn_8xb2-80e_kitti-3d-3class_20221117_234428-b384d22f.pth
 
 # Pointpiller FPS ~ 12.6
-python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py \
-    /workspace/data/kitti_detection/models_to_test/pointpiller/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20220301_150306-37dc2420.pth 
+# python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py \
+#     /workspace/data/kitti_detection/models_to_test/pointpiller/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20220301_150306-37dc2420.pth 
