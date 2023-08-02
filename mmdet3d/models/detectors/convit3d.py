@@ -66,6 +66,12 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
             points = batch_inputs_dict['points']
             stack_points = torch.stack(points)
             x = self.backbone(stack_points)
+
+            print("Keys", x.keys())
+            print("x['sa_feature']",x['sa_feature'][-1].shape)
+            print("x['sa_xyz']",x['sa_xyz'][-1].shape)
+
+            print("Pass")
             
         if self.with_neck:
             sa_xyz = x['sa_xyz'][-1]
