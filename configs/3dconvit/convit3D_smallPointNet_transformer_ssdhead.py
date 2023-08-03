@@ -194,19 +194,20 @@ model = dict(
     
     backbone=dict(
         type='PointNet2SASSG',
-        in_channels=3,
-        num_points=(8192,4096),
-        radius=(0.2, 0.4 ),
-        num_samples=(64, 32),
-        sa_channels=((64, 64, 128), (128, 128, 256)),
-        fp_channels=((256, 256)),
+        in_channels=4,
+        num_points=(2048, 1024, 512, 256),
+        radius=(0.2, 0.4, 0.8, 1.2),
+        num_samples=(64, 32, 16, 16),
+        sa_channels=((64, 64, 128), (128, 128, 256), (128, 128, 256),
+                     (128, 128, 256)),
+        fp_channels=((256, 256), (256, 256)),
         norm_cfg=dict(type='BN2d'),
         sa_cfg=dict(
             type='PointSAModule',
             pool_mod='max',
             use_xyz=True,
             normalize_xyz=True)),
-            
+
     neck =  dict(
                 type='VisionTransformer',   
                 num_classes=3, 
@@ -324,7 +325,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=-1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook')
+    # visualization=dict(type='Det3DVisualizationHook')
     )
 
 
@@ -333,9 +334,9 @@ default_hooks = dict(
 #     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 
-vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
-visualizer = dict(
-    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
+# visualizer = dict(
+#     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 log_config = dict(
     interval=50,

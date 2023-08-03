@@ -113,8 +113,8 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=2,
-    num_workers=4,
+    batch_size=1,
+    num_workers=1,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -131,8 +131,8 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=2,
-    num_workers=4,
+    batch_size=1,
+    num_workers=1,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -243,7 +243,7 @@ model = dict(
                 ),  
 
    bbox_head=dict(
-        type='TransHead',    #SSD3DHead , TransHead
+        type='SSD3DHead',    #SSD3DHead , TransHead
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
