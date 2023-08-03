@@ -159,7 +159,7 @@ test_evaluator = val_evaluator
 
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=2 ) #val_interval=1
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80,val_interval=5 ) #val_interval=1
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -195,7 +195,7 @@ model = dict(
     backbone=dict(
         type='PointNet2SASSG',
         in_channels=4,
-        num_points=(4096, 512),
+        num_points=(4096, 1024),
         radius=(0.2, 0.4),
         num_samples=(64, 32),
         sa_channels=((64, 64, 128), (128, 128, 256)),
@@ -208,7 +208,7 @@ model = dict(
             normalize_xyz=True)),
 
     neck =  dict(
-                type='VisionTransformer',   
+                type='VisionTransformerV2',   
                 num_classes=3, 
                 in_chans=256, #1024
                 embed_dim=256, #1024
@@ -232,13 +232,13 @@ model = dict(
                 ), 
 
    bbox_head=dict(
-        type='SSD3DHead',    #SSD3DHead , TransHead
+        type='TransHead',    #SSD3DHead , TransHead
         num_classes=3,
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         vote_module_cfg=dict(
             in_channels=256,
-            num_points=256,
+            num_points=512,
             gt_per_seed=1,
             conv_channels=(128, ),
             conv_cfg=dict(type='Conv1d'),
@@ -247,7 +247,7 @@ model = dict(
             vote_xyz_range=(3.0, 3.0, 2.0)),
         vote_aggregation_cfg=dict(
             type='PointSAModuleMSG',
-            num_point=256,
+            num_point=512,
             radii=(4.8, 6.4),
             sample_nums=(16, 32),
             mlp_channels=((256, 256, 256, 512), (256, 256, 512, 1024)),
@@ -298,7 +298,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_smallPointNet_transformer_ssdhead'
+work_dir = './work_dirs/convit3D_smallPointNet_transformer_ssdhead_V2'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
@@ -342,7 +342,7 @@ log_config = dict(
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-# checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=5)
 
 env_cfg = dict(
     cudnn_benchmark=False,
