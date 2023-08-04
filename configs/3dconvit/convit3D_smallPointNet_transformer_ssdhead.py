@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-  batch_size=4,
+  batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -159,7 +159,7 @@ test_evaluator = val_evaluator
 
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80,val_interval=5 ) #val_interval=1
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80,val_interval=10 ) #val_interval=1
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -195,7 +195,7 @@ model = dict(
     backbone=dict(
         type='PointNet2SASSG',
         in_channels=4,
-        num_points=(4096, 640),
+        num_points=(4096, 1024),
         radius=(0.2, 0.4),
         num_samples=(64, 32),
         sa_channels=((64, 64, 128), (128, 128, 256)),
@@ -210,7 +210,7 @@ model = dict(
     neck =  dict(
                 type='VisionTransformer',   
                 num_classes=3, 
-                in_chans=256, #1024
+                # in_chans=256, #1024
                 embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=8 ,  # 12
@@ -238,7 +238,7 @@ model = dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         vote_module_cfg=dict(
             in_channels=256,
-            num_points=512,
+            num_points=400,
             gt_per_seed=1,
             conv_channels=(128, ),
             conv_cfg=dict(type='Conv1d'),
@@ -247,9 +247,9 @@ model = dict(
             vote_xyz_range=(3.0, 3.0, 2.0)),
         vote_aggregation_cfg=dict(
             type='PointSAModuleMSG',
-            num_point=512,
+            num_point=400,
             radii=(4.8, 6.4),
-            sample_nums=(16, 32),
+            sample_nums=(32, 64), #(16,32)
             mlp_channels=((256, 256, 256, 512), (256, 256, 512, 1024)),
             norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
             use_xyz=True,
@@ -298,7 +298,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_smallPointNet_transformer_ssdhead_V2'
+work_dir = './work_dirs/convit3D_smallPointNet_transformer_1024Head_ssdhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
@@ -322,11 +322,13 @@ default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=-1),
+    checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook')
     )
 
+
+checkpoint_config = dict(interval=1,max_keep_ckpts=25,save_last=True,save_optimizer=True)
 
 # vis_backends = [dict(type='LocalVisBackend')]
 # visualizer = dict(
