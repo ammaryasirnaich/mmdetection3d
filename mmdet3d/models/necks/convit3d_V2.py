@@ -400,7 +400,12 @@ class VisionTransformerV2(nn.Module):
 
     def forward(self, feat_dict, voxel_coors):
         x = feat_dict["fp_features"][-1]
-        voxel_coors = feat_dict["fp_xyz"][-1]
+        # voxel_coors = feat_dict["fp_xyz"][-1]
+
+        print("Keys", feat_dict.keys())
+        print('Point_xyz shape from fp_xyz', feat_dict["fp_features"][-1].shape)
+        print('Point_xyz shape from sa_feautre', feat_dict["sa_features"][-1].shape)
+
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
         # print("attend output shape before head",attend.shape)
