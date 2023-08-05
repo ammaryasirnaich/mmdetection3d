@@ -86,7 +86,8 @@ class GPSA(nn.Module):
         
         if use_local_init:
             # self.local_init(locality_strength=locality_strength) # for 2d image data
-            self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
+            # self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
+            self.local_init_3d_relaxed(locality_strength=locality_strength)  # for 3d point cloud
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -216,6 +217,49 @@ class GPSA(nn.Module):
                     self.pos_proj.weight.data[position,0] = 2*(h1-center)*locality_distance
                     position +=1
         self.pos_proj.weight.data *= locality_strength
+    
+    def local_init_3d_relaxed(self,locality_strength=1.):
+        '''
+        This function will generate intial weights for number of heads = torch.math.ceil(num_heads**(1/3))**3
+        and then randomly select weights for heads, num_heads
+        note:
+        for num_heads = 8, it works normaly, with kernel size of 2x2x2
+        for num_heads >8 and  num_heads <=27, it generate weights for 27 heads with kernel size of 3x3x3
+        and then randomly select weights to match the number of actual head.
+
+    '''
+        position=0
+        self.v.weight.data.copy_(torch.eye(self.dim))
+        locality_distance = 1 #max(1,1/locality_strength**.5)
+        num_heads_exp = torch.math.ceil(self.num_heads**(1/3))**3
+        kernel_size = int(torch.math.ceil(self.num_heads**(1/3)))
+        print(self.num_heads, '-->',num_heads_exp, 'kernel_size =',kernel_size)
+        center = (kernel_size-1)/2 if kernel_size%2==0 else kernel_size//2
+        wdata = torch.zeros([num_heads_exp,4])
+
+
+        for h1 in range(kernel_size):
+            for h2 in range(kernel_size):
+                for h3 in range(kernel_size):    
+                    print(position,h1,h2,h3)
+                    wdata[position,3] = -1
+                    wdata[position,2] = 2*(h3-center)*locality_distance
+                    wdata[position,1] = 2*(h2-center)*locality_distance
+                    wdata[position,0] = 2*(h1-center)*locality_distance
+                    position +=1
+
+        wdata *= locality_strength
+        print(wdata)
+        idx = torch.randperm(wdata.shape[0])
+        wdata = wdata[idx]
+        print(wdata)
+        self.pos_proj.weight.data[:,0] = wdata[:self.num_heads,0]
+        self.pos_proj.weight.data[:,1] = wdata[:self.num_heads,1]
+        self.pos_proj.weight.data[:,2] = wdata[:self.num_heads,2]
+        self.pos_proj.weight.data[:,3] = wdata[:self.num_heads,3]
+
+        return wdata
+        
 
 
 
