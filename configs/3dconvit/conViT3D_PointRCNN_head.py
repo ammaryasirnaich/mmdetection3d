@@ -113,7 +113,7 @@ train_dataloader = dict(
             backend_args=backend_args)))
 
 val_dataloader = dict(
-    batch_size=4,
+    batch_size=1,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -131,7 +131,7 @@ val_dataloader = dict(
         backend_args=backend_args))
         
 test_dataloader = dict(
-    batch_size=4,
+    batch_size=1,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -158,7 +158,7 @@ test_evaluator = val_evaluator
 
 
 # train_dataloader = dict(
-#     batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+#     batch_size=1, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 # test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -191,40 +191,38 @@ model = dict(
     type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
-        voxel=True,
-        voxel_layer=dict(
-            max_num_points=9,  #35
-            point_cloud_range= point_cloud_range,
-            voxel_size=voxel_size,
-            max_voxels=(16000, 40000))),
-    voxel_encoder=dict(type='HardSimpleVFE',),      # HardVFE , IEVFE 
+        # voxel=True,
+        # voxel_layer=dict(
+        #     max_num_points=9,  #35
+        #     point_cloud_range= point_cloud_range,
+        #     voxel_size=voxel_size,
+        #     max_voxels=(16000, 40000))
+            ),
+    voxel_encoder=None,      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
     middle_encoder = None,
-     backbone=dict(
-        type='PointNet2SAMSG',
+    
+    backbone=dict(
+        type='PointNet2SASSG',
         in_channels=4,
-        num_points=(4096, 1024, (256, 256)),
-        radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
-        num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
-        sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
-                     ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
-                     ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 256),
-        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (512, -1)),
-        norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
+        num_points=(4096, 1024),
+        radius=(0.2, 0.4),
+        num_samples=(64, 32),
+        sa_channels=((64, 64, 128), (128, 128, 256)),
+        fp_channels=((256, 256), (256, 256)),
+        norm_cfg=dict(type='BN2d'),
         sa_cfg=dict(
-            type='PointSAModuleMSG',
+            type='PointSAModule',
             pool_mod='max',
             use_xyz=True,
-            normalize_xyz=False)),
+            normalize_xyz=True)),
 
     neck =  dict(
-                type='VisionTransformer',    # FullConViT3DNeck  ,ConViT3DNeck
+                type='VisionTransformer',   
                 num_classes=3, 
-                in_chans=256, #1024
+                # in_chans=256, #1024
                 embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=8 ,  # 12
+                num_heads=12 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -240,14 +238,14 @@ model = dict(
                 pretrained=None,
                 use_patch_embed=False,
                 fp_output_channel = 256, 
-                ),  
+                ), 
 
-    rpn_head=dict(
-        type='PointRPNHead',
+    bbox_head=dict(
+        type='ConVit3DRPNHead',
         num_classes=3,
         enlarge_width=0.1,
         pred_layer_cfg=dict(
-            in_channels=128,
+            in_channels=256,
             cls_linear_channels=(256, 256),
             reg_linear_channels=(256, 256)),
         cls_loss=dict(

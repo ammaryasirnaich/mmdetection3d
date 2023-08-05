@@ -86,8 +86,8 @@ class GPSA(nn.Module):
         
         if use_local_init:
             # self.local_init(locality_strength=locality_strength) # for 2d image data
-            # self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
-            self.local_init_3d_relaxed(locality_strength=locality_strength)  # for 3d point cloud
+            self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
+            # self.local_init_3d_relaxed(locality_strength=locality_strength)  # for 3d point cloud
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -98,24 +98,6 @@ class GPSA(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    '''      
-    def forward(self,  x, voxel_coord):
-        B, N, C = x.shape
-
-
-        if not hasattr(self, 'rel_indices'):
-            # self.get_patch_wise_relative_encoding(voxel_coord)
-            # dumy_rel= torch.randn(4,64,64,4, device='cuda')
-            self.rel_indices = self.embd_3d_encodding(voxel_coord)
-
-        attn = self.get_attention(x)
-        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
-
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x
-    '''
 
     def forward(self,  x, voxel_coord):
         "forward with scaled dot attention mechanism"
@@ -129,11 +111,6 @@ class GPSA(nn.Module):
        
         attn = self.proj(attn) 
         attn = self.proj_drop(attn)
-
-        # if(B!= attn.shape[0]):
-        #     print("Batch mismatched occured in GPSA")
-        #     print("Input batch shape:", x.shape, ", ouput batch shape:", attn.shape )
-        #     print("Voxelcoord shape:", voxel_coord.shape)
 
         return attn
 
