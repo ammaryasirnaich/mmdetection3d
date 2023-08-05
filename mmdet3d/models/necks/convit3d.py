@@ -353,7 +353,9 @@ class VisionTransformer(nn.Module):
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 16 # embed_dim, num_classes
+                fp_output_channel = 16, # embed_dim, num_classes
+                rpn_feature_set = False,
+
                 ):
         super(VisionTransformer,self).__init__()
         self.num_classes = num_classes
@@ -369,6 +371,7 @@ class VisionTransformer(nn.Module):
               
         self.pos_drop = nn.Dropout(p=drop_rate)
         self.i = 0
+        self.rpn_feature_set = rpn_feature_set
 
         
         self.blocks = nn.ModuleList([
@@ -418,14 +421,24 @@ class VisionTransformer(nn.Module):
 
         return x
 
-    def forward(self, feat_dict, voxel_coors):
+    def forward(self, feat_dict):
         x = feat_dict["sa_features"][-1]
+        voxel_coors = feat_dict["sa_xyz"][-1]
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
         # print("attend output shape before head",attend.shape)
         attend = self.transformer_head(attend)  
         # create new feature 
-        feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
+        
+        if (self.rpn_feature_set):
+            feat_dict["fp_features"] = attend.permute(0,2,1).contiguous()
+            feat_dict["fp_xyz"] = feat_dict["sa_xyz"][-1]
+        else:
+            feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
+            
+
+            
+
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
         return feat_dict
     

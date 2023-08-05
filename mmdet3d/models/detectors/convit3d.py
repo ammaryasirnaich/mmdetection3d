@@ -68,8 +68,7 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet
             x = self.backbone(stack_points)
             
         if self.with_neck:
-            sa_xyz = x['sa_xyz'][-1]
-            x = self.neck(x,sa_xyz)
+            x = self.neck(x)
             
         return x
     
