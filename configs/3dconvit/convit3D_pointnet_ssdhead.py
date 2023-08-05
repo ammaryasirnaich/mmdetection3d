@@ -240,6 +240,7 @@ model = dict(
                 pretrained=None,
                 use_patch_embed=False,
                 fp_output_channel = 256, 
+                rpn_feature_set = False,  
                 ),  
 
    bbox_head=dict(

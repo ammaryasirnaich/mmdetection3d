@@ -213,7 +213,7 @@ model = dict(
                 # in_chans=256, #1024
                 embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=12 ,  # 12
+                num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -228,7 +228,8 @@ model = dict(
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 256, 
+                fp_output_channel = 256,
+                rpn_feature_set = False,   
                 ), 
 
    bbox_head=dict(

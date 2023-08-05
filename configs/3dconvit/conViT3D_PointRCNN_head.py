@@ -188,41 +188,37 @@ voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
 # voxel_size = [0.05, 0.05, 0.2]
 
 model = dict(
-    type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
-    data_preprocessor=dict(
-        type='Det3DDataPreprocessor',
-        # voxel=True,
-        # voxel_layer=dict(
-        #     max_num_points=9,  #35
-        #     point_cloud_range= point_cloud_range,
-        #     voxel_size=voxel_size,
-        #     max_voxels=(16000, 40000))
-            ),
-    voxel_encoder=None,      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
-    middle_encoder = None,
-    
+    type='PointRCNN',
+    data_preprocessor=dict(type='Det3DDataPreprocessor'),
     backbone=dict(
-        type='PointNet2SASSG',
+        type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 1024),
-        radius=(0.2, 0.4),
-        num_samples=(64, 32),
-        sa_channels=((64, 64, 128), (128, 128, 256)),
-        fp_channels=((256, 256), (256, 256)),
-        norm_cfg=dict(type='BN2d'),
+        num_points=(4096, 1024, 256, 64),
+        radii=((0.1, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 4.0)),
+        num_samples=((16, 32), (16, 32), (16, 32), (16, 32)),
+        sa_channels=(((16, 16, 32), (32, 32, 64)), ((64, 64, 128), (64, 96,
+                                                                    128)),
+                     ((128, 196, 256), (128, 196, 256)), ((256, 256, 512),
+                                                          (256, 384, 512))),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('D-FPS'), ('D-FPS')),
+        fps_sample_range_lists=((-1), (-1), (-1), (-1)),
+        aggregation_channels=(None, None, None, None),
+        dilated_group=(False, False, False, False),
+        out_indices=(0, 1, 2, 3),
+        norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
-            type='PointSAModule',
+            type='PointSAModuleMSG',
             pool_mod='max',
             use_xyz=True,
-            normalize_xyz=True)),
+            normalize_xyz=False)),
 
-    neck =  dict(
+      neck =  dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=256, #1024
+                embed_dim=1024, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=12 ,  # 12
+                num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -237,15 +233,16 @@ model = dict(
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 256, 
+                fp_output_channel = 128,
+                rpn_feature_set = True,  
                 ), 
 
-    bbox_head=dict(
-        type='ConVit3DRPNHead',
+    rpn_head=dict(
+        type='PointRPNHead',
         num_classes=3,
         enlarge_width=0.1,
         pred_layer_cfg=dict(
-            in_channels=256,
+            in_channels=128,
             cls_linear_channels=(256, 256),
             reg_linear_channels=(256, 256)),
         cls_loss=dict(
@@ -268,8 +265,39 @@ model = dict(
             use_mean_size=True,
             mean_size=[[3.9, 1.6, 1.56], [0.8, 0.6, 1.73], [1.76, 0.6,
                                                             1.73]])),
-
-# model training and testing settings
+    roi_head=dict(
+        type='PointRCNNRoIHead',
+        bbox_roi_extractor=dict(
+            type='Single3DRoIPointExtractor',
+            roi_layer=dict(type='RoIPointPool3d', num_sampled_points=512)),
+        bbox_head=dict(
+            type='PointRCNNBboxHead',
+            num_classes=1,
+            loss_bbox=dict(
+                type='mmdet.SmoothL1Loss',
+                beta=1.0 / 9.0,
+                reduction='sum',
+                loss_weight=1.0),
+            loss_cls=dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                loss_weight=1.0),
+            pred_layer_cfg=dict(
+                in_channels=512,
+                cls_conv_channels=(256, 256),
+                reg_conv_channels=(256, 256),
+                bias=True),
+            in_channels=5,
+            # 5 = 3 (xyz) + scores + depth
+            mlp_channels=[128, 128],
+            num_points=(128, 32, -1),
+            radius=(0.2, 0.4, 100),
+            num_samples=(16, 16, 16),
+            sa_channels=((128, 128, 128), (128, 128, 256), (256, 256, 512)),
+            with_corner_loss=True),
+        depth_normalizer=70.0),
+    # model training and testing settings
     train_cfg=dict(
         pos_distance_thr=10.0,
         rpn=dict(
@@ -414,20 +442,53 @@ optim_wrapper = dict(
 
 # learning rate
 param_scheduler = [
-     dict(
-        type='MultiStepLR',
+    # learning rate scheduler
+    # During the first 35 epochs, learning rate increases from 0 to lr * 10
+    # during the next 45 epochs, learning rate decreases from lr * 10 to
+    # lr * 1e-4
+    dict(
+        type='CosineAnnealingLR',
+        T_max=35,
+        eta_min=lr * 10,
         begin=0,
+        end=35,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=45,
+        eta_min=lr * 1e-4,
+        begin=35,
         end=80,
         by_epoch=True,
-        milestones=[45, 60],
-        gamma=0.1)
+        convert_to_iter_based=True),
+    # momentum scheduler
+    # During the first 35 epochs, momentum increases from 0 to 0.85 / 0.95
+    # during the next 45 epochs, momentum increases from 0.85 / 0.95 to 1
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=35,
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=35,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=45,
+        eta_min=1,
+        begin=35,
+        end=80,
+        by_epoch=True,
+        convert_to_iter_based=True)
 ]
+
 
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=2)
+auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
