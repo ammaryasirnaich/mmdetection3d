@@ -213,7 +213,7 @@ model = dict(
                 # in_chans=256, #1024
                 embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=8 ,  # 12
+                num_heads=12 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -298,7 +298,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_smallPointNet_transformer_1024Head_ssdhead'
+work_dir = './work_dirs/convit3D_smallPointNet_transformer_relax_ssdhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
