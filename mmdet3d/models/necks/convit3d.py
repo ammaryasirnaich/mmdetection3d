@@ -9,6 +9,7 @@ from mmengine.model import BaseModule
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
+from .bev import bev_3D_to_2D
 
 
 class Mlp(nn.Module):
@@ -431,13 +432,13 @@ class VisionTransformer(nn.Module):
         # create new feature 
         
         if (self.rpn_feature_set):
-            feat_dict["fp_features"] = attend.contiguous()
-            feat_dict["fp_xyz"] = feat_dict["sa_xyz"][-1]
+            # feat_dict["fp_features"] = attend.contiguous()
+            # feat_dict["fp_xyz"] = feat_dict["sa_xyz"][-1]
+            feat_dict["fp_features"] = bev_3D_to_2D(attend.contiguous())
         else:
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
             
-
-        # print("fp_features shape",feat_dict["fp_features"].shape)
+        print("fp_features shape",feat_dict["fp_features"].shape)
         # print("fp_xyz shape",feat_dict["fp_xyz"].shape)
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
         return feat_dict
