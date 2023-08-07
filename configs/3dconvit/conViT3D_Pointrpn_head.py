@@ -235,15 +235,10 @@ model = dict(
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 128,
+                fp_output_channel = 512,
                 rpn_feature_set = True,  
                 ), 
-    neck=dict(
-        type='SECONDFPN',
-        in_channels=[128, 128],
-        upsample_strides=[1, 2],
-        out_channels=[256, 256]),         
-
+   
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,

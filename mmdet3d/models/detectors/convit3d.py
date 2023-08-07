@@ -17,7 +17,7 @@ from .point_rcnn import PointRCNN
 from typing import Dict, Optional
 
 @MODELS.register_module()
-class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet , SingleStage3DDetector
+class ConVit3D(SingleStage3DDetector):  #PointRCNN ,  VoteNet , SingleStage3DDetector
     r"""for 3D detection."""
 
     def __init__(self,
@@ -69,6 +69,7 @@ class ConVit3D(VoteNet):  #PointRCNN ,  VoteNet , SingleStage3DDetector
             
         if self.with_neck:
             x = self.neck(x)
+            print("returning shape of tranformer feature", x[0].shape)
             
         return x
     

@@ -438,8 +438,8 @@ class VisionTransformer(nn.Module):
             x = torch.cat((feat_dict["sa_xyz"][-1][:,:,:3],feat_dict["sa_features"][-1]),dim=2)
             # print("cat fature",x.shape)
             x = bev_3D_to_2D(x).permute(0,3,1,2)
-            print("shape for rpn network x:", x.shape)
-            return x
+            # print("shape for rpn network x:", x.shape)
+            return [x]
         else:
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
             

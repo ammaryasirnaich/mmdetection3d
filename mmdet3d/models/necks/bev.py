@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-3, 1), image_size=(200, 200)):
+def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-3, 1), image_size=(200, 176)):
     
     batch_size,num_points,num_channels = point_clouds_batch.shape
     x_min = torch.min(point_clouds_batch[:, :, 0])
