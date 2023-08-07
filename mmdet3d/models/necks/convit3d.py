@@ -434,8 +434,10 @@ class VisionTransformer(nn.Module):
         if (self.rpn_feature_set):
             # feat_dict["fp_features"] = attend.contiguous()
             # feat_dict["fp_xyz"] = feat_dict["sa_xyz"][-1]
-            feat_dict["sa_features"][-1] = bev_3D_to_2D(attend.contiguous())
-            x = torch.cat((feat_dict["sa_xyz"][-1],feat_dict["sa_features"][-1]),dim=2)
+            feat_dict["sa_features"][-1] = attend.contiguous()
+            x = torch.cat((feat_dict["sa_xyz"][-1][:,:,:3],feat_dict["sa_features"][-1]),dim=2)
+            # print("cat fature",x.shape)
+            x = bev_3D_to_2D(x).permute(0,3,1,2)
             print("shape for rpn network x:", x.shape)
             return x
         else:

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-2, 2), image_size=(200, 200)):
+def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-3, 1), image_size=(200, 200)):
     
     batch_size,num_points,num_channels = point_clouds_batch.shape
     x_min = torch.min(point_clouds_batch[:, :, 0])
@@ -13,7 +13,7 @@ def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-2, 2), image
     x_bins = int(x_range / resolution)
     y_bins = int(y_range / resolution)
 
-    hist_batch = torch.zeros((batch_size, image_size[0], image_size[1], num_channels), dtype=torch.float32,device='cuda')
+    hist_batch = torch.zeros((batch_size, image_size[0], image_size[1], num_channels-3), dtype=torch.float32,device='cuda')
 
     for batch_idx in range(batch_size):
         for point_idx in range(num_points):
@@ -25,6 +25,4 @@ def bev_3D_to_2D(point_clouds_batch, resolution=0.2, height_range=(-2, 2), image
                     intensity_channels = point[3:]  # Exclude XYZ
                     hist_batch[batch_idx, x_index, y_index, :] = intensity_channels
     
-    print("shape of hist_batch", hist_batch.shape)
-
     return hist_batch

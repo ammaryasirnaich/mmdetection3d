@@ -238,16 +238,16 @@ model = dict(
                 fp_output_channel = 128,
                 rpn_feature_set = True,  
                 ), 
+    neck=dict(
+        type='SECONDFPN',
+        in_channels=[128, 128],
+        upsample_strides=[1, 2],
+        out_channels=[256, 256]),         
 
-    # neck=dict(
-    #     type='PointNetFPNeck',
-    #     fp_channels=((1536, 512, 512), (768, 512, 512), (608, 256, 256),
-    #                  (257, 128, 128))),
-    
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
-        in_channels=128,
+        in_channels=512,
         feat_channels=512,
         use_direction_classifier=True,
         anchor_generator=dict(
