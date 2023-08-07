@@ -311,7 +311,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/data/kitti_detection/model_output_results/convit3d_rpnhead'
+work_dir = './workspace/mmdetection3d/work_dirs/convit3d_PointNet_Transformer_rpnhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)

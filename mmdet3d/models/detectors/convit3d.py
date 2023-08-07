@@ -69,7 +69,6 @@ class ConVit3D(SingleStage3DDetector):  #PointRCNN ,  VoteNet , SingleStage3DDet
             
         if self.with_neck:
             x = self.neck(x)
-            print("returning shape of tranformer feature", x[0].shape)
             
         return x
     
