@@ -232,6 +232,7 @@ model = dict(
                 pretrained=None,
                 use_patch_embed=False,
                 fp_output_channel = 256, 
+                rpn_feature_set = False,  
                 ), 
 
    bbox_head=dict(
@@ -301,7 +302,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_testing'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
