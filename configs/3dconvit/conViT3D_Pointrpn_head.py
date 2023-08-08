@@ -163,7 +163,7 @@ test_evaluator = val_evaluator
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=40, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -238,7 +238,7 @@ model = dict(
                 fp_output_channel = 512,
                 rpn_feature_set = True,  
                 ), 
-   
+
     bbox_head=dict(
         type='Anchor3DHead',
         num_classes=3,
@@ -307,11 +307,12 @@ model = dict(
 
 
 
+
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './workspace/mmdetection3d/work_dirs/convit3d_PointNet_Transformer_rpnhead'
+work_dir = './work_dirs/convit3d_PointNet_Transformer_rpnhead'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]   # , ('val', 1)
@@ -335,7 +336,7 @@ default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=-1),
+    checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     # visualization=dict(type='Det3DVisualizationHook', draw=True)
     )
@@ -378,64 +379,60 @@ Schedules settings
 # The learning rate set in the cyclic schedule is the initial learning rate
 # rather than the max learning rate. Since the target_ratio is (10, 1e-4),
 # the learning rate will change from 0.0018 to 0.018, than go to 0.0018*1e-4
-# optimizer
-lr = 0.002  # max learning rate
+lr = 0.0018
+# The optimizer follows the setting in SECOND.Pytorch, but here we use
+# the official AdamW optimizer implemented by PyTorch.
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
-
-
+    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
+    clip_grad=dict(max_norm=10, norm_type=2))
 # learning rate
 param_scheduler = [
     # learning rate scheduler
-    # During the first 35 epochs, learning rate increases from 0 to lr * 10
-    # during the next 45 epochs, learning rate decreases from lr * 10 to
+    # During the first 16 epochs, learning rate increases from 0 to lr * 10
+    # during the next 24 epochs, learning rate decreases from lr * 10 to
     # lr * 1e-4
     dict(
         type='CosineAnnealingLR',
-        T_max=35,
+        T_max=16,
         eta_min=lr * 10,
         begin=0,
-        end=35,
+        end=16,
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
         type='CosineAnnealingLR',
-        T_max=45,
+        T_max=24,
         eta_min=lr * 1e-4,
-        begin=35,
-        end=80,
+        begin=16,
+        end=40,
         by_epoch=True,
         convert_to_iter_based=True),
     # momentum scheduler
-    # During the first 35 epochs, momentum increases from 0 to 0.85 / 0.95
-    # during the next 45 epochs, momentum increases from 0.85 / 0.95 to 1
+    # During the first 16 epochs, momentum increases from 0 to 0.85 / 0.95
+    # during the next 24 epochs, momentum increases from 0.85 / 0.95 to 1
     dict(
         type='CosineAnnealingMomentum',
-        T_max=35,
+        T_max=16,
         eta_min=0.85 / 0.95,
         begin=0,
-        end=35,
+        end=16,
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
         type='CosineAnnealingMomentum',
-        T_max=45,
+        T_max=24,
         eta_min=1,
-        begin=35,
-        end=80,
+        begin=16,
+        end=40,
         by_epoch=True,
         convert_to_iter_based=True)
 ]
-
-
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
+auto_scale_lr = dict(enable=False, base_batch_size=48)
 
 
