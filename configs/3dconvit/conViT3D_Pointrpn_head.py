@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=4,
+    batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -163,7 +163,7 @@ test_evaluator = val_evaluator
 # val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=40, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -367,6 +367,11 @@ log_config = dict(
            dict(type='TensorboardLoggerHook')])
 
 checkpoint_config = dict(interval=1,max_keep_ckpts=3,save_last=True)
+
+
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=41, val_interval=5)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
 env_cfg = dict(
     cudnn_benchmark=False,

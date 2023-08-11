@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-  batch_size=4,
+  batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -302,7 +302,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_testing'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_testing_batchSize_2'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
@@ -330,12 +330,6 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook')
     )
-
-
-# vis_backends = [dict(type='LocalVisBackend')]
-# visualizer = dict(
-#     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
-
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
 visualizer = dict(
