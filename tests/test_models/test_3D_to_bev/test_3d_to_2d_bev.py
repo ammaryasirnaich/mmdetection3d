@@ -59,7 +59,7 @@ def project_to_birds_eye_view_batch(point_clouds_batch, resolution=0.2, height_r
 
 batch_size = 4
 num_channels = 4  # Adjust based on your data
-point_clouds_batch = np.array([load_kitti_pointcloud('/workspace/mmdetection3d/demo/data/kitti/000008.bin')] * batch_size)
+point_clouds_batch = np.array([load_kitti_pointcloud('demo/data/kitti/000008.bin')] * batch_size)
 point_clouds_batch = t.from_numpy(point_clouds_batch).cuda()
 
 resolution = 0.2
