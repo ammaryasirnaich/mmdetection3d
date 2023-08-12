@@ -159,10 +159,6 @@ test_evaluator = val_evaluator
 
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
 
 '''
 Model parameter settings
@@ -194,7 +190,7 @@ model = dict(
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 512, (256, 256)),
+        num_points=(4096, 2048, (300, 300)),   #(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
@@ -210,12 +206,12 @@ model = dict(
             use_xyz=True,
             normalize_xyz=False)),
             
-    neck =  dict(
+      neck =  dict(
                 type='VisionTransformer',   
                 num_classes=3, 
-                in_chans=256, #1024
+                # in_chans=256, #1024
                 embed_dim=256, #1024
-                depth = 12, #  Depths Transformer stage. Default 12
+                depth = 18, #  Depths Transformer stage. Default 12
                 num_heads=8 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
@@ -225,15 +221,16 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=12 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=15 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 256, 
-                rpn_feature_set = False,  
+                fp_output_channel = 512,
+                rpn_feature_set = True,  
                 ), 
+
 
    bbox_head=dict(
         type='SSD3DHead',    #SSD3DHead , TransHead
@@ -241,7 +238,7 @@ model = dict(
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         vote_module_cfg=dict(
-            in_channels=256,
+            in_channels=512,
             num_points=256,
             gt_per_seed=1,
             conv_channels=(128, ),
@@ -302,7 +299,7 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_testing_batchSize_2'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__12_August'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]  
@@ -340,7 +337,12 @@ log_config = dict(
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=5)
+
+
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
 env_cfg = dict(
     cudnn_benchmark=False,
