@@ -221,14 +221,14 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=15 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=16 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
                 use_patch_embed=False,
-                fp_output_channel = 512,
-                rpn_feature_set = True,  
+                fp_output_channel = 256,
+                rpn_feature_set = False,  
                 ), 
 
 
@@ -238,7 +238,7 @@ model = dict(
         bbox_coder=dict(
             type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True),
         vote_module_cfg=dict(
-            in_channels=512,
+            in_channels=256,
             num_points=256,
             gt_per_seed=1,
             conv_channels=(128, ),
@@ -301,7 +301,7 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__12_August'
 load_from = None
-resume_from = None
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__12_August'
 workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded
