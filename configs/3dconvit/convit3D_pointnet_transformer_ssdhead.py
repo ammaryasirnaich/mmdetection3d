@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-  batch_size=2,
+  batch_size=4,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -190,13 +190,13 @@ model = dict(
     backbone=dict(
         type='PointNet2SAMSG',
         in_channels=4,
-        num_points=(4096, 2048, (300, 300)),   #(4096, 512, (256, 256)),
+        num_points=(4096, 1024, (256, 256)),   #(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 256),
+        aggregation_channels=(64, 128, 234),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
@@ -210,9 +210,9 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=256, #1024
-                depth = 18, #  Depths Transformer stage. Default 12
-                num_heads=8 ,  # 12
+                embed_dim=234, #1024
+                depth = 12, #  Depths Transformer stage. Default 12
+                num_heads=9 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -221,7 +221,7 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=16 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,
                 use_pos_embed=False,
                 init_cfg=None,
