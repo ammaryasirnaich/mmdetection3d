@@ -299,9 +299,9 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__12_August'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__13_August'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__12_August'
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__13_August'
 workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded
@@ -323,7 +323,7 @@ default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=-1),
+    checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook')
     )
