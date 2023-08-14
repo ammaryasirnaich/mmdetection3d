@@ -1,8 +1,9 @@
 import torch
 import numpy as np
 import  matplotlib.pyplot as plt
-# from mmdet3d.visualization import Det3DLocalVisualizer
-# from mmdet3d.structures import LiDARInstance3DBoxes
+from mmdet3d.visualization import Det3DLocalVisualizer
+from mmdet3d.structures import LiDARInstance3DBoxes
+from mmengine import load
 
 # points = np.fromfile('/workspace/mmdetection3d/demo/data/kitti/000008.bin', dtype=np.float32)
 # points = points.reshape(-1, 4)
@@ -41,10 +42,6 @@ import  matplotlib.pyplot as plt
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 
 
-import torch
-import mmcv
-from mmengine.visualization import Visualizer
-
 # # https://raw.githubusercontent.com/open-mmlab/mmengine/main/docs/en/_static/image/cat_and_dog.png
 # image = mmcv.imread('/workspace/mmengine/docs/en/_static/image/cat_and_dog.png',
 #                     channel_order='rgb')
@@ -57,12 +54,12 @@ from mmengine.visualization import Visualizer
 # print("End")
 
 
-import torch
+
 # import mmcv
 # from mmengine.visualization import Visualizer
 
 # tensor = torch.load('./bev_image_0.pt')
-tensor = torch.load('./second_fpn0.pt')
+# tensor = torch.load('./second_fpn0.pt')
 # b,c,h,w = tensor.shape
 # print("second_fpn shape:",tensor.shape)
 # print( tensor.shape)
@@ -87,51 +84,30 @@ tensor = torch.load('./second_fpn0.pt')
 # plt.imshow(img)
 
 
+import pickle
 
-# import numpy as np
-# from mmengine import load
-
-# from mmdet3d.visualization import Det3DLocalVisualizer
-# from mmdet3d.structures import CameraInstance3DBoxes ,LiDARInstance3DBoxes
-
-# info_file = load('demo/data/kitti/000008.pkl')
-# bboxes_3d = []
-# for instance in info_file['data_list'][0]['instances']:
-#     bboxes_3d.append(instance['bbox_3d'])
-# gt_bboxes_3d = np.array(bboxes_3d, dtype=np.float32)
-
-# gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d)
-
-# visualizer = Det3DLocalVisualizer()
-# # set bev image in visualizer
-# visualizer.set_bev_image()
-# # draw bev bboxes
-# visualizer.draw_bev_bboxes(gt_bboxes_3d, edge_colors='orange')
-# visualizer.show()
+with open('demo/data/kitti/000008.pkl', 'rb') as f:
+    info_file = pickle.load(f)
 
 
-import torch
-import numpy as np
+bboxes_3d = []
 
-from mmdet3d.visualization import Det3DLocalVisualizer
-from mmdet3d.structures import LiDARInstance3DBoxes
-from mmengine import load
+for instance in info_file['data_list'][0]['instances']:
+    bboxes_3d.append(instance['bbox_3d'])
+
+# Define a single RGB color for all bounding boxes (e.g., green)
+single_bbox_color = [0, 255, 0]
+
+# Duplicate the color for all bounding boxes
+bbox_colors = [single_bbox_color] * len(bboxes_3d)
 
 points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
 points = points.reshape(-1, 4)
-
-info_file = load('demo/data/kitti/000008.pkl')
-bboxes_3d = []
-for instance in info_file['data_list'][0]['instances']:
-    bboxes_3d.append(instance['bbox_3d'])
-gt_bboxes_3d = np.array(bboxes_3d, dtype=np.float32)
-
 visualizer = Det3DLocalVisualizer()
 # set point cloud in visualizer
-visualizer.set_points(points)
-bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d)
-# Draw 3D bboxes
-visualizer.draw_bboxes_3d(bboxes_3d)
+visualizer.set_points(points,pcd_mode=2,vis_mode='add')
+
+# Draw and visualize each bounding box with the duplicated color
+for bbox, color in zip(bboxes_3d, bbox_colors):
+    visualizer.draw_bboxes_3d(LiDARInstance3DBoxes(torch.tensor(bbox).unsqueeze(0)), np.array([color]))
 visualizer.show()
-
-
