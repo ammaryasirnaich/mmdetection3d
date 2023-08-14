@@ -87,8 +87,8 @@ class GPSA(nn.Module):
         
         if use_local_init:
             # self.local_init(locality_strength=locality_strength) # for 2d image data
-            self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
-            # self.local_init_3d_relaxed(locality_strength=locality_strength)  # for 3d point cloud
+            # self.local_init_3d(locality_strength=locality_strength)  # for 3d point cloud
+            self.local_init_3d_relaxed(locality_strength=locality_strength)  # for 3d point cloud
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
