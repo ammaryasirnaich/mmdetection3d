@@ -196,7 +196,7 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 234),
+        aggregation_channels=(64, 128, 225),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
@@ -210,7 +210,7 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=234, #1024
+                embed_dim=225, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=9 ,  # 12
                 mlp_ratio=4,
@@ -325,7 +325,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook')
+    visualization=dict(type='Det3DVisualizationHook',draw=True)
     )
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
@@ -334,6 +334,7 @@ visualizer = dict(
 
 log_config = dict(
     interval=50,
+    by_epoch=True,
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
@@ -355,7 +356,7 @@ log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
 load_from = None
-resume = False
+resume = True
 
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
