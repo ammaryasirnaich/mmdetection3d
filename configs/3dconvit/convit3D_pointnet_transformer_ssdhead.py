@@ -196,7 +196,7 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 225),
+        aggregation_channels=(64, 128, 216),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
@@ -325,7 +325,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook',draw=True)
+    visualization=dict(type='Det3DVisualizationHook')
     )
 
 vis_backends = [dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')]
