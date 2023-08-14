@@ -196,7 +196,7 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 216),
+        aggregation_channels=(64, 128, 230),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
@@ -210,9 +210,9 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=216, #1024
+                embed_dim=230, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=9 ,  # 12
+                num_heads=10 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
@@ -299,9 +299,9 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__13_August'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__14_August'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__13_August'
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__14_August'
 workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded
