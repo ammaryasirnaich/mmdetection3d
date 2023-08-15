@@ -91,7 +91,7 @@ eval_pipeline = [
 
 
 train_dataloader = dict(
-  batch_size=4,
+  batch_size=2,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -178,12 +178,7 @@ model = dict(
     type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
-        # voxel=True,
-        # voxel_layer=dict(
-        #     max_num_points=9,  #35
-        #     point_cloud_range= point_cloud_range,
-        #     voxel_size=voxel_size,
-        #     max_voxels=(16000, 40000))
+       
         ),
     voxel_encoder=None,      # HardVFE , IEVFE ,dict(type='HardSimpleVFE',),
     middle_encoder = None,
@@ -196,7 +191,7 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 200),
+        aggregation_channels=(64, 128, 240),
         fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
@@ -210,9 +205,9 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=200, #1024
+                embed_dim=240, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
-                num_heads=10 ,  # 12
+                num_heads=12 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
