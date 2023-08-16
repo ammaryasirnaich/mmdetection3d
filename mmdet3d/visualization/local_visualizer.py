@@ -601,6 +601,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         seg_points[:, 0] += offset
         self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
 
+    def get_single_color(self, color:str,len_target:int):
+        from webcolors import name_to_rgb
+        try:
+            rgb_tuple_list = [name_to_rgb(color)]* len_target
+            return rgb_tuple_list
+        except ValueError:
+            print("Color not found.")
+   
     def _draw_instances_3d(self,
                            data_input: dict,
                            instances: InstanceData,
@@ -661,6 +669,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
             self.set_points(
                 points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
+
+            # forcing a color
+            colors = self.get_single_color('green',bboxes_3d_depth.shape[0])
+         
             self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
