@@ -236,8 +236,20 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pcd = geometry.PointCloud()
         if mode == 'xyz':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-            points_colors = np.tile(
-                np.array(points_color), (points.shape[0], 1))
+            intensity = points[:, 3]
+
+            # Normalize intensity values to the range [0, 1]
+            normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
+
+            # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
+            color_map = plt.get_cmap('plasma')
+            points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
+                
+                        
+            # points_colors = np.tile(
+            #     np.array(points_color), (points.shape[0], 1))
+            
+ 
         elif mode == 'xyzrgb':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
             points_colors = points[:, 3:6]
