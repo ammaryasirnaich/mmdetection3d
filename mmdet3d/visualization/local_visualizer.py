@@ -244,8 +244,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
             color_map = plt.get_cmap('plasma')
             points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
-                
-                        
+                                
             # points_colors = np.tile(
             #     np.array(points_color), (points.shape[0], 1))
             
@@ -611,6 +610,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             offset = 0
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
+
         self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
 
     def get_single_color(self, color:str,len_target:int):
@@ -627,7 +627,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                            input_meta: dict,
                            vis_task: str,
                            show_pcd_rgb: bool = False,
-                           palette: Optional[List[tuple]] = None) -> dict:
+                           palette: Optional[List[tuple]] = None,
+                           color_pen = Optional [str]) -> dict:
         """Draw 3D instances of GT or prediction.
 
         Args:
@@ -682,9 +683,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(
                 points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
 
-            # forcing a color
-            colors = self.get_single_color('green',bboxes_3d_depth.shape[0])
-         
+            if (len(color_pen))>0:
+                # forcing a color
+                colors = self.get_single_color(color_pen,bboxes_3d_depth.shape[0])
+            
+
+            
             self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -1009,12 +1013,13 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pred_data_3d = None
         gt_img_data = None
         pred_img_data = None
+        self.draw_gt= draw_gt
 
-        if draw_gt and data_sample is not None:
+        if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
                     data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, show_pcd_rgb, palette)
+                    data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -1045,7 +1050,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
-                                                       palette)
+                                                       palette, 'orange')
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
