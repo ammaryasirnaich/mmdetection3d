@@ -211,7 +211,7 @@ class GPSA(nn.Module):
         locality_distance = 1 #max(1,1/locality_strength**.5)
         num_heads_exp = torch.math.ceil(self.num_heads**(1/3))**3
         kernel_size = int(torch.math.ceil(self.num_heads**(1/3)))
-        print(self.num_heads, '-->',num_heads_exp, 'kernel_size =',kernel_size)
+        # print(self.num_heads, '-->',num_heads_exp, 'kernel_size =',kernel_size)
         center = (kernel_size-1)/2 if kernel_size%2==0 else kernel_size//2
         wdata = torch.zeros([num_heads_exp,4])
 
@@ -219,7 +219,7 @@ class GPSA(nn.Module):
         for h1 in range(kernel_size):
             for h2 in range(kernel_size):
                 for h3 in range(kernel_size):    
-                    print(position,h1,h2,h3)
+                    # print(position,h1,h2,h3)
                     wdata[position,3] = -1
                     wdata[position,2] = 2*(h3-center)*locality_distance
                     wdata[position,1] = 2*(h2-center)*locality_distance
@@ -227,10 +227,10 @@ class GPSA(nn.Module):
                     position +=1
 
         wdata *= locality_strength
-        print(wdata)
+        # print(wdata)
         idx = torch.randperm(wdata.shape[0])
         wdata = wdata[idx]
-        print(wdata)
+        # print(wdata)
         self.pos_proj.weight.data[:,0] = wdata[:self.num_heads,0]
         self.pos_proj.weight.data[:,1] = wdata[:self.num_heads,1]
         self.pos_proj.weight.data[:,2] = wdata[:self.num_heads,2]
