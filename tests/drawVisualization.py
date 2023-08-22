@@ -90,6 +90,7 @@ Example 1 : with out using instance object
 
 # with open('demo/data/kitti/000008.pkl', 'rb') as f:
 #     info_file = pickle.load(f)
+# imuLidarTrans = info_file['data_list'][0]['lidar_points']['Tr_imu_to_velo']
 
 
 # bboxes_3d = []
@@ -109,9 +110,10 @@ Example 1 : with out using instance object
 # # set point cloud in visualizer
 # visualizer.set_points(points,vis_mode='add')
 
+
 # # Draw and visualize each bounding box with the duplicated color
 # for bbox, color in zip(bboxes_3d, bbox_colors):
-#     visualizer.draw_bboxes_3d(LiDARInstance3DBoxes(torch.tensor(bbox).unsqueeze(0)), np.array([color]))
+#     visualizer.draw_bboxes_3d(BaseInstance3DBoxes(torch.tensor(bbox).unsqueeze(0)), bbox_color=np.array([color]))
 # visualizer.show()
 
 
@@ -135,6 +137,8 @@ Second example for the 3D Bounding box are disoriented
 # for instance in info_file['data_list'][0]['instances']:
 #     bboxes_3d.append(instance['bbox_3d'])
 #     labels_3d.append(instance['bbox_label_3d'])
+#     if 'axis_align_matrix' in info_file['data_list'][0]:
+#         print("yes its there")
 
 # bbox3d = torch.tensor(bboxes_3d)
 # labels_3d = torch.tensor(labels_3d)
@@ -142,8 +146,15 @@ Second example for the 3D Bounding box are disoriented
 # gt_instances_3d.bboxes_3d = DepthInstance3DBoxes(bbox3d)
 # gt_instances_3d.labels_3d = labels_3d
 
+
 # gt_det3d_data_sample = Det3DDataSample()
 # gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
+# # gt_det3d_data_sample.metainfo = 
+
+
+
+
+
 # data_input = dict(points=points)
 
 # visualizer.add_datasample('3D Scene', data_input,
@@ -200,11 +211,54 @@ of pcd demo file
 # visualizer.show()
 
 
-from webcolors import name_to_rgb
-color_name = 'green'
 
-try:
-    rgb_tuple = name_to_rgb(color_name)
-    print(f"The RGB values for {color_name} are: {rgb_tuple}")
-except ValueError:
-    print("Color not found.")
+# import torch
+# import numpy as np
+
+# from mmdet3d.visualization import Det3DLocalVisualizer
+# from mmdet3d.structures import LiDARInstance3DBoxes
+
+# points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
+# points = points.reshape(-1, 4)
+# visualizer = Det3DLocalVisualizer()
+# # set point cloud in visualizer
+# visualizer.set_points(points)
+# bboxes_3d = LiDARInstance3DBoxes(
+#     torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
+#                    -1.5808]]))
+
+# bbox_color = [(0,225,0)]
+# # Draw 3D bboxes
+# visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
+# visualizer.show()
+
+
+
+
+# info_file = load('demo/data/kitti/kitti_infos_test.pkl')   # ['metainfo', 'data_list'
+info_file = load('demo/data/kitti/kitti_infos_train.pkl')   # ['metainfo', 'data_list'
+
+# Traverse the data to extract 3D bounding box information
+# print(info_file['data_list'][0].keys()) 
+
+bboxes_3d = []
+
+### sample_idx', 'images', 'lidar_points', 'instances', 'cam_instances
+for info_dic in info_file['data_list']:
+        # print(type(info_dic))
+        lidar_info_str= info_dic['lidar_points']['lidar_path']
+        # print(type(lidar_info_dic))
+        # print(lidar_info_dic)
+        if(lidar_info_str == '000009.bin'):
+            for instance_dic in info_dic['instances']:
+                # print(type(instance_dic))
+                bboxes_3d.append(instance_dic['bbox_3d'])
+                print(instance_dic['bbox_3d'])
+            
+            break
+                
+
+gt_bboxes_3d = np.array(bboxes_3d, dtype=np.float32)
+
+# print(gt_bboxes_3d)
+     

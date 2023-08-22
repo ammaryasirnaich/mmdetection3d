@@ -63,7 +63,10 @@ visualizer.dataset_meta = model.dataset_meta
 result, data = inference_detector(model, file_name)
 points = data['inputs']['points']
 
-print(type(result.gt_instances_3d))
+
+info_file = load('demo/data/kitti/000008.pkl')
+print(info_file['data_list'][0]['lidar_points']['Tr_imu_to_velo'])
+imuLidarTrans = info_file['data_list'][0]['lidar_points']['Tr_imu_to_velo']
 
 
 file_meta = 'demo/data/kitti/000008.pkl'
@@ -71,21 +74,21 @@ gt_instances_3d = get_gt_instance(file_meta)
 result.gt_instances_3d = gt_instances_3d
 
 
-data_input = dict(points=points)
+# data_input = dict(points=points)
 
 
 ##show the results
-visualizer.add_datasample(
-    'result',
-    data_input,
-    data_sample=result,
-    draw_gt=True,
-    draw_pred = True,
-    show=True,
-    wait_time=-1,
-    out_file=None,
-    pred_score_thr=0.5,
-    vis_task='lidar_det')
+# visualizer.add_datasample(
+#     'result',
+#     data_input,
+#     data_sample=result,
+#     draw_gt=True,
+#     draw_pred = True,
+#     show=True,
+#     wait_time=-1,
+#     out_file=None,
+#     pred_score_thr=0.5,
+#     vis_task='lidar_det')
 
 
 
