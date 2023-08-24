@@ -21,8 +21,9 @@
 #     --task lidar_det --show --show-dir /workspace/conVit3D/show_results
 
 
-CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/convit3D_pointnet_transformer_ssdhead.py"
-CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth"
+
+CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
+CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
 # SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
 
 # python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
@@ -36,9 +37,9 @@ python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det
 
 # # Running SSD3DNet
 
-CONFIG_FILE="/workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-car.py"
-CKPT_PATH="/workspace/data/kitti_detection/models_to_test/3dssd/3dssd_4x4_kitti-3d-car_20210818_203828-b89c8fc4.pth"
-SHOW_DIR="/workspace/data/kitti_detection/models_to_test/3dssd"
+# CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
+# CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
+# SHOW_DIR="/workspace/data/kitti_detection/models_to_test/3dssd"
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det
 
 

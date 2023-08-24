@@ -236,29 +236,67 @@ of pcd demo file
 
 
 # info_file = load('demo/data/kitti/kitti_infos_test.pkl')   # ['metainfo', 'data_list'
-info_file = load('demo/data/kitti/kitti_infos_train.pkl')   # ['metainfo', 'data_list'
+# info_file = load('demo/data/kitti/kitti_infos_train.pkl')   # ['metainfo', 'data_list'
+# info_file = load('demo/data/kitti/000008.pkl')
 
 # Traverse the data to extract 3D bounding box information
 # print(info_file['data_list'][0].keys()) 
 
-bboxes_3d = []
+# bboxes_3d = []
 
 ### sample_idx', 'images', 'lidar_points', 'instances', 'cam_instances
-for info_dic in info_file['data_list']:
-        # print(type(info_dic))
-        lidar_info_str= info_dic['lidar_points']['lidar_path']
-        # print(type(lidar_info_dic))
-        # print(lidar_info_dic)
-        if(lidar_info_str == '000009.bin'):
-            for instance_dic in info_dic['instances']:
-                # print(type(instance_dic))
-                bboxes_3d.append(instance_dic['bbox_3d'])
-                print(instance_dic['bbox_3d'])
+# for info_dic in info_file['data_list']:
+#         # print(type(info_dic))
+#         lidar_info_str= info_dic['lidar_points']['lidar_path']
+#         # print(type(lidar_info_dic))
+#         # print(lidar_info_str)
+#         if(lidar_info_str == '000009.bin'):
+#             # print(type(info_dic['instances']))
+#             # print(len(info_dic['instances']))
+#             for instance_dic in info_dic['instances']:
+#                 # print(type(instance_dic))
+#                 bboxes_3d.append(instance_dic['bbox_3d'])
+#                 print(instance_dic['bbox_3d'])
+
+#             ## break after reading a single data instancce in the if conidition              
+#             break
             
-            break
+
+
+def get_3dbbox_from_pklfile(file:str):
+    info_file = load(file)   # ['metainfo', 'data_list'
+     
+
+    # Traverse the data to extract 3D bounding box information
+    # print(info_file['data_list'][0].keys()) 
+
+    bboxes_3d = []
+
+    ### sample_idx', 'images', 'lidar_points', 'instances', 'cam_instances
+    for info_dic in info_file['data_list']:
+            # print(type(info_dic))
+            lidar_info_str= info_dic['lidar_points']['lidar_path']
+            # print(type(lidar_info_dic))
+            # print(lidar_info_str)
+            if(lidar_info_str == '000009.bin'):
+                # print(type(info_dic['instances']))
+                # print(len(info_dic['instances']))
+                for instance_dic in info_dic['instances']:
+                    # print(type(instance_dic))
+                    bboxes_3d.append(instance_dic['bbox_3d'])
+                    # print(instance_dic['bbox_3d'])
+
+                ## break after reading a single data instancce in the if conidition              
+                break
                 
+    return  bboxes_3d
 
-gt_bboxes_3d = np.array(bboxes_3d, dtype=np.float32)
 
-# print(gt_bboxes_3d)
+
+# filename ='demo/data/kitti/kitti_infos_test.pkl'  # ['metainfo', 'data_list'
+filename ='demo/data/kitti/kitti_infos_train.pkl'  # ['metainfo', 'data_list'
+# filename = 'demo/data/kitti/000008.pkl'
+
+gt_bboxes_3d= get_3dbbox_from_pklfile(filename)
+print(gt_bboxes_3d)
      
