@@ -212,55 +212,10 @@ of pcd demo file
 
 
 
-# import torch
-# import numpy as np
-
-# from mmdet3d.visualization import Det3DLocalVisualizer
-# from mmdet3d.structures import LiDARInstance3DBoxes
-
-# points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
-# points = points.reshape(-1, 4)
-# visualizer = Det3DLocalVisualizer()
-# # set point cloud in visualizer
-# visualizer.set_points(points)
-# bboxes_3d = LiDARInstance3DBoxes(
-#     torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
-#                    -1.5808]]))
-
-# bbox_color = [(0,225,0)]
-# # Draw 3D bboxes
-# visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
-# visualizer.show()
-
-
-
 
 # info_file = load('demo/data/kitti/kitti_infos_test.pkl')   # ['metainfo', 'data_list'
 # info_file = load('demo/data/kitti/kitti_infos_train.pkl')   # ['metainfo', 'data_list'
 # info_file = load('demo/data/kitti/000008.pkl')
-
-# Traverse the data to extract 3D bounding box information
-# print(info_file['data_list'][0].keys()) 
-
-# bboxes_3d = []
-
-### sample_idx', 'images', 'lidar_points', 'instances', 'cam_instances
-# for info_dic in info_file['data_list']:
-#         # print(type(info_dic))
-#         lidar_info_str= info_dic['lidar_points']['lidar_path']
-#         # print(type(lidar_info_dic))
-#         # print(lidar_info_str)
-#         if(lidar_info_str == '000009.bin'):
-#             # print(type(info_dic['instances']))
-#             # print(len(info_dic['instances']))
-#             for instance_dic in info_dic['instances']:
-#                 # print(type(instance_dic))
-#                 bboxes_3d.append(instance_dic['bbox_3d'])
-#                 print(instance_dic['bbox_3d'])
-
-#             ## break after reading a single data instancce in the if conidition              
-#             break
-            
 
 
 def get_3dbbox_from_pklfile(file:str):
@@ -277,12 +232,12 @@ def get_3dbbox_from_pklfile(file:str):
             # print(type(info_dic))
             lidar_info_str= info_dic['lidar_points']['lidar_path']
             # print(type(lidar_info_dic))
-            # print(lidar_info_str)
+            # print(lidar_info_str) 
             if(lidar_info_str == '000009.bin'):
                 # print(type(info_dic['instances']))
                 # print(len(info_dic['instances']))
                 for instance_dic in info_dic['instances']:
-                    # print(type(instance_dic))
+                    
                     bboxes_3d.append(instance_dic['bbox_3d'])
                     # print(instance_dic['bbox_3d'])
 
@@ -293,10 +248,37 @@ def get_3dbbox_from_pklfile(file:str):
 
 
 
+
+     
+
+import torch
+import numpy as np
+
+from mmdet3d.visualization import Det3DLocalVisualizer
+from mmdet3d.structures import LiDARInstance3DBoxes
+
 # filename ='demo/data/kitti/kitti_infos_test.pkl'  # ['metainfo', 'data_list'
 filename ='demo/data/kitti/kitti_infos_train.pkl'  # ['metainfo', 'data_list'
 # filename = 'demo/data/kitti/000008.pkl'
 
+points = np.fromfile('demo/data/kitti/000009.bin', dtype=np.float32)
+points = points.reshape(-1, 4)
+visualizer = Det3DLocalVisualizer()
+# set point cloud in visualizer
+visualizer.set_points(points)
+
 gt_bboxes_3d= get_3dbbox_from_pklfile(filename)
 print(gt_bboxes_3d)
-     
+
+
+bboxes_3d = LiDARInstance3DBoxes(
+    torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
+                   -1.5808]]))
+
+bbox_color = [(0,225,0)]
+# Draw 3D bboxes
+visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
+visualizer.show()
+
+
+
