@@ -39,46 +39,8 @@ import pickle
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
 
 
-# # https://raw.githubusercontent.com/open-mmlab/mmengine/main/docs/en/_static/image/cat_and_dog.png
-# image = mmcv.imread('/workspace/mmengine/docs/en/_static/image/cat_and_dog.png',
-#                     channel_order='rgb')
-# visualizer = Visualizer(image=image)
-# # single bbox formatted as [xyxy]
-# visualizer.draw_bboxes(torch.tensor([72, 13, 179, 147]))
-# # draw multiple bboxes
-# visualizer.draw_bboxes(torch.tensor([[33, 120, 209, 220], [72, 13, 179, 147]]))
-# visualizer.show()
-# print("End")
 
 
-
-# import mmcv
-# from mmengine.visualization import Visualizer
-
-# tensor = torch.load('./bev_image_0.pt')
-# tensor = torch.load('./second_fpn0.pt')
-# b,c,h,w = tensor.shape
-# print("second_fpn shape:",tensor.shape)
-# print( tensor.shape)
-# img = tensor[0]
-
-# img = img.permute(1,2,0).detach().cpu().numpy()
-# img = img.mean(2)
-# print(img.shape, img.min(), img.max())
-# print(img[:,:,:3])
-# img = img-img.min()
-# img = img/img.max()
-# plt.imshow(img)
-# print("Pass")
-
-
-
-# select a sample from the batch
-# img = x[0]
-# permute to match the desired memory format
-# img = img.permute(1, 2, 0).numpy()
-# print(img[:,:,:3])
-# plt.imshow(img)
 
 
 
@@ -218,14 +180,17 @@ of pcd demo file
 # info_file = load('demo/data/kitti/000008.pkl')
 
 
+
+'''
+
 def get_3dbbox_from_pklfile(file:str):
     info_file = load(file)   # ['metainfo', 'data_list'
      
 
     # Traverse the data to extract 3D bounding box information
-    # print(info_file['data_list'][0].keys()) 
+    print(info_file['data_list'][0].keys()) 
 
-    bboxes_3d = []
+    bboxes_3d = []  
 
     ### sample_idx', 'images', 'lidar_points', 'instances', 'cam_instances
     for info_dic in info_file['data_list']:
@@ -233,14 +198,13 @@ def get_3dbbox_from_pklfile(file:str):
             lidar_info_str= info_dic['lidar_points']['lidar_path']
             # print(type(lidar_info_dic))
             # print(lidar_info_str) 
-            if(lidar_info_str == '000009.bin'):
+            if(lidar_info_str == '000003.bin'):
                 # print(type(info_dic['instances']))
                 # print(len(info_dic['instances']))
                 for instance_dic in info_dic['instances']:
                     
                     bboxes_3d.append(instance_dic['bbox_3d'])
                     # print(instance_dic['bbox_3d'])
-
                 ## break after reading a single data instancce in the if conidition              
                 break
                 
@@ -257,28 +221,74 @@ import numpy as np
 from mmdet3d.visualization import Det3DLocalVisualizer
 from mmdet3d.structures import LiDARInstance3DBoxes
 
-# filename ='demo/data/kitti/kitti_infos_test.pkl'  # ['metainfo', 'data_list'
-filename ='demo/data/kitti/kitti_infos_train.pkl'  # ['metainfo', 'data_list'
+# filename ='/workspace/data/kitti_detection/kitti/kitti_infos_test.pkl'  # ['metainfo', 'data_list'
+filename ='/workspace/data/kitti_detection/kitti/kitti_infos_train.pkl'  # ['metainfo', 'data_list'
 # filename = 'demo/data/kitti/000008.pkl'
 
-points = np.fromfile('demo/data/kitti/000009.bin', dtype=np.float32)
+# points = np.fromfile('/workspace/data/kitti_detection/kitti/training/velodyne_reduced/000002.bin', dtype=np.float32)
+points = np.fromfile('/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin', dtype=np.float32)
 points = points.reshape(-1, 4)
 visualizer = Det3DLocalVisualizer()
 # set point cloud in visualizer
 visualizer.set_points(points)
 
 gt_bboxes_3d= get_3dbbox_from_pklfile(filename)
+print("No of entries",len(gt_bboxes_3d))
 print(gt_bboxes_3d)
 
+# DepthInstance3DBoxes
+# bboxes_3d = LiDARInstance3DBoxes(
+#     torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
+#                    -1.5808]]))
 
-bboxes_3d = LiDARInstance3DBoxes(
-    torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
-                   -1.5808]]))
+gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d)
+print("After converting using DepthInstance3DBoxes:")
+print(gt_bboxes_3d)
 
-bbox_color = [(0,225,0)]
-# Draw 3D bboxes
-visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
+bbox_color = [(0,225,0)]*len(gt_bboxes_3d)
+# # Draw 3D bboxes
+visualizer.draw_bboxes_3d(gt_bboxes_3d,bbox_color)
 visualizer.show()
 
 
+'''
 
+
+
+import torch
+import numpy as np
+
+from mmdet3d.visualization import Det3DLocalVisualizer
+from mmdet3d.structures import LiDARInstance3DBoxes
+
+points = np.fromfile('/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin', dtype=np.float32)
+points = points.reshape(-1, 4)
+visualizer = Det3DLocalVisualizer()
+# set point cloud in visualizer
+# visualizer.set_points(points)
+
+center_obj_point = np.random.rand(1, 4)
+
+visualizer.set_points(center_obj_point,points_color=(255,0,0),points_size=10)
+
+
+
+
+
+# gt_bboxes = LiDARInstance3DBoxes(
+#     torch.tensor([[1.0, 1.75, 13.22, 4.15, 1.57, 1.73, 1.62]]))
+    
+# bboxes_3d = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
+#                                                Box3DMode.DEPTH)
+
+# print(bboxes_3d)
+
+# bboxes_3d = LiDARInstance3DBoxes(
+#     # torch.tensor([[1.0, 1.75, 13.22, 4.15, 1.57, 1.73, 1.62]]))
+#     torch.tensor([[8.7314, -1.8559, -1.5997,4.15, 1.57, 1.73, 1.62]]))
+
+
+# bbox_color = [(0,225,0)]*len(bboxes_3d)
+# # Draw 3D bboxes
+# visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
+visualizer.show()
