@@ -87,6 +87,8 @@ def trigger_visualization_hook(cfg, args):
             'if you want to use visualization hook'
         visualization_hook['vis_task'] = args.task
         visualization_hook['score_thr'] = args.score_thr
+        visualization_hook['draw_gt'] =  True
+
     else:
         raise RuntimeError(
             'VisualizationHook must be included in default_hooks.'
