@@ -181,7 +181,7 @@ of pcd demo file
 
 
 
-'''
+
 
 def get_3dbbox_from_pklfile(file:str):
     info_file = load(file)   # ['metainfo', 'data_list'
@@ -199,11 +199,27 @@ def get_3dbbox_from_pklfile(file:str):
             # print(type(lidar_info_dic))
             # print(lidar_info_str) 
             if(lidar_info_str == '000003.bin'):
+
+                # convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+                lidar2cam = np.array(info_dic['images']['CAM2']['lidar2cam'])
+                print("lidar2cam",lidar2cam)
+               
                 # print(type(info_dic['instances']))
                 # print(len(info_dic['instances']))
                 for instance_dic in info_dic['instances']:
-                    
-                    bboxes_3d.append(instance_dic['bbox_3d'])
+                    # print(len(instance_dic['bbox_3d']))
+                    # print(instance_dic['bbox_3d'])
+                    # box = torch.tensor([[13.22, 4.15, -1.5997, 4.15, 1.57, 1.73, 3.1]])
+                    # print(box)
+                    box = torch.tensor([instance_dic['bbox_3d']])
+                    # print(box)
+                    gt_bboxes_3d = CameraInstance3DBoxes(box).convert_to(Box3DMode.LIDAR,
+                                                 np.linalg.inv(lidar2cam))
+                    # gt_bboxes_3d = CameraInstance3DBoxes(
+                    #   instance_dic['bbox_3d']).convert_to('LiDAR',
+                    #                              np.linalg.inv(lidar2cam))
+                        
+                    bboxes_3d.append(gt_bboxes_3d)
                     # print(instance_dic['bbox_3d'])
                 ## break after reading a single data instancce in the if conidition              
                 break
@@ -233,28 +249,21 @@ visualizer = Det3DLocalVisualizer()
 visualizer.set_points(points)
 
 gt_bboxes_3d= get_3dbbox_from_pklfile(filename)
+
+
 print("No of entries",len(gt_bboxes_3d))
 print(gt_bboxes_3d)
 
-# DepthInstance3DBoxes
-# bboxes_3d = LiDARInstance3DBoxes(
-#     torch.tensor([[8.7314, -1.8559, -1.5997, 4.2000, 3.4800, 1.8900,
-#                    -1.5808]]))
-
-gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d)
-print("After converting using DepthInstance3DBoxes:")
-print(gt_bboxes_3d)
 
 bbox_color = [(0,225,0)]*len(gt_bboxes_3d)
 # # Draw 3D bboxes
-visualizer.draw_bboxes_3d(gt_bboxes_3d,bbox_color)
+visualizer.draw_bboxes_3d(gt_bboxes_3d[0],bbox_color)
 visualizer.show()
 
 
+
+
 '''
-
-
-
 import torch
 import numpy as np
 
@@ -264,31 +273,34 @@ from mmdet3d.structures import LiDARInstance3DBoxes
 points = np.fromfile('/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin', dtype=np.float32)
 points = points.reshape(-1, 4)
 visualizer = Det3DLocalVisualizer()
-# set point cloud in visualizer
-# visualizer.set_points(points)
+## set point cloud in visualizer
+visualizer.set_points(points)
 
-center_obj_point = np.random.rand(1, 4)
+# center_obj_point = np.random.rand(1, 4)
+# center_obj_point = np.array([(13.22, 4.15, -1.5997,0)])
 
-visualizer.set_points(center_obj_point,points_color=(255,0,0),points_size=10)
+# visualizer.set_points(center_obj_point,points_color=(255,0,0),points_size=10)
 
+info = data_infos[index]
+rect = info['calib']['R0_rect'].astype(np.float32)
+Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
 
-
-
-
-# gt_bboxes = LiDARInstance3DBoxes(
-#     torch.tensor([[1.0, 1.75, 13.22, 4.15, 1.57, 1.73, 1.62]]))
-    
-# bboxes_3d = Box3DMode.convert(gt_bboxes, Box3DMode.LIDAR,
-#                                                Box3DMode.DEPTH)
+gt_bboxes_3d = torch.tensor([[13.22, 4.15, -1.5997, 4.15, 1.57, 1.73, 3.1]])
+gt_bboxes_3d = CameraInstance3DBoxes(gt_bboxes_3d).convert_to(
+            'LiDAR', np.linalg.inv(rect @ Trv2c))
 
 # print(bboxes_3d)
 
-# bboxes_3d = LiDARInstance3DBoxes(
-#     # torch.tensor([[1.0, 1.75, 13.22, 4.15, 1.57, 1.73, 1.62]]))
-#     torch.tensor([[8.7314, -1.8559, -1.5997,4.15, 1.57, 1.73, 1.62]]))
-
+# bboxes_3d = LiDARInstance3DBoxes(  # x , y ,z ,h ,w, l, radin
+#     ## torch.tensor([[1.0, 1.75, 13.22, 4.15, 1.57, 1.73, 1.62]]))
+#       torch.tensor([[13.22, 4.15, -1.5997, 4.15, 1.57, 1.73, 3.1]]))
+                    
 
 # bbox_color = [(0,225,0)]*len(bboxes_3d)
 # # Draw 3D bboxes
 # visualizer.draw_bboxes_3d(bboxes_3d,bbox_color)
 visualizer.show()
+
+'''
+
+
