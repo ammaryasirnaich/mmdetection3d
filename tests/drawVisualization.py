@@ -338,6 +338,7 @@ gt_instances_3d = get_3dInstance_from_pklfile(lidarinstanceName)
 
 gt_det3d_data_sample = Det3DDataSample()
 gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
+
 data_input = dict(points=points)
 
 visualizer.add_datasample('3D Scene', data_input,
