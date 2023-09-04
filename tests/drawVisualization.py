@@ -16,6 +16,10 @@ from mmengine.visualization.utils import (check_type, color_val_matplotlib,
                                           tensor2ndarray)
 import pickle
 
+
+from mmdet3d.visualization.get3dInstancefrompkl import *
+
+
 # import mmcv
 # import numpy as np
 # from mmengine import load
@@ -37,9 +41,6 @@ import pickle
 
 
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --show --show-dir ${SHOW_DIR}
-
-
-
 
 
 
@@ -113,10 +114,6 @@ Second example for the 3D Bounding box are disoriented
 # gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
 # # gt_det3d_data_sample.metainfo = 
 
-
-
-
-
 # data_input = dict(points=points)
 
 # visualizer.add_datasample('3D Scene', data_input,
@@ -128,49 +125,52 @@ Second example for the 3D Bounding box are disoriented
 
 
 
-
-
 '''
 
-using the config file for consistance with the help
-of pcd demo file
-'''
+###using the config file for consistance with the help
+###of pcd demo file
 
 
-# points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
-# points = points.reshape(-1, 4)
-# visualizer = Det3DLocalVisualizer()
+
+points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
+points = points.reshape(-1, 4)
+visualizer = Det3DLocalVisualizer()
 
 
-# info_file = load('demo/data/kitti/000008.pkl')
+info_file = load('demo/data/kitti/000008.pkl')
 
 
-# bboxes_3d = []
-# labels_3d = []
+bboxes_3d = []
+labels_3d = []
 
-# gt_instances_3d = InstanceData()
+gt_instances_3d = InstanceData()
 
-# for instance in info_file['data_list'][0]['instances']:
-#     bboxes_3d.append(instance['bbox_3d'])
-#     labels_3d.append(instance['bbox_label_3d'])
+for instance in info_file['data_list'][0]['instances']:
+    bboxes_3d.append(instance['bbox_3d'])
+    labels_3d.append(instance['bbox_label_3d'])
 
-# bbox3d = torch.tensor(bboxes_3d)
-# labels_3d = torch.tensor(labels_3d)
+bbox3d = torch.tensor(bboxes_3d)
+labels_3d = torch.tensor(labels_3d)
 
-# # gt_instances_3d.bboxes_3d = DepthInstance3DBoxes(bbox3d)
-# # gt_instances_3d.labels_3d = labels_3d
+# convert gt_bboxes_3d to velodyne coordinates with `lidar2cam`
+lidar2cam = np.array(info_file['data_list'][0]['images']['CAM2']['lidar2cam'])
+# print("lidar2cam",lidar2cam)
+               
 
-# points, bboxes_3d_depth = to_depth_mode(points, bboxes_3d)
+gt_instances_3d.bboxes_3d = CameraInstance3DBoxes(bbox3d).convert_to(Box3DMode.LIDAR,
+                                                 np.linalg.inv(lidar2cam))
+gt_instances_3d.labels_3d = labels_3d
 
-# gt_det3d_data_sample = Det3DDataSample()
-# gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
-# data_input = dict(points=points)
 
-# visualizer.add_datasample('3D Scene', data_input,
-#                                    gt_det3d_data_sample,
-#                                     vis_task='lidar_det')
+gt_det3d_data_sample = Det3DDataSample()
+gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
+data_input = dict(points=points)
 
-# visualizer.show()
+visualizer.add_datasample('3D Scene', data_input,
+                                   gt_det3d_data_sample,
+                                    vis_task='lidar_det')
+
+visualizer.show()
 
 
 
@@ -180,6 +180,11 @@ of pcd demo file
 # info_file = load('demo/data/kitti/000008.pkl')
 
 
+'''
+
+
+'''
+## for single object displya
 
 
 
@@ -212,12 +217,13 @@ def get_3dbbox_from_pklfile(file:str):
                     # box = torch.tensor([[13.22, 4.15, -1.5997, 4.15, 1.57, 1.73, 3.1]])
                     # print(box)
                     box = torch.tensor([instance_dic['bbox_3d']])
+
                     # print(box)
                     gt_bboxes_3d = CameraInstance3DBoxes(box).convert_to(Box3DMode.LIDAR,
                                                  np.linalg.inv(lidar2cam))
-                    # gt_bboxes_3d = CameraInstance3DBoxes(
-                    #   instance_dic['bbox_3d']).convert_to('LiDAR',
-                    #                              np.linalg.inv(lidar2cam))
+                    # print("after conversion")
+                    # print(gt_bboxes_3d)
+   
                         
                     bboxes_3d.append(gt_bboxes_3d)
                     # print(instance_dic['bbox_3d'])
@@ -227,10 +233,13 @@ def get_3dbbox_from_pklfile(file:str):
     return  bboxes_3d
 
 
+'''
 
 
-     
 
+'''
+
+    
 import torch
 import numpy as np
 
@@ -255,10 +264,15 @@ print("No of entries",len(gt_bboxes_3d))
 print(gt_bboxes_3d)
 
 
+# gt_bboxes_3d = LiDARInstance3DBoxes(gt_bboxes_3d)
+# print("After converting using DepthInstance3DBoxes:")
+# print(gt_bboxes_3d)
+
 bbox_color = [(0,225,0)]*len(gt_bboxes_3d)
 # # Draw 3D bboxes
 visualizer.draw_bboxes_3d(gt_bboxes_3d[0],bbox_color)
 visualizer.show()
+'''
 
 
 
@@ -304,3 +318,30 @@ visualizer.show()
 '''
 
 
+
+
+
+'''
+Testing get3dInstance_frompkl
+'''
+import torch
+import numpy as np
+
+from mmdet3d.visualization import Det3DLocalVisualizer
+points = np.fromfile('demo/data/kitti/000008.bin', dtype=np.float32)
+points = points.reshape(-1, 4)
+visualizer = Det3DLocalVisualizer()
+
+lidarinstanceName= '000008.bin'
+gt_instances_3d = get_3dInstance_from_pklfile(lidarinstanceName)
+
+
+gt_det3d_data_sample = Det3DDataSample()
+gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
+data_input = dict(points=points)
+
+visualizer.add_datasample('3D Scene', data_input,
+                                   gt_det3d_data_sample,
+                                    vis_task='lidar_det')
+
+visualizer.show()
