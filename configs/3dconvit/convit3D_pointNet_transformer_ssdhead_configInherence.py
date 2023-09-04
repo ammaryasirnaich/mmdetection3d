@@ -46,7 +46,6 @@ test_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
-     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -63,7 +62,7 @@ test_pipeline = [
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
             dict(type='PointSample', num_points=16384),
         ]),
-    dict(type='Pack3DDetInputs', keys=['points','gt_bboxes_3d', 'gt_labels_3d'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
 train_dataloader = dict(
