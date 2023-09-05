@@ -71,7 +71,9 @@ def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
 
     mesh_list = trimesh.util.concatenate(scene.dump())
     # save to obj file
-    trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='obj')
+    # trimesh.io.export.export_mesh(mesh_list, out_filename, file_type='obj')
+    mesh_list.export(out_filename)
+    
 
 
 def to_depth_mode(

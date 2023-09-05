@@ -226,10 +226,10 @@ class Det3DVisualizationHook(Hook):
                         '.')[0] + '.png'
                     o3d_save_path = osp.join(self.test_out_dir, o3d_save_path)
                 
+                #getting GT 3D instance
                 lidarInstance = lidar_path.split('/')[-1]
                 if(self.draw_gt):
                     data_sample.gt_instances_3d = get_3dInstance_from_pklfile(lidarInstance)
-                
 
             self._visualizer.add_datasample(
                 'test sample',

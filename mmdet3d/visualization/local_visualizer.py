@@ -27,7 +27,10 @@ from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
-                        proj_lidar_bbox3d_to_img, to_depth_mode)
+                        proj_lidar_bbox3d_to_img, to_depth_mode, 
+                        write_obj, write_oriented_bbox )
+
+from os import path as osp
 
 try:
     import open3d as o3d
@@ -686,9 +689,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if (len(color_pen))>0:
                 # forcing a color
                 colors = self.get_single_color(color_pen,bboxes_3d_depth.shape[0])
-            
-
-            
+                 
             self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -1014,12 +1015,17 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
         self.draw_gt= draw_gt
+        self.dataPack = dict()
 
         if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_data_3d = self._draw_instances_3d(
                     data_input, data_sample.gt_instances_3d,
                     data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
+                
+                self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
+                self.dataPack['gt_points']= gt_data_3d['points']
+
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -1051,6 +1057,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
                                                        palette, 'orange')
+
+                self.dataPack['pred_3bbox']= gt_data_3d['bboxes_3d']
+                self.dataPack['pred_points']= gt_data_3d['points']
+
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
@@ -1113,5 +1123,21 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 mmcv.imwrite(drawn_img_3d[..., ::-1], out_file)
             if drawn_img is not None:
                 mmcv.imwrite(drawn_img[..., ::-1], out_file)
+            
         else:
             self.add_image(name, drawn_img_3d, step)
+            filename = osp.basename(o3d_save_path).split('.')[0]
+            out_file = osp.dirname(o3d_save_path)
+            print(out_file)
+            write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'))
+            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'))
+
+            # self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
+            # self.dataPack['gt_points']= gt_data_3d['points']
+
+
+            # self.dataPack['pred_3bbox']= gt_data_3d['bboxes_3d']
+            # self.dataPack['pred_points']= gt_data_3d['points']
+
+            
