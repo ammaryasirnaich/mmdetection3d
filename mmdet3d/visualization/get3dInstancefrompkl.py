@@ -21,7 +21,7 @@ def get_3dInstance_from_pklfile(lidarfileinstance:str):
      
 
     # Traverse the data to extract 3D bounding box information
-    print(info_file['data_list'][0].keys()) 
+    # print(info_file['data_list'][0].keys()) 
 
     
     bboxes_3d = []

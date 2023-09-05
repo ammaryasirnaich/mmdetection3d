@@ -1017,14 +1017,16 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         self.draw_gt= draw_gt
         self.dataPack = dict()
 
+
         if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
-                gt_data_3d = self._draw_instances_3d(
-                    data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
-                
-                self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
-                self.dataPack['gt_points']= gt_data_3d['points']
+                if len(data_sample.gt_instances_3d) > 0:
+                    gt_data_3d = self._draw_instances_3d(
+                        data_input, data_sample.gt_instances_3d,
+                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
+                    
+                    self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
+                    self.dataPack['gt_points']= gt_data_3d['points']
 
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
@@ -1057,9 +1059,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
                                                        palette, 'orange')
-
-                self.dataPack['pred_3bbox']= gt_data_3d['bboxes_3d']
-                self.dataPack['pred_points']= gt_data_3d['points']
+                if len(pred_instances_3d)>0:
+                    self.dataPack['pred_3bbox']= pred_data_3d['bboxes_3d']
+                else:
+                    self.dataPack['pred_3bbox']= np.zeros((1,7),dtype=float)
+                # self.dataPack['pred_points']= pred_data_3d['points']
 
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
@@ -1128,16 +1132,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.add_image(name, drawn_img_3d, step)
             filename = osp.basename(o3d_save_path).split('.')[0]
             out_file = osp.dirname(o3d_save_path)
-            print(out_file)
             write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
             write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'))
             write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'))
+            
 
-            # self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
-            # self.dataPack['gt_points']= gt_data_3d['points']
-
-
-            # self.dataPack['pred_3bbox']= gt_data_3d['bboxes_3d']
-            # self.dataPack['pred_points']= gt_data_3d['points']
-
+            
             
