@@ -1130,6 +1130,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             
         else:
             self.add_image(name, drawn_img_3d, step)
+            
+            ##@ visualization part
             filename = osp.basename(o3d_save_path).split('.')[0]
             out_file = osp.dirname(o3d_save_path)
             write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
