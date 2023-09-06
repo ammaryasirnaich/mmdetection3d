@@ -239,6 +239,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pcd = geometry.PointCloud()
         if mode == 'xyz':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
+
+            '''@ giving color based on intensity'''
             intensity = points[:, 3]
 
             # Normalize intensity values to the range [0, 1]
@@ -664,6 +666,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             check_type('points', points, (np.ndarray, Tensor))
             points = tensor2ndarray(points)
 
+
+            print("3dInstance contained:", type(bboxes_3d))
+
             if not isinstance(bboxes_3d, DepthInstance3DBoxes):
                 points, bboxes_3d_depth = to_depth_mode(points, bboxes_3d)
             else:
@@ -686,6 +691,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.set_points(
                 points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
 
+            #@ checking condition
             if (len(color_pen))>0:
                 # forcing a color
                 colors = self.get_single_color(color_pen,bboxes_3d_depth.shape[0])
@@ -1014,7 +1020,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         pred_data_3d = None
         gt_img_data = None
         pred_img_data = None
-        self.draw_gt= draw_gt
+
+        self.draw_gt= True
         self.dataPack = dict()
 
 
@@ -1052,6 +1059,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 pred_instances_3d = data_sample.pred_instances_3d
                 # .cpu can not be used for BaseInstance3DBoxes
                 # so we need to use .to('cpu')
+
                 pred_instances_3d = pred_instances_3d[
                     pred_instances_3d.scores_3d > pred_score_thr].to('cpu')
                 pred_data_3d = self._draw_instances_3d(data_input,
@@ -1131,12 +1139,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         else:
             self.add_image(name, drawn_img_3d, step)
             
+            '''
             ##@ visualization part
             filename = osp.basename(o3d_save_path).split('.')[0]
             out_file = osp.dirname(o3d_save_path)
             write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
             write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'))
             write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'))
+            '''
             
 
             
