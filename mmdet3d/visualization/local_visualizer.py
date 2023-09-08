@@ -1021,7 +1021,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        self.draw_gt= True
+        self.draw_gt= draw_gt
         self.dataPack = dict()
 
 
