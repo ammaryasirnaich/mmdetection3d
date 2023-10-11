@@ -30,11 +30,11 @@ def get_3dInstance_from_pklfile(lidarfileinstance:str):
                     bboxes_3d.append(instance_dic['bbox_3d'])
                     labels_3d.append(instance_dic['bbox_label_3d'])
 
-                bbox3d = torch.tensor(bboxes_3d)
-                # gt_instances_3d.bboxes_3d = CameraInstance3DBoxes(bbox3d).convert_to(Box3DMode.LIDAR,
-                #                     np.linalg.inv(lidar2cam))
-                gt_instances_3d.bboxes_3d = CameraInstance3DBoxes(bbox3d).convert_to(Box3DMode.LIDAR)
-          
+                bbox3d_cam = torch.tensor(bboxes_3d)
+                # bbox3d_cam = CameraInstance3DBoxes(bbox3d_cam)
+                
+                # bbox3d_cam -> bbox3d_lidar
+                gt_instances_3d.bboxes_3d = CameraInstance3DBoxes(bbox3d_cam).convert_to(Box3DMode.LIDAR)
                 gt_instances_3d.labels_3d = torch.tensor(labels_3d) 
                 return  gt_instances_3d
 

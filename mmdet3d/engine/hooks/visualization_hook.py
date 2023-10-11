@@ -238,7 +238,7 @@ class Det3DVisualizationHook(Hook):
                 'test sample',
                 data_input,
                 data_sample=data_sample,
-                draw_gt=True,   #self.draw_gt
+                draw_gt=False,   #self.draw_gt
                 draw_pred=self.draw_pred,
                 show=self.show,
                 vis_task=self.vis_task,
