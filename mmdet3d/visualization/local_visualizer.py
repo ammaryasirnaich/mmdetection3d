@@ -1022,7 +1022,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         gt_img_data = None
         pred_img_data = None
 
-        self.draw_gt= False
+        self.draw_gt= draw_gt  , #draw_gt
         
         self.dataPack = dict()
 
@@ -1038,7 +1038,6 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
                     self.dataPack['gt_points']= gt_data_3d['points']
                 
-  
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -1073,14 +1072,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        vis_task, show_pcd_rgb,
                                                        palette, 'orange')
                 
-                print("bbox from path:",data_sample.lidar_path)
+                # print("bbox from path:",data_sample.lidar_path)
                 
-                print("gt_instances_3d.bboxes_3d")
-                print(data_sample.gt_instances_3d.bboxes_3d)
+                # print("gt_instances_3d.bboxes_3d")
+                # print(data_sample.gt_instances_3d.bboxes_3d)
                 
                 
-                print("pred_instances_3d.bboxes_3d")
-                print(pred_instances_3d.bboxes_3d)
+                # print("pred_instances_3d.bboxes_3d")
+                # print(pred_instances_3d.bboxes_3d)
                 
                    
                 if len(pred_instances_3d)>0:
