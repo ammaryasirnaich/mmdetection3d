@@ -16,17 +16,22 @@ def get_3dInstance_from_pklfile(lidarfileinstance:str):
     bboxes_3d = []
     labels_3d = []
     gt_instances_3d = InstanceData()
-    lidar2cam = np.array(info_file['data_list'][0]['images']['CAM2']['lidar2cam'])
+    # lidar2cam = np.array(info_file['data_list'][0]['images']['CAM2']['lidar2cam'])
 
 
     for info_dic in info_file['data_list']:
             lidar_info_str= info_dic['lidar_points']['lidar_path']
             if(lidar_info_str == lidarfileinstance):
+                
                 if(len(info_dic['instances'])==0):
                      print("No instance found")
                      return
 
                 for instance_dic in info_dic['instances']:
+                    
+                    bbox_3d = instance_dic['bbox_3d']
+                    if bbox_3d[3]<0: # skip dont care rows
+                        continue
                     bboxes_3d.append(instance_dic['bbox_3d'])
                     labels_3d.append(instance_dic['bbox_label_3d'])
 

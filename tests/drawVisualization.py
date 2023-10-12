@@ -343,6 +343,7 @@ data_input = dict(points=points)
 
 visualizer.add_datasample('3D Scene', data_input,
                                    gt_det3d_data_sample,
+                                   draw_gt=True,
                                     vis_task='lidar_det')
 
 visualizer.show()
