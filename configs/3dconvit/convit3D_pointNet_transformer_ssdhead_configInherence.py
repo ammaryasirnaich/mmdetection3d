@@ -39,6 +39,7 @@ train_pipeline = [
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 
+
 test_pipeline = [
     dict(
         type='LoadPointsFromFile',

@@ -62,7 +62,7 @@ class Det3DVisualizationHook(Hook):
                  vis_task: str = 'mono_det',
                  wait_time: float = 0.,
                  test_out_dir: Optional[str] = None,
-                 draw_gt: bool = False,
+                 draw_gt: bool = True,
                  draw_pred: bool = True,
                  show_pcd_rgb: bool = False,
                  backend_args: Optional[dict] = None):
@@ -228,23 +228,27 @@ class Det3DVisualizationHook(Hook):
                 
                 
                 ##getting GT 3D instance
+                print("visual instance called for:", lidar_path)
+                
                 lidarInstance = lidar_path.split('/')[-1]
                 if(self.draw_gt):
                     data_sample.gt_instances_3d = get_3dInstance_from_pklfile(lidarInstance)
 
           
                
-            self._visualizer.add_datasample(
-                'test sample',
-                data_input,
-                data_sample=data_sample,
-                draw_gt=False,   #self.draw_gt
-                draw_pred=self.draw_pred,
-                show=self.show,
-                vis_task=self.vis_task,
-                wait_time=self.wait_time,
-                pred_score_thr=self.score_thr,
-                out_file=out_file,
-                o3d_save_path=o3d_save_path,
-                step=self._test_index,
-                show_pcd_rgb=self.show_pcd_rgb)
+                self._visualizer.add_datasample(
+                    'test sample',
+                    data_input,
+                    data_sample=data_sample,
+                    draw_gt=True,   #self.draw_gt
+                    draw_pred=self.draw_pred,
+                    show=self.show,
+                    vis_task=self.vis_task,
+                    wait_time=self.wait_time,
+                    pred_score_thr=self.score_thr,
+                    out_file=out_file,
+                    o3d_save_path=o3d_save_path,
+                    step=self._test_index,
+                    show_pcd_rgb=self.show_pcd_rgb)
+                
+   
