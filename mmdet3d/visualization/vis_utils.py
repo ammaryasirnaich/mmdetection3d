@@ -5,6 +5,7 @@ from typing import Tuple
 import numpy as np
 import torch
 import trimesh
+from webcolors import name_to_rgb
 
 from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 CameraInstance3DBoxes, Coord3DMode,
@@ -33,7 +34,7 @@ def write_obj(points: np.ndarray, out_filename: str) -> None:
     fout.close()
 
 
-def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
+def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str, obj_type = None) -> None:
     """Export oriented (around Z axis) scene bbox to meshes.
 
     Args:
@@ -42,6 +43,7 @@ def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
             Y forward, X right, Z upward, heading angle of positive X is 0,
             heading angle of positive Y is 90 degrees.
         out_filename (str): Filename.
+        
     """
 
     def heading2rotmat(heading_angle: float) -> np.ndarray:
@@ -61,6 +63,10 @@ def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
         trns[3, 3] = 1.0
         trns[0:3, 0:3] = heading2rotmat(box[6])
         box_trimesh_fmt = trimesh.creation.box(lengths, trns)
+        if(obj_type =='gt'):
+            box_trimesh_fmt.visual.vertex_colors = [255,165,0,0.3]
+        else:
+            box_trimesh_fmt.visual.vertex_colors = [0,128,0,0.3]
         return box_trimesh_fmt
 
     if len(scene_bbox) == 0:
@@ -68,6 +74,7 @@ def write_oriented_bbox(scene_bbox: np.ndarray, out_filename: str) -> None:
     scene = trimesh.scene.Scene()
     for box in scene_bbox:
         scene.add_geometry(convert_oriented_box_to_trimesh_fmt(box))
+        
 
     mesh_list = trimesh.util.concatenate(scene.dump())
     

@@ -96,7 +96,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         >>> gt_det3d_data_sample = Det3DDataSample()
         >>> gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
         >>> data_input = dict(img=image, points=points)
-        >>> det3d_local_visualizer.add_datasample('3D Scene', data_input,
+        >>> det3d_local_visualizer.add_datasample('3D Scene'How to save open3d visualizer to a 3D model, data_input,
         ...                                       gt_det3d_data_sample)
 
         >>> from mmdet3d.structures import PointData
@@ -1153,15 +1153,20 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             
         else:
             self.add_image(name, drawn_img_3d, step)
-            
-            '''
+                
             ##@ visualization part
             filename = osp.basename(o3d_save_path).split('.')[0]
             out_file = osp.dirname(o3d_save_path)
+            # write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'),color='orange')
+            # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'),color='green')
+            
             write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
-            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'))
-            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'))
-            '''
+            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
+            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
+            
+            
+            
             
 
             
