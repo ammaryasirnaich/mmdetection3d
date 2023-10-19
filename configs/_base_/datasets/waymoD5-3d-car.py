@@ -2,7 +2,7 @@
 # D5 in the config name means the whole dataset is divided into 5 folds
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
-data_root = 'data/waymo/kitti_format/'
+data_root = '/workspace/data/waymo/kitti_format/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
