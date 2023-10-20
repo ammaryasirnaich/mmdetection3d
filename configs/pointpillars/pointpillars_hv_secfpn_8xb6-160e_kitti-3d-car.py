@@ -2,7 +2,7 @@
 _base_ = './pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class.py'
 # dataset settings
 dataset_type = 'KittiDataset'
-data_root = 'data/kitti/'
+data_root = '/workspace/data/kitti_detection/kitti/'
 class_names = ['Car']
 metainfo = dict(classes=class_names)
 backend_args = None
