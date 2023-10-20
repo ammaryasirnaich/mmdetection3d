@@ -3,11 +3,14 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 
 model = dict(
     type='VoxelNet',
-    voxel_layer=dict(
-        max_num_points=35,
-        point_cloud_range=[0, -40, -3, 70.4, 40, 1],
-        voxel_size=voxel_size,
-        max_voxels=(16000, 40000)),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=35,
+            point_cloud_range=[0, -40, -3, 70.4, 40, 1],
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000))),
     voxel_encoder=dict(
         type='IEVFE',      # HardVFE , IEVFE
         in_channels=4,
@@ -52,33 +55,34 @@ model = dict(
         diff_rad_by_sin=True,
         bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
         loss_cls=dict(
-            type='FocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
         loss_dir=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
-    # model training and testing settings
+            type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
+  
+   # model training and testing settings
     train_cfg=dict(
         assigner=[
             dict(  # for Pedestrian
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.35,
                 neg_iou_thr=0.2,
                 min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Cyclist
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.35,
                 neg_iou_thr=0.2,
                 min_pos_iou=0.2,
                 ignore_iof_thr=-1),
             dict(  # for Car
-                type='MaxIoUAssigner',
+                type='Max3DIoUAssigner',
                 iou_calculator=dict(type='BboxOverlapsNearest3D'),
                 pos_iou_thr=0.6,
                 neg_iou_thr=0.45,
@@ -97,12 +101,28 @@ model = dict(
         nms_pre=100,
         max_num=50))
 
-
-# dataset settings
 dataset_type = 'KittiDataset'
 data_root = '/workspace/data/kitti_detection/kitti/'
 class_names = ['Pedestrian', 'Cyclist', 'Car']
-input_modality = dict(use_lidar=True, use_camera=False)
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+input_modality = dict(use_lidar=True, use_camera=True)
+metainfo = dict(classes=class_names)
+
+# Example to use different file client
+# Method 1: simply set the data root and let the file I/O module
+# automatically infer from prefix (not support LMDB and Memcache yet)
+
+# data_root = 's3://openmmlab/datasets/detection3d/kitti/'
+
+# Method 2: Use backend_args, file_client_args in versions before 1.1.0
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection3d/',
+#          'data/': 's3://openmmlab/datasets/detection3d/'
+#      }))
+backend_args = None
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
@@ -111,27 +131,23 @@ db_sampler = dict(
         filter_by_difficulty=[-1],
         filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
     classes=class_names,
-    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6))
-
-file_client_args = dict(backend='disk')
-# Uncomment the following if use ceph or other file clients.
-# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
-# for more details.
-# file_client_args = dict(
-#     backend='petrel', path_mapping=dict(data='s3://kitti_data/'))
+    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
 
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=4,  # x, y, z, intensity
         use_dim=4,
-        file_client_args=file_client_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
         type='ObjectNoise',
@@ -147,8 +163,9 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='PointShuffle'),
-    dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+    dict(
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -156,7 +173,7 @@ test_pipeline = [
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
+        backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
@@ -170,13 +187,9 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(
-                type='DefaultFormatBundle3D',
-                class_names=class_names,
-                with_label=False),
-            dict(type='Collect3D', keys=['points'])
-        ])
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+        ]),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
@@ -186,57 +199,71 @@ eval_pipeline = [
         coord_type='LIDAR',
         load_dim=4,
         use_dim=4,
-        file_client_args=file_client_args),
-    dict(
-        type='DefaultFormatBundle3D',
-        class_names=class_names,
-        with_label=False),
-    dict(type='Collect3D', keys=['points'])
+        backend_args=backend_args),
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
-
-data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
-    train=dict(
+train_dataloader = dict(
+    batch_size=4,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type='RepeatDataset',
         times=2,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'kitti_infos_train.pkl',
-            split='training',
-            pts_prefix='velodyne_reduced',
+            ann_file='kitti_infos_train.pkl',
+            data_prefix=dict(pts='training/velodyne_reduced'),
             pipeline=train_pipeline,
             modality=input_modality,
-            classes=class_names,
             test_mode=False,
+            metainfo=metainfo,
             # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR')),
-    val=dict(
+            box_type_3d='LiDAR',
+            backend_args=backend_args)))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
+        data_prefix=dict(pts='training/velodyne_reduced'),
+        ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
-        classes=class_names,
         test_mode=True,
-        box_type_3d='LiDAR'),
-    test=dict(
+        metainfo=metainfo,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root + 'kitti_infos_val.pkl',
-        split='training',
-        pts_prefix='velodyne_reduced',
+        data_prefix=dict(pts='training/velodyne_reduced'),
+        ann_file='kitti_infos_val.pkl',
         pipeline=test_pipeline,
         modality=input_modality,
-        classes=class_names,
         test_mode=True,
-        box_type_3d='LiDAR'))
+        metainfo=metainfo,
+        box_type_3d='LiDAR',
+        backend_args=backend_args))
+val_evaluator = dict(
+    type='KittiMetric',
+    ann_file=data_root + 'kitti_infos_val.pkl',
+    metric='bbox',
+    backend_args=backend_args)
+test_evaluator = val_evaluator
 
-evaluation = dict(interval=1, pipeline=eval_pipeline)
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # Training settings
@@ -247,31 +274,59 @@ load_from = None
 resume_from = None
 workflow = [('train', 1), ('val', 1)]
 
-# disable opencv multithreading to avoid system being overloaded
-opencv_num_threads = 0
-# set multi-process start method as `fork` to speed up the training
-mp_start_method = 'fork'
-
 
 # Mixed precision set to dynamic
 # fp16 =dict(loss_scale=512.)
+# fp16 settings
+# fp16 =dict(loss_scale=512.)
 fp16 = dict(loss_scale='dynamic')
 
-checkpoint_config = dict(interval=1, max_keep_ckpts=5, save_last=True)
+'''
+Log settings
+'''
+default_scope = 'mmdet3d'
+
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook')
+    )
+
+vis_backends = [dict(type='LocalVisBackend'),
+                dict(type='TensorboardVisBackend')]
+
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+
 log_config = dict(
     interval=50,
+    by_epoch=True,
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-# trace_config = dict(type='tb_trace', dir_name= work_dir)
-# schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
+checkpoint_config = dict(interval=5)
 
-# profiler_config = dict(type='ProfilerHook',by_epoch=False,profile_iters=2,
-#                     record_shapes=True, profile_memory=True, with_flops =True, 
-#                         schedule = dict( wait=1,warmup=1,active=2),
-#                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
-#                         # with_stack =True,
 
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
+
+
+log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+
+log_level = 'INFO'
+load_from = None
+resume = True
 
 '''
 Schedules settings
@@ -281,28 +336,58 @@ Schedules settings
 # rather than the max learning rate. Since the target_ratio is (10, 1e-4),
 # the learning rate will change from 0.0018 to 0.018, than go to 0.0018*1e-4
 lr = 0.0018
+# The optimizer follows the setting in SECOND.Pytorch, but here we use
 # the official AdamW optimizer implemented by PyTorch.
-optimizer = dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=10, norm_type=2))
-# We use cyclic learning rate and momentum schedule following SECOND.Pytorch
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
+    clip_grad=dict(max_norm=10, norm_type=2))
+# learning rate
+param_scheduler = [
+    # learning rate scheduler
+    # During the first 16 epochs, learning rate increases from 0 to lr * 10
+    # during the next 24 epochs, learning rate decreases from lr * 10 to
+    # lr * 1e-4
+    dict(
+        type='CosineAnnealingLR',
+        T_max=16,
+        eta_min=lr * 10,
+        begin=0,
+        end=16,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=24,
+        eta_min=lr * 1e-4,
+        begin=16,
+        end=40,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    # momentum scheduler
+    # During the first 16 epochs, momentum increases from 0 to 0.85 / 0.95
+    # during the next 24 epochs, momentum increases from 0.85 / 0.95 to 1
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=16,
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=16,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=24,
+        eta_min=1,
+        begin=16,
+        end=40,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]
 
-lr_config = dict(
-    policy='cyclic',
-    target_ratio=(10, 1e-4),
-    cyclic_times=1,
-    step_ratio_up=0.4,
-)
-momentum_config = dict(
-    policy='cyclic',
-    target_ratio=(0.85 / 0.95, 1),
-    cyclic_times=1,
-    step_ratio_up=0.4,
-)
-# Although the max_epochs is 40, this schedule is usually used we
-# RepeatDataset with repeat ratio N, thus the actual max epoch
-# number could be Nx40  
-# seed = 0
-# gpu_ids = range(1)
-# samples_per_gpu=1 # batch size per GPU
-runner = dict(type='EpochBasedRunner', max_epochs=40)
-# runner = dict(type='IterBasedRunner', max_iters=100)
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=80)
