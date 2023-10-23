@@ -191,6 +191,9 @@ def write_oriented_bbox(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename
     pred_target_no = len(pred_bbox)
     gt_target_no = len(gt_bbox)
     
+    
+    df = pd.read_csv("")
+    
     def getrange(xyx_location):
         return np.linalg(xyx_location,(0.0,0.0,0.0))
     
@@ -198,6 +201,7 @@ def write_oriented_bbox(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename
     for box in pred_bbox:
         range.append(getrange(box[:3]))
     
+
     
         
      
