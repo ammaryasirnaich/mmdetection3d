@@ -188,11 +188,13 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
 
 def write_oriented_bbox(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename: str):
     
-    pred_target_no = len(pred_bbox)
-    gt_target_no = len(gt_bbox)
+       
+    df = pd.read_csv("/workspace/data/kitti_detection/model_output_results/prediction_analytics.csv")
+    row = 1
+    if not df.empty:
+        row = df.index[-1]
+        row +=1
     
-    
-    df = pd.read_csv("")
     
     def getrange(xyx_location):
         return np.linalg(xyx_location,(0.0,0.0,0.0))
@@ -200,6 +202,21 @@ def write_oriented_bbox(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename
     range = []
     for box in pred_bbox:
         range.append(getrange(box[:3]))
+    
+    df.at[row,'scene_no'] = out_filename
+    df.at[row,'pre_object_number'] = pred_target_no = len(pred_bbox)
+    df.at[row,'pred_max_range'] = max(range)
+    
+    range.clear()
+    
+    for box in gt_bbox:
+        range.append(getrange(box[:3]))
+    
+    df.at[row,'scene_no'] = out_filename
+    df.at[row,'pre_object_number'] =  gt_target_no = len(gt_bbox)
+    df.at[row,'pred_max_range'] = max(range)
+    
+    df.to_csv('/workspace/data/kitti_detection/model_output_results/prediction_analytics.csv', index=False)
     
 
     
