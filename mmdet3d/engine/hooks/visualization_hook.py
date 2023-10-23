@@ -228,7 +228,7 @@ class Det3DVisualizationHook(Hook):
                 
                 
                 ##getting GT 3D instance
-                print("visual instance called for:", lidar_path)
+                # print("visual instance called for:", lidar_path)
                 
                 lidarInstance = lidar_path.split('/')[-1]
                 if(self.draw_gt):

@@ -28,7 +28,7 @@ from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode, 
-                        write_obj, write_oriented_bbox )
+                        write_obj, write_oriented_bbox, write_bbox_statistics )
 
 from os import path as osp
 
@@ -1161,9 +1161,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'),color='orange')
             # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'),color='green')
             
-            write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
-            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
-            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
+            # write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
+            # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
+           
+            
+            write_bbox_statistics(self.dataPack['pred_3bbox'],self.dataPack['gt_3bbox'],filename)
             
             
             
