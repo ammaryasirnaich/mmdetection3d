@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from typing import Tuple
-
+import pandas as pd
 import numpy as np
 import torch
 import trimesh
@@ -184,3 +184,20 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 
     return imgfov_pts_2d
+
+
+def write_oriented_bbox(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename: str):
+    
+    pred_target_no = len(pred_bbox)
+    gt_target_no = len(gt_bbox)
+    
+    def getrange(xyx_location):
+        return np.linalg(xyx_location,(0.0,0.0,0.0))
+    
+    range = []
+    for box in pred_bbox:
+        range.append(getrange(box[:3]))
+    
+    
+        
+     
