@@ -4,14 +4,10 @@ Model parameter settings
 '''
 
 # voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
-voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
+voxel_size = [0.08, 0.08, 0.1] # no of voxel generated 91600
+point_cloud_range=[-76.8, -51.2, -2, 76.8, 51.2, 4]
 # x=1408 , y=1600, z= 40
 
-# voxel_size = [0.05, 0.05, 0.1]
-# point_cloud_range=[70.4, 80, 4]
-               #      x  ,  y, z
-               
-# voxel_size = [0.05, 0.05, 0.2]
 
 model = dict(
     type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 

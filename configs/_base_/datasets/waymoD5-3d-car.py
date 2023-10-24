@@ -160,13 +160,17 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 
+
+
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-    waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-    data_root='./data/waymo/waymo_format',
-    convert_kitti_format=False,
-    backend_args=backend_args)
+    ann_file=data_root+'waymo_infos_val.pkl',
+    waymo_bin_file= data_root+'gt.bin',
+    data_root=data_root,
+    backend_args=backend_args,
+    convert_kitti_format=True,
+    idx2metainfo= data_root+'idx2metainfo.pkl')
+    
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]
