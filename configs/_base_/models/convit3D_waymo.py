@@ -19,7 +19,7 @@ model = dict(
     middle_encoder = None,
     backbone=dict(
         type='PointNet2SAMSG',
-        in_channels=4,
+        in_channels=5,
         num_points=(4096, 1024, (256, 256)),   #(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
@@ -129,10 +129,8 @@ model = dict(
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
 dist_params = dict(backend='nccl')
-log_level = 'INFO'
-# work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
-load_from = None
-# resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
+
+
 workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded
@@ -177,10 +175,6 @@ env_cfg = dict(
 
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
-log_level = 'INFO'
-load_from = None
-resume = True
-
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
 
@@ -196,40 +190,38 @@ resume = True
 Schedules settings
 '''
 # optimizer
-# This schedule is mainly used by models on nuScenes dataset
-lr = 0.001
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
-    # max_norm=10 is better for SECOND
-    clip_grad=dict(max_norm=35, norm_type=2))
 
 # training schedule for 2x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-# learning rate
+# optimizer
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=0.0005, weight_decay=0.0001),
+    paramwise_cfg=dict(
+        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
+    clip_grad=dict(max_norm=35., norm_type=2))
 param_scheduler = [
-    dict(
-        type='LinearLR',
-        start_factor=1.0 / 1000,
-        by_epoch=False,
-        begin=0,
-        end=1000),
     dict(
         type='MultiStepLR',
         begin=0,
         end=24,
         by_epoch=True,
-        milestones=[20, 23],
+        milestones=[16, 22],
         gamma=0.1)
 ]
-
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=32)
+auto_scale_lr = dict(enable=False, base_batch_size=2)
+
+
+
+log_level = 'INFO'
+load_from = None
+resume = True
 
 

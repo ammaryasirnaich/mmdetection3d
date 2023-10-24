@@ -3,12 +3,20 @@ _base_ = [
     '../_base_/datasets/waymoD5-3d-3class.py',
 ]
 
-data_root = 'workspace/data/waymo/waymo_mini/kitti_format'
 
 # data settings
-train_dataloader = dict( batch_size=1,dataset=dict(dataset=dict(load_interval=1)))
+# train_dataloader = dict( batch_size=2)
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=32)
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+work_dir = './work_dirs/convit3D_waymo'
+load_from = None
+resume_from = './work_dirs/convit3D_waymo'
+workflow = [('train', 1),('val', 1)]  
+# workflow = [('val', 1)]  
+
