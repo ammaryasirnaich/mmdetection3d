@@ -133,9 +133,9 @@ model = dict(
 # yapf:enable
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
+# work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
+# resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
 workflow = [('train', 1)]  
 
 # disable opencv multithreading to avoid system being overloaded

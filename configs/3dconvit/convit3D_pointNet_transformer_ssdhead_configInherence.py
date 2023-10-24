@@ -66,10 +66,12 @@ test_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
+
 train_dataloader = dict(
-    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
 
 
 # optimizer
@@ -79,6 +81,32 @@ optim_wrapper = dict(
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
     clip_grad=dict(max_norm=35, norm_type=2),
 )
+
+
+
+'''
+Log settings
+'''
+default_scope = 'mmdet3d'
+
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',draw=True)
+    )
+
+log_config = dict(
+    interval=50,
+    by_epoch=True,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+
+checkpoint_config = dict(interval=1)
+
+
 
 # training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
@@ -95,5 +123,15 @@ param_scheduler = [
         milestones=[45, 60],
         gamma=0.1)
 ]
+
+
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__configInheretance_batch2_epoch_testing'
+load_from = None
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__configInheretance_batch2_epoch_testing'
+# workflow = [('train', 1)]  
+workflow = [('val', 1)]  
+
 
 
