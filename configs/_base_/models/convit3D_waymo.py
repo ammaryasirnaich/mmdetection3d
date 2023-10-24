@@ -5,7 +5,7 @@ Model parameter settings
 
 # voxel_size = [0.2, 0.2, 0.4]   # no of voxel generated 38799
 voxel_size = [0.08, 0.08, 0.1] # no of voxel generated 91600
-point_cloud_range=[-76.8, -51.2, -2, 76.8, 51.2, 4]
+
 # x=1408 , y=1600, z= 40
 
 
@@ -112,6 +112,7 @@ model = dict(
         vote_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
 
+
     # model training and testing settings
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
@@ -167,10 +168,6 @@ log_config = dict(
 checkpoint_config = dict(interval=5)
 
 
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
 env_cfg = dict(
     cudnn_benchmark=False,
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
@@ -198,35 +195,41 @@ resume = True
 '''
 Schedules settings
 '''
-# The schedule is usually used by models trained on KITTI dataset
-# The learning rate set in the cyclic schedule is the initial learning rate
-# rather than the max learning rate. Since the target_ratio is (10, 1e-4),
-# the learning rate will change from 0.0018 to 0.018, than go to 0.0018*1e-4
 # optimizer
-lr = 0.002  # max learning rate
+# This schedule is mainly used by models on nuScenes dataset
+lr = 0.001
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
+    # max_norm=10 is better for SECOND
+    clip_grad=dict(max_norm=35, norm_type=2))
 
+# training schedule for 2x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=24, val_interval=24)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
 # learning rate
 param_scheduler = [
-     dict(
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 1000,
+        by_epoch=False,
+        begin=0,
+        end=1000),
+    dict(
         type='MultiStepLR',
         begin=0,
-        end=80,
+        end=24,
         by_epoch=True,
-        milestones=[45, 60],
+        milestones=[20, 23],
         gamma=0.1)
 ]
-
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=4)
+#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)
 
 

@@ -1,12 +1,12 @@
 _base_ = [
-    '../_base_/models/pointpillars_hv_secfpn_waymo.py',
+    '../_base_/models/convit3D_waymo.py',
     '../_base_/datasets/waymoD5-3d-3class.py',
-    '../_base_/schedules/schedule-2x.py',
-    '../_base_/default_runtime.py',
 ]
 
+data_root = 'workspace/data/waymo/waymo_mini/kitti_format'
+
 # data settings
-train_dataloader = dict(dataset=dict(dataset=dict(load_interval=1)))
+train_dataloader = dict( batch_size=1,dataset=dict(dataset=dict(load_interval=1)))
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
