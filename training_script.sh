@@ -16,6 +16,9 @@
 
 # python tools/train.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py
 
-python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py
+# python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py
+
+python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_waymo.py
+# python tools/train.py /workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py
 
 
