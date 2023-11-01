@@ -610,12 +610,23 @@ class GTDatabaseCreater:
             input_dict['box_mode_3d'] = self.dataset.box_mode_3d
             return input_dict
 
-        multi_db_infos = mmengine.track_parallel_progress(
+        #Note, causing the system to crach
+        # multi_db_infos = mmengine.track_parallel_progress(
+        #     self.create_single,
+        #     ((loop_dataset(i)
+        #       for i in range(len(self.dataset))), len(self.dataset)),
+        #     self.num_worker)
+        # print('Make global unique group id')
+        
+        # running after removing the multi threading stuff
+        multi_db_infos = mmengine.track_progress(
             self.create_single,
             ((loop_dataset(i)
               for i in range(len(self.dataset))), len(self.dataset)),
-            self.num_worker)
-        print('Make global unique group id')
+            )
+        
+        
+        
         group_counter_offset = 0
         all_db_infos = dict()
         for single_db_infos in track_iter_progress(multi_db_infos):
