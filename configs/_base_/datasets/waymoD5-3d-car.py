@@ -3,8 +3,8 @@
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 
-data_root = '/workspace/data/waymo/kitti_format/'
-# data_root = '/workspace/data/waymo/waymo_mini/'
+# data_root = '/workspace/data/waymo/kitti_format/'
+data_root = '/workspace/data/waymo/waymo_mini/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module

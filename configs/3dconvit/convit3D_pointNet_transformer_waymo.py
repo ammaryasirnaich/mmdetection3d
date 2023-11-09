@@ -19,10 +19,10 @@ workflow = [('train', 1),('val', 1)]
 
 
 # data_root = '/workspace/data/waymo/waymo_mini/'
-# work_dir = './work_dirs/convit3D_waymo_mini_dataset'
-# resume_from = './work_dirs/convit3D_waymo_mini_dataset'
+work_dir = './work_dirs/convit3D_waymo_mini_dataset'
+resume_from = './work_dirs/convit3D_waymo_mini_dataset'
 
-data_root = '/workspace/data/waymo/kitti_format/'
-work_dir = './work_dirs/convit3D_waymo_full_dataset'
-resume_from = './work_dirs/convit3D_waymo_full_dataset'
+
+# work_dir = './work_dirs/convit3D_waymo_full_dataset'
+# resume_from = './work_dirs/convit3D_waymo_full_dataset'
 
