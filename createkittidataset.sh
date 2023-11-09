@@ -8,7 +8,7 @@
 
 
 
-python tools/create_data.py waymo --root-path /workspace/data/waymo --out-dir /workspace/data/waymo --workers 8 --extra-tag waymo
+python tools/create_data.py waymo --root-path /workspace/data/waymo --out-dir /workspace/data/waymo --workers 8 --extra-tag waymo --only-gt-database
 
 
 

@@ -14,9 +14,15 @@ auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_waymo'
 load_from = None
-resume_from = './work_dirs/convit3D_waymo'
 workflow = [('train', 1),('val', 1)]  
-# workflow = [('val', 1)]  
+
+
+# data_root = '/workspace/data/waymo/waymo_mini/'
+# work_dir = './work_dirs/convit3D_waymo_mini_dataset'
+# resume_from = './work_dirs/convit3D_waymo_mini_dataset'
+
+data_root = '/workspace/data/waymo/kitti_format/'
+work_dir = './work_dirs/convit3D_waymo_full_dataset'
+resume_from = './work_dirs/convit3D_waymo_full_dataset'
 

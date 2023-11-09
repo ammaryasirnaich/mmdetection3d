@@ -3,8 +3,8 @@
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 
-data_root = '/workspace/data/waymo/waymo_mini/kitti_format/'
-# data_root = '/workspace/data/waymo/kitti_format/'
+data_root = '/workspace/data/waymo/kitti_format/'
+# data_root = '/workspace/data/waymo/waymo_mini/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -174,14 +174,14 @@ val_evaluator = dict(
     backend_args=backend_args)
 test_evaluator = val_evaluator
 
-# val_evaluator = dict(
-#     type='WaymoMetric',
-#     ann_file=data_root+'waymo_infos_val.pkl',
-#     waymo_bin_file= data_root+'gt.bin',
-#     data_root=data_root,
-#     backend_args=backend_args,
-#     convert_kitti_format=True,
-#     idx2metainfo= data_root+'idx2metainfo.pkl')
+val_evaluator = dict(
+    type='WaymoMetric',
+    ann_file=data_root+'waymo_infos_val.pkl',
+    waymo_bin_file= data_root+'gt.bin',
+    data_root=data_root,
+    backend_args=backend_args,
+    convert_kitti_format=True,
+    idx2metainfo= data_root+'idx2metainfo.pkl')
     
 test_evaluator = val_evaluator
 
