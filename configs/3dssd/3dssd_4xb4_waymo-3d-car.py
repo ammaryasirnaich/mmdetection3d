@@ -1,11 +1,14 @@
 _base_ = [
-    '../_base_/models/convit3D_waymo.py',
-    '../_base_/datasets/waymoD5-3d-3class.py',
+    '../_base_/models/3dssd.py', '../_base_/datasets/waymoD5-3d-3class.py',
+    '../_base_/default_runtime.py'
 ]
 
+# dataset settings
 dataset_type = 'WaymoDataset'
 data_root = '/workspace/data/waymo/waymo_mini/'
+             
 
+# class_names = ['Car']
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
 
 backend_args = None
@@ -70,33 +73,37 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
+# model settings
+model = dict(
+    bbox_head=dict(
+        num_classes=3,
+        
+        bbox_coder=dict(
+            type='AnchorFreeBBoxCoder', num_dir_bins=12, with_rot=True)))
 
+# optimizer
+lr = 0.002  # max learning rate
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
 
+# training schedule for 1x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
-
-
-# data settings
-# train_dataloader = dict( batch_size=2)
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
-
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-load_from = None
-workflow = [('train', 1),('val', 1)]  
-
-
-# data_root = '/workspace/data/waymo/waymo_mini/'
-work_dir = './work_dirs/convit3D_waymo_mini_dataset'
-resume_from = './work_dirs/convit3D_waymo_mini_dataset'
-
-
-# work_dir = './work_dirs/convit3D_waymo_full_dataset'
-# resume_from = './work_dirs/convit3D_waymo_full_dataset'
-
+# learning rate
+param_scheduler = [
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=80,
+        by_epoch=True,
+        milestones=[45, 60],
+        gamma=0.1)
+]
