@@ -163,7 +163,7 @@ log_config = dict(
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=5)
+checkpoint_config = dict(interval=1)
 
 
 env_cfg = dict(

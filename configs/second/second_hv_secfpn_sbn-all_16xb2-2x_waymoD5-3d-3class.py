@@ -6,7 +6,7 @@ _base_ = [
 ]
 
 dataset_type = 'WaymoDataset'
-data_root = 'data/waymo/kitti_format/'
+data_root = '/workspace/data/waymo/waymo_mini/'
 class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
 
