@@ -108,9 +108,7 @@ model = dict(
         max_num=50))
 
 
-
 resume = True
-
 
 log_config = dict(
     interval=50,

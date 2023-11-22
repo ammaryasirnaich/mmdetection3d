@@ -7,7 +7,7 @@ model = dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
-            max_num_points=35,
+            max_num_points=5,
             point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
@@ -60,7 +60,7 @@ model = dict(
             gamma=2.0,
             alpha=0.25,
             loss_weight=1.0),
-        loss_bbox=dict(type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),
+        loss_bbox=dict(type='mmdet.SmoothL1Loss', beta=1.0 / 9.0, loss_weight=2.0),  # previously it was beta=0.1111111111111111
         loss_dir=dict(
             type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=0.2)),
   
@@ -108,19 +108,6 @@ point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=True)
 metainfo = dict(classes=class_names)
 
-# Example to use different file client
-# Method 1: simply set the data root and let the file I/O module
-# automatically infer from prefix (not support LMDB and Memcache yet)
-
-# data_root = 's3://openmmlab/datasets/detection3d/kitti/'
-
-# Method 2: Use backend_args, file_client_args in versions before 1.1.0
-# backend_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/': 's3://openmmlab/datasets/detection3d/',
-#          'data/': 's3://openmmlab/datasets/detection3d/'
-#      }))
 backend_args = None
 
 db_sampler = dict(
@@ -187,7 +174,11 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+            # dict(
+            #     type='DefaultFormatBundle3D',
+            #     class_names=['Pedestrian', 'Cyclist', 'Car'],
+            #     with_label=False),
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -200,6 +191,10 @@ eval_pipeline = [
         load_dim=4,
         use_dim=4,
         backend_args=backend_args),
+     dict(
+        type='DefaultFormatBundle3D',
+        class_names=['Pedestrian', 'Cyclist', 'Car'],
+        with_label=False),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(

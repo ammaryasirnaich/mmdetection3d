@@ -1045,7 +1045,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 if len(gt_instances_3d) > 0:
                     gt_data_3d = self._draw_instances_3d(
                         data_input, gt_instances_3d,
-                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'red')
+                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
                     
                     self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
                     self.dataPack['gt_points']= gt_data_3d['points']
@@ -1082,7 +1082,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
-                                                       palette, 'green')
+                                                       palette, 'blue')
                 
                 # print("bbox from path:",data_sample.lidar_path)
                 
@@ -1169,12 +1169,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             filename = osp.basename(o3d_save_path).split('.')[0]
             out_file = osp.dirname(o3d_save_path)
             # write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
-            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'),color='orange')
+            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'),color='red')
             # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'),color='green')
             
-            # write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
-            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
-            # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
+            write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
+            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
            
             
             write_bbox_statistics(self.dataPack['pred_3bbox'],self.dataPack['gt_3bbox'],filename)
