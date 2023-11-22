@@ -1045,7 +1045,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 if len(gt_instances_3d) > 0:
                     gt_data_3d = self._draw_instances_3d(
                         data_input, gt_instances_3d,
-                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
+                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'red')
                     
                     self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
                     self.dataPack['gt_points']= gt_data_3d['points']
@@ -1082,7 +1082,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
-                                                       palette, 'red')
+                                                       palette, 'green')
                 
                 # print("bbox from path:",data_sample.lidar_path)
                 
