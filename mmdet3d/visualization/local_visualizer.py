@@ -235,7 +235,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         render_option = self.o3d_vis.get_render_option()
         if render_option is not None:
             render_option.point_size = points_size
-            render_option.background_color = np.asarray([0, 0, 0])
+            # render_option.background_color = np.asarray([0, 0, 0]) # black
+            render_option.background_color = np.asarray([255, 255, 255])  # white background
 
         points = points.copy()
         pcd = geometry.PointCloud()
@@ -1081,7 +1082,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
-                                                       palette, 'orange')
+                                                       palette, 'red')
                 
                 # print("bbox from path:",data_sample.lidar_path)
                 

@@ -22,9 +22,13 @@
 
 
 
-CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
-CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
-SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
+CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
+CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth"
+SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
+
+# CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
+# CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
+# SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
 
 # python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
 #     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
