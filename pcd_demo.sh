@@ -8,9 +8,12 @@ PCD_FILE="/workspace/mmdetection3d/demo/data/kitti/000008.bin"
 # CHECKPOINT_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_202.pth"
 
 
-CONFIG_FILE="/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"
-CHECKPOINT_FILE="/workspace/data/kitti_detection/IVEF/epoch_80.pth"
+# CONFIG_FILE="/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"
+# CHECKPOINT_FILE="/workspace/data/kitti_detection/IVEF/epoch_80.pth"
 
+CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
+CHECKPOINT_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_24.pth"
+SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
 
 
 

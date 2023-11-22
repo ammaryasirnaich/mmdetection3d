@@ -22,8 +22,8 @@
 
 
 
-CONFIG_FILE="/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py"
-CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth"
+CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
+CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_24.pth"
 SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
 
 # CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
