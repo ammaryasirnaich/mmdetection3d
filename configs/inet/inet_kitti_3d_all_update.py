@@ -119,4 +119,4 @@ log_config = dict(
 checkpoint_config = dict(interval=5)
 
 train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=1)
-work_dir = '/workspace/mmdetection3d/working_dir/intensityAware_35pnt'
+work_dir = '/workspace/mmdetection3d/working_dir/IVEFpnt'

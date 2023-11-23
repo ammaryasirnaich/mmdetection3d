@@ -8,13 +8,13 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "/workspace/mmdetection3d/tools/train.py",  // for training
+            // "program": "/workspace/mmdetection3d/tools/train.py",  // for training
             // "program": "/workspace/mmdetection3d/tools/test.py", // for testing
             // "program": "/workspace/mmdetection3d/tools/analysis_tools/get_flops.py", // Model Complexity
-            
-            // "program": "/workspace/mmdetection3d/tests/intensity_mode_visualization.py",
-
+            "program": "tests/intensity_mode_visualization.py",
+            "console": "integratedTerminal",
             "justMyCode": true,
+
             
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py"]
             // python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
@@ -28,19 +28,27 @@
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/conViT3D_PointRCNN_head.py"]
             // "args": ["/workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-car.py"]
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/conVit3DKitti-car.py"]
-            // "args": ["/workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-car.py"]
-
             
-            // "args": ["/workspace/mmdetection3d/demo/data/kitti/000008.bin","/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py","/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_202.pth","--show"]
 
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py",
             //            "/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_202.pth", 
             //         "--task","lidar_det","--show","--show-dir","/workspace/mmdetection3d/working_dir"]
+            // /workspace/mmdetection3d/demo/data/kitti/000008.bin
+            // /workspace/data/kitti_detection/kitti/training/velodyne_reduced/000049.bin
 
-            //// pointpiller waymodataset testing
-            // "args": ["/workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-car.py",
-            //         "/workspace/data/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth", 
-            //      "--task","lidar_det","--show","--show-dir","/workspace/mmdetection3d/working_dir"]
+            // for sample for prediction 000173.bin, 000016.bin 
+            "args": ["/workspace/data/kitti_detection/kitti/training/velodyne/000173.bin","/workspace/mmdetection3d/working_dir/IVEFpnt/inet_kitti_3d_all_update.py","/workspace/mmdetection3d/working_dir/IVEFpnt/epoch_40.pth","--show"]
+
+        //     "args": ["/workspace/mmdetection3d/working_dir/IVEFpnt/inet_kitti_3d_all_update.py",
+        //     "/workspace/mmdetection3d/working_dir/IVEFpnt/epoch_40.pth", 
+        //  "--task","lidar_det"]
+
+
+            // "args": ["/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py",
+            //            "/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth", 
+            //         "--task","lidar_det","--show","--show-dir","/workspace/data/kitti_detection/model_output_results/IVEFResults"]
+
+
 
 
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py",
@@ -57,10 +65,6 @@
             // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth",
             //     "--eval","mAP","--eval-options","show=","True","out_dir","/workspace/working_dir/show_results"  ]
                 
-
-
-
-            // /workspace/data/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth
         }
     ]
 }
