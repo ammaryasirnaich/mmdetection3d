@@ -1163,7 +1163,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if drawn_img is not None:
                 mmcv.imwrite(drawn_img[..., ::-1], out_file)
         else:
-            self.add_image(name, drawn_img_3d, step)
+            # self.add_image(name, drawn_img_3d, step)
                 
             ##@ visualization part
             filename = osp.basename(o3d_save_path).split('.')[0]
@@ -1174,9 +1174,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             
             write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
             write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
-            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')
-           
-            
+            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')       
             write_bbox_statistics(self.dataPack['pred_3bbox'],self.dataPack['gt_3bbox'],filename)
             
             

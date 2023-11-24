@@ -1,12 +1,8 @@
 _base_ = [
-    '../_base_/models/convit3D.py', '../_base_/datasets/kitti-3d-3class.py'
+    '../_base_/models/convit3D_kitti.py', '../_base_/datasets/kitti-3d-3class.py'
 ]
 
 
-# dataset settings
-dataset_type = 'KittiDataset'
-data_root = '/workspace/data/kitti_detection/kitti/'
-# class_names = ['Car']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
@@ -33,7 +29,7 @@ train_pipeline = [
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.9, 1.1]),
-    dict(type='PointSample', num_points=16384),
+    dict(type='PointSample', num_points=32768), # 16384*2
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -61,7 +57,7 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=16384),
+            dict(type='PointSample', num_points=32768),
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -75,10 +71,10 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
 # optimizer
-lr = 0.002  # max learning rate
+lr = 0.0018 # max learning rate
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
     clip_grad=dict(max_norm=35, norm_type=2),
 )
 
@@ -95,12 +91,13 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook',draw=True)
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False)
     )
 
 log_config = dict(
     interval=50,
     by_epoch=True,
+    log_metric_by_epoch=True,
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
@@ -125,13 +122,19 @@ param_scheduler = [
 ]
 
 
-dist_params = dict(backend='nccl')
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
+
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__configInheretance_batch2_epoch_testing'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_points'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__configInheretance_batch2_epoch_testing'
-# workflow = [('train', 1)]  
-workflow = [('val', 1)]  
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_points'
+workflow = [('train', 1),('val', 1)]  
+# workflow = [('val', 1)]  
 
 
 
