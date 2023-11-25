@@ -1,9 +1,9 @@
 
 module load cuda/11.7
 module load python/3.8.2
-python -m venv openmet
-source openmet/bin/activate
-pip install torch torchvision torchaudio
+python -m venv mmdet
+source mmdet/bin/activate
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
 pip install cupy-cuda11x
 pip install spconv-cu117
 pip install open3d==0.13.0

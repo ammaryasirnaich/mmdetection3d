@@ -3,8 +3,8 @@ _base_ = [
     '../_base_/datasets/waymoD5-3d-3class.py',
 ]
 
-dataset_type = 'WaymoDataset'
-data_root = '/workspace/data/waymo/waymo_mini/'
+# dataset_type = 'WaymoDataset'
+# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
 
@@ -70,33 +70,99 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
 
 
 
+# fp16 settings
+# fp16 =dict(loss_scale=512.)
+fp16 = dict(loss_scale='dynamic')
 
-# data settings
-# train_dataloader = dict( batch_size=2)
+'''
+Log settings
+'''
+default_scope = 'mmdet3d'
+
+default_hooks = dict(
+    timer=dict(type='IterTimerHook'),
+    logger=dict(type='LoggerHook', interval=50),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False)
+    )
+
+
+log_config = dict(
+    interval=50,
+    by_epoch=True,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+
+checkpoint_config = dict(interval=1)
+
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
+
+
+log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+
+# trace_config = dict(type='tb_trace', dir_name= work_dir)
+# schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
+
+# profiler_config = dict(type='ProfilerHook',by_epoch=False,profile_iters=2,
+#                     record_shapes=True, profile_memory=True, with_flops =True, 
+#                         schedule = dict( wait=1,warmup=1,active=2),
+#                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
+#                         # with_stack =True,
+
+
+
+'''
+Schedules settings
+'''
+# optimizer
+
+# training schedule for 2x
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+# optimizer
+lr = 0.0018 # max learning rate
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
+    paramwise_cfg=dict(
+        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
+    clip_grad=dict(max_norm=35., norm_type=2))
+param_scheduler = [
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=24,
+        by_epoch=True,
+        milestones=[16, 22],
+        gamma=0.1)
+]
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
-#   - `base_batch_size` = (16 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
+#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=2)
 
-dist_params = dict(backend='nccl')
+
+
 log_level = 'INFO'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymmo'
 load_from = None
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymo'
 workflow = [('train', 1),('val', 1)]  
-
-
-# data_root = '/workspace/data/waymo/waymo_mini/'
-work_dir = './work_dirs/convit3D_waymo_mini_dataset'
-resume_from = './work_dirs/convit3D_waymo_mini_dataset'
-
-
-# work_dir = './work_dirs/convit3D_waymo_full_dataset'
-# resume_from = './work_dirs/convit3D_waymo_full_dataset'
-
+# workflow = [('val', 1)]  
