@@ -106,7 +106,7 @@ checkpoint_config = dict(interval=1)
 
 
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -130,9 +130,9 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_points'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymo'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_points'
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymo'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  
 
