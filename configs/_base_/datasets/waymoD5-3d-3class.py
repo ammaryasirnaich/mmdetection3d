@@ -3,8 +3,8 @@
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 
-# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
-data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
+data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
+# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -167,11 +167,11 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='WaymoMetric',
     ann_file=data_root+'waymo_infos_val.pkl',
-    waymo_bin_file= data_root+'gt.bin',
+    waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/"+'gt.bin',
     data_root=data_root,
     backend_args=backend_args,
     convert_kitti_format=True,
-    idx2metainfo= data_root+'idx2metainfo.pkl')
+    idx2metainfo= '/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/'+'idx2metainfo.pkl')
 
 test_evaluator = val_evaluator
 
