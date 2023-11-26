@@ -70,13 +70,6 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
 
-# optimizer
-lr = 0.0018 # max learning rate
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
 
 
 
@@ -104,22 +97,47 @@ log_config = dict(
 checkpoint_config = dict(interval=1)
 
 
-
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=5)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+
+# optimizer
+lr = 0.001 # max learning rate
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, betas=(0.9, 0.999), weight_decay=1e-2),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
+
+
 # learning rate
 param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=80,
-        by_epoch=True,
-        milestones=[45, 60],
-        gamma=0.1)
+    # Use a linear warm-up at [0, 30) iterations
+    dict(type='LinearLR',
+         start_factor=0.001,
+         by_epoch=False,
+         begin=0,
+         end=30),
+    # Use a cosine learning rate at [30, 200) iterations
+    dict(type='CosineAnnealingLR',
+         T_max=150,
+         by_epoch=False,
+         begin=30,
+         end=200)
 ]
+
+
+# param_scheduler = [
+#     dict(
+#         type='MultiStepLR',
+#         begin=0,
+#         end=80,
+#         by_epoch=True,
+#         milestones=[45, 60],
+#         gamma=0.1)
+# ]
 
 
 
