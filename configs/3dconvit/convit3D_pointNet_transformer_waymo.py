@@ -1,6 +1,7 @@
 _base_ = [
     '../_base_/models/convit3D_waymo.py',
     '../_base_/datasets/waymoD5-3d-3class.py',
+    '../_base_/schedules/cyclic-40e.py'
 ]
 
 # dataset_type = 'WaymoDataset'
@@ -69,17 +70,6 @@ test_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 
-train_dataloader = dict(
-    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-
-
-
-
-
-# fp16 settings
-# fp16 =dict(loss_scale=512.)
-fp16 = dict(loss_scale='dynamic')
 
 '''
 Log settings
@@ -95,14 +85,61 @@ default_hooks = dict(
     visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False)
     )
 
-
 log_config = dict(
     interval=50,
     by_epoch=True,
+    log_metric_by_epoch=True,
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
 
 checkpoint_config = dict(interval=1)
+
+
+# In practice PointPillars also uses a different schedule
+# optimizer
+lr = 0.001
+epoch_num = 80
+
+optim_wrapper = dict(
+    optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
+param_scheduler = [
+    dict(
+        type='CosineAnnealingLR',
+        T_max=epoch_num * 0.4,
+        eta_min=lr * 10,
+        begin=0,
+        end=epoch_num * 0.4,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=epoch_num * 0.6,
+        eta_min=lr * 1e-4,
+        begin=epoch_num * 0.4,
+        end=epoch_num * 1,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=epoch_num * 0.4,
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=epoch_num * 0.4,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=epoch_num * 0.6,
+        eta_min=1,
+        begin=epoch_num * 0.4,
+        end=epoch_num * 1,
+        convert_to_iter_based=True)
+]
+
+# training schedule for 1x
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=5)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
 
 env_cfg = dict(
@@ -111,52 +148,28 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
 )
 
-
-log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
-
-# trace_config = dict(type='tb_trace', dir_name= work_dir)
-# schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
-
-# profiler_config = dict(type='ProfilerHook',by_epoch=False,profile_iters=2,
-#                     record_shapes=True, profile_memory=True, with_flops =True, 
-#                         schedule = dict( wait=1,warmup=1,active=2),
-#                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
-#                         # with_stack =True,
-
-
-
-'''
-Schedules settings
-'''
 # optimizer
-
-# training schedule for 2x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
-# optimizer
-lr = 0.0018 # max learning rate
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
-    paramwise_cfg=dict(
-        custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
-    clip_grad=dict(max_norm=35., norm_type=2))
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=24,
-        by_epoch=True,
-        milestones=[16, 22],
-        gamma=0.1)
-]
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=2)
+# lr = 0.0018 # max learning rate
+# optim_wrapper = dict(
+#     type='OptimWrapper',
+#     optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
+#     paramwise_cfg=dict(
+#         custom_keys={'backbone': dict(lr_mult=0.1, decay_mult=1.0)}),
+#     clip_grad=dict(max_norm=35., norm_type=2))
+# param_scheduler = [
+#     dict(
+#         type='MultiStepLR',
+#         begin=0,
+#         end=24,
+#         by_epoch=True,
+#         milestones=[16, 22],
+#         gamma=0.1)
+# ]
+# # Default setting for scaling LR automatically
+# #   - `enable` means enable scaling LR automatically
+# #       or not by default.
+# #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
+# auto_scale_lr = dict(enable=False, base_batch_size=2)
 
 
 
