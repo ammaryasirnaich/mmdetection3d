@@ -131,17 +131,6 @@ model = dict(
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
 # yapf:enable
-dist_params = dict(backend='nccl')
-log_level = 'INFO'
-# work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
-load_from = None
-# resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep'
-workflow = [('train', 1)]  
-
-# disable opencv multithreading to avoid system being overloaded
-opencv_num_threads = 0
-# set multi-process start method as `fork` to speed up the training
-mp_start_method = 'fork'
 
 
 # fp16 settings
@@ -151,42 +140,42 @@ fp16 = dict(loss_scale='dynamic')
 '''
 Log settings
 '''
-default_scope = 'mmdet3d'
+# default_scope = 'mmdet3d'
 
-default_hooks = dict(
-    timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=50),
-    param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=1),
-    sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook',draw=True)
-    )
+# default_hooks = dict(
+#     timer=dict(type='IterTimerHook'),
+#     logger=dict(type='LoggerHook', interval=50),
+#     param_scheduler=dict(type='ParamSchedulerHook'),
+#     checkpoint=dict(type='CheckpointHook', interval=1),
+#     sampler_seed=dict(type='DistSamplerSeedHook'),
+#     visualization=dict(type='Det3DVisualizationHook',draw=True)
+#     )
 
-log_config = dict(
-    interval=50,
-    by_epoch=True,
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])
+# log_config = dict(
+#     interval=50,
+#     by_epoch=True,
+#     hooks=[dict(type='TextLoggerHook'),
+#            dict(type='TensorboardLoggerHook')])
 
-checkpoint_config = dict(interval=5)
-
-
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
-
-env_cfg = dict(
-    cudnn_benchmark=False,
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
-    dist_cfg=dict(backend='nccl'),
-)
+# checkpoint_config = dict(interval=5)
 
 
-log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+# train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+# val_cfg = dict(type='ValLoop')
+# test_cfg = dict(type='TestLoop')
 
-log_level = 'INFO'
-load_from = None
-resume = True
+# env_cfg = dict(
+#     cudnn_benchmark=False,
+#     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+#     dist_cfg=dict(backend='nccl'),
+# )
+
+
+# log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+
+# log_level = 'INFO'
+# load_from = None
+# resume = True
 
 # trace_config = dict(type='tb_trace', dir_name= work_dir)
 # schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
@@ -197,40 +186,5 @@ resume = True
 #                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
 #                         # with_stack =True,
 
-
-
-'''
-Schedules settings
-'''
-# The schedule is usually used by models trained on KITTI dataset
-# The learning rate set in the cyclic schedule is the initial learning rate
-# rather than the max learning rate. Since the target_ratio is (10, 1e-4),
-# the learning rate will change from 0.0018 to 0.018, than go to 0.0018*1e-4
-# optimizer
-lr = 0.002  # max learning rate
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
-
-
-# learning rate
-param_scheduler = [
-     dict(
-        type='MultiStepLR',
-        begin=0,
-        end=80,
-        by_epoch=True,
-        milestones=[45, 60],
-        gamma=0.1)
-]
-
-
-# Default setting for scaling LR automatically
-#   - `enable` means enable scaling LR automatically
-#       or not by default.
-#   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=4)
 
 

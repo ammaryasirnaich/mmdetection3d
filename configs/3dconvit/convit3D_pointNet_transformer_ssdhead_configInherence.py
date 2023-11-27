@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/convit3D_kitti.py', '../_base_/datasets/kitti-3d-3class.py'
+    '../_base_/models/convit3D_kitti.py', '../_base_/datasets/kitti-3d-3class.py','../_base_/schedules/cyclic-40e.py'
 ]
 
 
@@ -69,10 +69,6 @@ test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 
-
-
-
-
 '''
 Log settings
 '''
@@ -98,47 +94,9 @@ checkpoint_config = dict(interval=1)
 
 
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
+train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=200, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-
-
-# optimizer
-lr = 0.001 # max learning rate
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, betas=(0.9, 0.999), weight_decay=1e-2),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
-
-
-# learning rate
-param_scheduler = [
-    # Use a linear warm-up at [0, 30) iterations
-    dict(type='LinearLR',
-         start_factor=0.001,
-         by_epoch=False,
-         begin=0,
-         end=30),
-    # Use a cosine learning rate at [30, 200) iterations
-    dict(type='CosineAnnealingLR',
-         T_max=150,
-         by_epoch=False,
-         begin=30,
-         end=200)
-]
-
-
-# param_scheduler = [
-#     dict(
-#         type='MultiStepLR',
-#         begin=0,
-#         end=80,
-#         by_epoch=True,
-#         milestones=[45, 60],
-#         gamma=0.1)
-# ]
-
 
 
 env_cfg = dict(
@@ -148,9 +106,9 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymo'
+work_dir = './work_dirs/convit3D_kitti'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymo'
+resume_from = './work_dirs/convit3D_kitti'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  
 
