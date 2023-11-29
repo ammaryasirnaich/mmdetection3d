@@ -1,15 +1,15 @@
 # dataset settings
 # D5 in the config name means the whole dataset is divided into 5 folds
 # We only use one fold for efficient experiments
-dataset_type = 'WaymoDataset'
+
 
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-data_root = '/workspace/data/waymo/waymo_mini/'
+# data_root = '/workspace/data/waymo/waymo_mini/'
 
 
-
+dataset_type = 'WaymoDataset'
 data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
@@ -26,6 +26,7 @@ data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 #         './data/': 's3://openmmlab/datasets/detection3d/',
 #          'data/': 's3://openmmlab/datasets/detection3d/'
 #      }))
+
 backend_args = None
 
 class_names = ['Car', 'Pedestrian', 'Cyclist']
@@ -112,7 +113,7 @@ eval_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2,
+    batch_size=16,
     num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -171,14 +172,24 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
+#     waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin",
+#     data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+#     backend_args=backend_args,
+#     convert_kitti_format=True,
+#     idx2metainfo='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/idx2metainfo.pkl'
+#     )
+
+
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file=data_root+'waymo_infos_val.pkl',
-    waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/"+'gt.bin',
-    data_root=data_root,
-    backend_args=backend_args,
-    convert_kitti_format=True,
-    idx2metainfo= '/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/'+'idx2metainfo.pkl')
+    ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
+    waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin",
+    data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+    convert_kitti_format=False,
+    backend_args=backend_args )
 
 test_evaluator = val_evaluator
 

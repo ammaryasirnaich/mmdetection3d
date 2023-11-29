@@ -6,7 +6,7 @@ dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-data_root = '/workspace/data/waymo/waymo_mini/'
+# data_root = '/workspace/data/waymo/waymo_mini/'
 
 data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
@@ -24,6 +24,8 @@ data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 #         './data/': 's3://openmmlab/datasets/detection3d/',
 #          'data/': 's3://openmmlab/datasets/detection3d/'
 #      }))
+
+
 backend_args = None
 
 class_names = ['Car']
@@ -31,6 +33,7 @@ metainfo = dict(classes=class_names)
 
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 input_modality = dict(use_lidar=True, use_camera=False)
+
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'waymo_dbinfos_train.pkl',
@@ -150,7 +153,7 @@ val_dataloader = dict(
         backend_args=backend_args))
 
 test_dataloader = dict(
-    batch_size=1,
+    batch_size=16,
     num_workers=1,
     persistent_workers=True,
     drop_last=False,
@@ -167,9 +170,6 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 
-
-
-
 # val_evaluator = dict(
 #     type='WaymoMetric',
 #     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
@@ -181,13 +181,55 @@ test_dataloader = dict(
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file=data_root+'waymo_infos_val.pkl',
-    waymo_bin_file= data_root+'gt.bin',
-    data_root=data_root,
-    backend_args=backend_args,
-    convert_kitti_format=True,
-    idx2metainfo= data_root+'idx2metainfo.pkl')
-    
+    ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
+    waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin",
+    data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+    convert_kitti_format=False,
+    # idx2metainfo= '/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/idx2metainfo.pkl'
+    )
+
+
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
+#     waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin",
+#     data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+#     backend_args=backend_args,
+#     convert_kitti_format=True,
+#     idx2metainfo='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/idx2metainfo.pkl'
+#     )
+
+
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
+#     waymo_bin_file= "/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin",
+#     data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+#     file_client_args=dict(backend='disk'),
+#     convert_kitti_format=False,
+#     _scope_='mmdet3d')
+
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+#     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
+#     data_root='./data/waymo/waymo_format',
+#     file_client_args=dict(backend='disk'),
+#     convert_kitti_format=False,
+#     _scope_='mmdet3d')
+
+# test_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
+#     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
+#     data_root='./data/waymo/waymo_format',
+#     file_client_args=dict(backend='disk'),
+#     convert_kitti_format=False,
+#     _scope_='mmdet3d')
+
+
+
+
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

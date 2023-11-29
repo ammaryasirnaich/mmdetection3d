@@ -38,7 +38,7 @@ train_pipeline = [
         scale_ratio_range=[0.95, 1.05]),
     # 3DSSD can get a higher performance without this transform
     # dict(type='BackgroundPointsFilter', bbox_enlarge_range=(0.5, 2.0, 0.5)),
-    dict(type='PointSample', num_points=32768),
+    dict(type='PointSample', num_points=32768),  #16384
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -65,10 +65,18 @@ test_pipeline = [
             dict(type='RandomFlip3D'),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-            dict(type='PointSample', num_points=32768),
+            dict(type='PointSample', num_points=32768),  #16384 ,32768
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
+
+
+
+train_dataloader = dict(
+    batch_size=32, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
 
 
 '''
@@ -137,7 +145,7 @@ param_scheduler = [
 ]
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=5)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
