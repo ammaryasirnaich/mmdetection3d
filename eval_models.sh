@@ -20,11 +20,18 @@
 #     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 #     --task lidar_det --show --show-dir /workspace/conVit3D/show_results
 
+CONFIG_FILE="/workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py"
+CKPT_PATH="/workspace/data/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth"
+SHOW_DIR="/workspace/data/kitti_detection/model_output_results/pointResults"
+PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
 
 
-CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
-CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_24.pth"
-SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
+
+
+# CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
+# CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_24.pth"
+# SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
+# PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
 
 # CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
 # CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
@@ -35,7 +42,7 @@ SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
 #     --task lidar_det --show-dir /workspace/conVit3D/show_results
 
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} 
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --cfg-options ${PKLFILE_PREFIX}
 
 
 

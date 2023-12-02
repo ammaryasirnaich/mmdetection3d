@@ -114,7 +114,7 @@ class Prediction2Waymo(object):
 
     def get_file_names(self):
         """Get file names of waymo raw data."""
-        if 'path_mapping' in self.backend_args:
+        if self.backend_args != None and 'path_mapping' in self.backend_args:
             for path in self.backend_args['path_mapping'].keys():
                 if path in self.waymo_tfrecords_dir:
                     self.waymo_tfrecords_dir = \
@@ -282,7 +282,7 @@ class Prediction2Waymo(object):
             res_index (int): The indices of the results.
         """
         sample_idx = self.results[res_index]['sample_idx']
-        if len(self.results[res_index]['pred_instances_3d']) > 0:
+        if len(self.results[res_index]) > 0:
             objects = self.parse_objects_from_origin(
                 self.results[res_index],
                 self.idx2metainfo[str(sample_idx)]['contextname'],

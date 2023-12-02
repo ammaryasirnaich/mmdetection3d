@@ -6,10 +6,10 @@ dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-data_root = '/workspace/data/waymo/waymo_mini/'
+data_root = '/workspace/data/waymo/waymo_mini'
 
-data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
-# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
+# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
+# data_root = '/workspace/data/waymo/kitti_format'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -150,8 +150,8 @@ val_dataloader = dict(
         backend_args=backend_args))
 
 test_dataloader = dict(
-    batch_size=1,
-    num_workers=1,
+    batch_size=6,
+    num_workers=2,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -169,24 +169,28 @@ test_dataloader = dict(
 
 
 
-
 # val_evaluator = dict(
 #     type='WaymoMetric',
-#     ann_file='./data/waymo/kitti_format/waymo_infos_val.pkl',
-#     waymo_bin_file='./data/waymo/waymo_format/gt.bin',
-#     data_root='./data/waymo/waymo_format',
-#     convert_kitti_format=False,
-#     backend_args=backend_args)
-# test_evaluator = val_evaluator
+#     ann_file=data_root+'/waymo_infos_val.pkl',
+#     waymo_bin_file= '/workspace/data/waymo/waymo_format/gt.bin',
+#     data_root='/workspace/data/waymo/waymo_format',
+#     backend_args=backend_args,
+#     convert_kitti_format=True,
+#     pklfile_prefix='/workspace/data/waymo/results/waymo_kitti',
+#     idx2metainfo= '/workspace/data/waymo/waymo_format/idx2metainfo.pkl')
+
+
 
 val_evaluator = dict(
     type='WaymoMetric',
-    ann_file=data_root+'waymo_infos_val.pkl',
-    waymo_bin_file= data_root+'gt.bin',
-    data_root=data_root,
+    ann_file=data_root+'/waymo_infos_val.pkl',
+    waymo_bin_file= '/workspace/data/waymo/waymo_format/gt.bin',
+    data_root='/workspace/data/waymo/waymo_format',
     backend_args=backend_args,
-    convert_kitti_format=True,
-    idx2metainfo= data_root+'idx2metainfo.pkl')
+    convert_kitti_format=False,
+    pklfile_prefix='/workspace/data/waymo/results/waymo_kitti')
+
+
     
 test_evaluator = val_evaluator
 
