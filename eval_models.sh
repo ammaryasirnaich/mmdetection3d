@@ -26,6 +26,9 @@ CONFIG_FILE="/import/digitreasure/ammar_workspace/mmdetection3d/configs/pointpil
 CKPT_PATH="/import/digitreasure/openmm_processed_dataset/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth"
 SHOW_DIR="/workspace/data/kitti_detection/model_output_results/pointpillerTest"
 
+PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/import/digitreasure/ammar_workspace/model_results/waymo-car/kitti_results'
+# SUBMISSION__PREFIX='test_evaluator.submission_prefix=/workspace/data/kitti_detection/model_output_results/results/waymo-car/kitti_results'
+
 
 
 
@@ -48,7 +51,7 @@ SHOW_DIR="/workspace/data/kitti_detection/model_output_results/pointpillerTest"
 #     --task lidar_det --show-dir /workspace/conVit3D/show_results
 
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
-CUDA_VISIBLE_DEVICES=1 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} 
+CUDA_VISIBLE_DEVICES=1 python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --cfg-options ${PKLFILE_PREFIX} #${SUBMISSION__PREFIX}
 
 
 

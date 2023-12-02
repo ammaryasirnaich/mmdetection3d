@@ -1,4 +1,4 @@
-
+source /homes/ayn30/mmdet/bin/activate
 module load cuda/11.7
 module load python/3.8.2
 python -m venv mmdet
