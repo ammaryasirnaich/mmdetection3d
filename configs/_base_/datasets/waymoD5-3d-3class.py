@@ -6,11 +6,11 @@
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-data_root = '/workspace/data/waymo/waymo_mini/'
+# data_root = '/workspace/data/waymo/waymo_mini/'
 
 
 
-data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
+# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 data_root = '/workspace/data/waymo/kitti_format'
 
