@@ -3,6 +3,7 @@
 # We only use one fold for efficient experiments
 
 
+dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
