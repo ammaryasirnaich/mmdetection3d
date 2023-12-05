@@ -164,15 +164,15 @@ test_dataloader = dict(
 
 ### local server 
 ## slow
-# val_evaluator = dict(
-#     type='WaymoMetric',
-#     ann_file=data_root+'/waymo_infos_val.pkl',
-#     waymo_bin_file='/workspace/data/waymo/waymo_format/gt.bin',
-#     data_root='/workspace/data/waymo/waymo_format',
-#     convert_kitti_format=False,
-#     backend_args=backend_args,
-#     pklfile_prefix= '/workspace/data/waymo/results'
-#     )
+val_evaluator = dict(
+    type='WaymoMetric',
+    ann_file=data_root+'/waymo_infos_val.pkl',
+    waymo_bin_file='/workspace/data/waymo/waymo_format/gt.bin',
+    data_root='/workspace/data/waymo/waymo_format',
+    convert_kitti_format=False,
+    backend_args=backend_args,
+    pklfile_prefix= '/workspace/data/waymo/results'
+    )
 
 # ## fast
 # val_evaluator = dict(
