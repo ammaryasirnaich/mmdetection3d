@@ -1,18 +1,19 @@
+#source /import/digitreasure/ammar_workspace/mmdet/bin/activate
 source /homes/ayn30/mmdet/bin/activate
-module load cuda/11.7
 module load python/3.8.2
+cd /homes/ayn30/
 python -m venv mmdet
 source mmdet/bin/activate
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install cupy-cuda11x
-pip install spconv-cu118
-pip install open3d==0.13.0
-pip install timm
-pip install webcolors
-pip install urllib3==1.26.6
-pip install protobuf=3.20.0
-pip install waymo-open-dataset-tf-2-6-0==1.4.7
-pip install -U openmim
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+python -m pip install cupy-cuda11x
+python -m pip install spconv-cu118
+python -m pip install open3d==0.13.0
+python -m pip install timm
+python -m pip install webcolors
+python -m pip install urllib3==1.26.6
+python -m pip install protobuf==3.20.0
+python -m pip install waymo-open-dataset-tf-2-6-0==1.4.7
+python -m pip install -U openmim
 mim install mmengine
 mim install 'mmcv>=2.0.1'
 mim install 'mmdet>=3.0.0'
