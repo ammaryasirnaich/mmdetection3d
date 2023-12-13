@@ -73,7 +73,7 @@ test_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=32, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -91,14 +91,18 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=1),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False)
+    
     )
 
-log_config = dict(
-    interval=50,
-    by_epoch=True,
-    log_metric_by_epoch=True,
-    hooks=[dict(type='TextLoggerHook'),
-           dict(type='TensorboardLoggerHook')])
+# log_config = dict(
+#     interval=1,
+#     by_epoch=True,
+#     log_metric_by_epoch=True,
+#     hooks=[dict(type='TextLoggerHook'),
+#            dict(type='TensorboardLoggerHook'),
+#            dict(type='EpochLossValuesLogging')])
+
+custom_hooks = [dict(type='EpochLossValuesLogging')]
 
 checkpoint_config = dict(interval=1)
 
@@ -145,7 +149,7 @@ param_scheduler = [
 ]
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=50)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -182,8 +186,10 @@ env_cfg = dict(
 
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymmo'
+# work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymmo
+work_dir = './work_dirs/logtesting'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymo'
+# resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymo'
+resume_from = './work_dirs/logtesting'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  
