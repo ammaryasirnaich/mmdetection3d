@@ -7,13 +7,13 @@ dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-# data_root = '/workspace/data/waymo/waymo_mini/'
+data_root = '/workspace/data/waymo/waymo_mini/'
 
 
 
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
-data_root = '/workspace/data/waymo/kitti_format'
+# data_root = '/workspace/data/waymo/kitti_format'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -115,7 +115,7 @@ eval_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=16,
+    batch_size=4,
     num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -174,6 +174,47 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 
+
+### local server 
+## slow
+val_evaluator = dict(
+    type='WaymoMetric',
+    ann_file=data_root+'/waymo_infos_val.pkl',
+    waymo_bin_file='/workspace/data/waymo/waymo_format/gt.bin',
+    data_root='/workspace/data/waymo/waymo_format',
+    convert_kitti_format=False,
+    backend_args=backend_args,
+    pklfile_prefix= '/workspace/data/waymo/results_new'
+    )
+
+# ## fast
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file=data_root+'/waymo_infos_val.pkl',
+#     waymo_bin_file='/workspace/data/waymo/waymo_format/gt.bin',
+#     data_root='/workspace/data/waymo/waymo_format',
+#     convert_kitti_format=True,
+#     backend_args=backend_args,
+#     pklfile_prefix= '/workspace/data/waymo/results',
+#     idx2metainfo='/workspace/data/waymo/waymo_format/idx2metainfo.pkl'
+#     )
+
+
+
+
+
+### EECS server
+##  slow evaluation
+# val_evaluator = dict(
+#     type='WaymoMetric',
+#     ann_file=data_root+'/waymo_infos_val.pkl',
+#     waymo_bin_file= '/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin',
+#     data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
+#     backend_args=backend_args,
+#     convert_kitti_format=False,
+#     pklfile_prefix='/import/digitreasure/openmm_processed_dataset/waymo/results/waymo_kitti')
+
+# ## fast evaluation
 # val_evaluator = dict(
 #     type='WaymoMetric',
 #     ann_file="/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/waymo_infos_val.pkl",
@@ -185,14 +226,7 @@ test_dataloader = dict(
 #     )
 
 
-val_evaluator = dict(
-    type='WaymoMetric',
-    ann_file=data_root+'/waymo_infos_val.pkl',
-    waymo_bin_file= '/import/digitreasure/openmm_processed_dataset/waymo/waymo_format/gt.bin',
-    data_root='/import/digitreasure/openmm_processed_dataset/waymo/waymo_format',
-    backend_args=backend_args,
-    convert_kitti_format=False,
-    pklfile_prefix='/import/digitreasure/openmm_processed_dataset/waymo/results/waymo_kitti')
+
 
 
 
