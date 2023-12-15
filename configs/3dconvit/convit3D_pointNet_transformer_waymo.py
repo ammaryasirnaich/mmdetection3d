@@ -4,8 +4,8 @@ _base_ = [
     '../_base_/schedules/cyclic-40e.py'
 ]
 
-# dataset_type = 'WaymoDataset'
-# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
+dataset_type = 'WaymoDataset'
+data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
 

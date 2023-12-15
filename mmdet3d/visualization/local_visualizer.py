@@ -33,14 +33,14 @@ from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
 
 from os import path as osp
 
-# try:
-#     import open3d as o3d
-#     from open3d import geometry
-#     from open3d.visualization import Visualizer
-# except ImportError:
-#     o3d = geometry = Visualizer = None
+try:
+    import open3d as o3d
+    from open3d import geometry
+    from open3d.visualization import Visualizer
+except ImportError:
+    o3d = geometry = Visualizer = None
 
-o3d = geometry = Visualizer = None
+
 
 @VISUALIZERS.register_module()
 class Det3DLocalVisualizer(DetLocalVisualizer):
@@ -184,6 +184,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if os.environ.get('DISPLAY', None) is not None and show:
             o3d_vis.create_window()
             self.view_control = o3d_vis.get_view_control()
+               
+            
         return o3d_vis
 
     @master_only
@@ -894,16 +896,35 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                      continue_key)
 
         if hasattr(self, 'o3d_vis'):
-            if hasattr(self, 'view_port'):
+            if hasattr(self, 'view_port'): 
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
+                
+        
+            # zoom=100
+            # front=[0.4257, -0.2125, -0.8795]
+            # lookat=[2.6172, 2.0475, 1.532]
+            # up=[-0.0694, -0.9768, 0.2024]
+
+            # # Apply the parameters
+      
+            # self.view_control = self.view_control.get_view_control()
+            # # self.view_control.set_front(front)
+            # # self.view_control.set_lookat(lookat)
+            # # self.view_control.set_up(up)
+            # # self.view_control.set_zoom(zoom)
+            
+            print("Field of view (after changing) %.2f" % self.view_control.get_field_of_view())                                   
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
             #     self.o3d_vis.create_window()
             #     self.view_control = self.o3d_vis.get_view_control()
+            
+            
             self.view_port = \
                 self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+      
             if wait_time != -1:
                 self.last_time = time.time()
                 while time.time(
@@ -1035,7 +1056,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ]:
             self.o3d_vis = self._initialize_o3d_vis(show=show)
 
-        self.draw_gt= draw_gt  , #draw_gt
+        self.draw_gt= draw_gt  ,  #draw_gt
         
         self.dataPack = dict()
 

@@ -162,10 +162,10 @@ class EpochLossValuesLogging(Hook):  #Hook
             # and the last level directory of `runner.work_dir`
             basename = osp.basename(runner.work_dir.rstrip(osp.sep))
             self.out_dir = self.file_backend.join_path(self.out_dir, basename)
-            print("before run", self.out_dir)
-            runner.logger.info(
-                f'Text logs will be saved to {self.out_dir} after the '
-                'training process.')
+            # print("before run", self.out_dir)
+            # runner.logger.info(
+            #     f'Text logs will be saved to {self.out_dir} after the '
+            #     'training process.')
 
         tensorlog_path = runner.work_dir+'/tensorboard_logs/'
         
@@ -210,15 +210,15 @@ class EpochLossValuesLogging(Hook):  #Hook
                  runner, batch_idx, 'train')
               
         epoch = runner.epoch
-        print(" ================= Epoch hook logging =========") 
-        print(log_str_t)    
+        # print(" ================= Epoch hook logging =========") 
+        # print(log_str_t)    
         
         # runner.logger.info(log_str_t)
-        print("type of tag_t", type(tag_t))
-        print(" values inside the tag")
-        print(tag_t)
+        # print("type of tag_t", type(tag_t))
+        # print(" values inside the tag")
+        # print(tag_t)
         
         self.writer.add_scalars('train_loss', tag_t, epoch)
         # runner.visualizer.add_scalars(
         #     tag_t, step=runner.iter + 1, file_path=self.json_log_path)
-        print(" ================= from Epoch hook ending =========") 
+        # print(" ================= from Epoch hook ending =========") 
