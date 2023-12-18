@@ -33,14 +33,14 @@ from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
 
 from os import path as osp
 
-# try:
-#     import open3d as o3d
-#     from open3d import geometry
-#     from open3d.visualization import Visualizer
-# except ImportError:
-#     o3d = geometry = Visualizer = None
+try:
+    import open3d as o3d
+    from open3d import geometry
+    from open3d.visualization import Visualizer
+except ImportError:
+    o3d = geometry = Visualizer = None
 
-o3d = geometry = Visualizer = None
+
 
 @VISUALIZERS.register_module()
 class Det3DLocalVisualizer(DetLocalVisualizer):
@@ -184,6 +184,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if os.environ.get('DISPLAY', None) is not None and show:
             o3d_vis.create_window()
             self.view_control = o3d_vis.get_view_control()
+            
+           
+            
         return o3d_vis
 
     @master_only
@@ -894,16 +897,46 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                      continue_key)
 
         if hasattr(self, 'o3d_vis'):
-            if hasattr(self, 'view_port'):
+            if hasattr(self, 'view_port'): 
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
+                
+        
+			
+            field_of_view = 90.0
+            front = [ 0.21571775931412299, -0.8735742439688472, 0.43627272272140882 ]
+            lookat = [ 2.2623417377471924, 1.6297537088394165, 1.5626154541969299 ]
+            up = [ -0.091347320454373257, 0.42677861631519626, 0.89973089293515573 ]
+            zoom = 0.12000000000000006
+                    
+            
+            # Apply the parameters
+      
+            self.view_control = self.o3d_vis.get_view_control()
+            self.view_control.set_front(front)
+            self.view_control.set_lookat(lookat)
+            self.view_control.set_up(up)
+            self.view_control.set_zoom(zoom)
+            self.view_control.change_field_of_view(field_of_view)
+            # self.view_control.rotate(60,0)
+            
+            # self.view_control.set_lookat(focus_point)
+            # self.view_control.set_front(camera_pos - focus_point)
+            # self.view_control.set_up(camera_up)
+            
+            # print("Field of view (after changing) %.2f" % self.view_control.get_field_of_view())                                   
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
             #     self.o3d_vis.create_window()
             #     self.view_control = self.o3d_vis.get_view_control()
+            
+            self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_70_pct.png")
+            
+            
             self.view_port = \
                 self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
+      
             if wait_time != -1:
                 self.last_time = time.time()
                 while time.time(
@@ -1035,7 +1068,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         ]:
             self.o3d_vis = self._initialize_o3d_vis(show=show)
 
-        self.draw_gt= draw_gt  , #draw_gt
+        self.draw_gt= draw_gt  ,  #draw_gt
         
         self.dataPack = dict()
 

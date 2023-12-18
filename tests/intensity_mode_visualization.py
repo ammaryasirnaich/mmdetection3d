@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.1, help='bbox score threshold')
+        '--score-thr', type=float, default=0.7, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -43,6 +43,10 @@ def main(args):
     points = data['inputs']['points']
     data_input = dict(points=points)
     
+    
+    
+    
+    
     # lidarinstanceName= '000008.bin'
     
     lidarinstanceName = args.pcd
@@ -55,7 +59,7 @@ def main(args):
     # gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
     result.gt_instances_3d = gt_instances_3d
     
-  
+    print("bbox thresold value:", args.score_thr)
     
     
 
@@ -70,6 +74,11 @@ def main(args):
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
         vis_task='lidar_det')
+    
+    
+    
+    
+    
     
     visualizer.show()
     
