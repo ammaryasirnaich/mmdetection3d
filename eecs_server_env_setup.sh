@@ -17,3 +17,9 @@ python -m pip install -U openmim
 mim install mmengine
 mim install 'mmcv>=2.0.1'
 mim install 'mmdet>=3.0.0'
+
+
+
+# on server side for waymo library for validation
+scl enable devtoolset-7 bash
+module load bazel
