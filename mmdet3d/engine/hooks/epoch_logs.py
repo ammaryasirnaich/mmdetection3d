@@ -20,17 +20,18 @@ DATA_BATCH = Optional[Union[dict, tuple, list]]
 SUFFIX_TYPE = Union[Sequence[str], str]
 
 
+from mmengine.visualization import TensorboardVisBackend
+
+from torch.utils.tensorboard import SummaryWriter
 
 
 
 @HOOKS.register_module()
-class EpochLossValuesLogging(Hook):
+class EpochLossValuesLogging(Hook):  #Hook
     """Collect logs from different components of ``Runner`` and write them to
     terminal, JSON file, tensorboard and wandb .etc.
 
-    ``LoggerHook`` is used to record logs formatted by ``LogProcessor`` during
-    training/validation/testing phase. It is used to control following
-    behaviors:
+    ``EpochLossValuesLogging`` is used to record loss values training/validation/testing phase.
 
     - The frequency of logs update in terminal, local, tensorboad wandb.etc.
     - The frequency of show experiment information in terminal.
@@ -147,7 +148,7 @@ class EpochLossValuesLogging(Hook):
 
         self.log_metric_by_epoch = log_metric_by_epoch
         
-    
+        self.writer=None
     
     def before_run(self, runner) -> None:
         """Infer ``self.file_client`` from ``self.out_dir``. Initialize the
@@ -161,11 +162,14 @@ class EpochLossValuesLogging(Hook):
             # and the last level directory of `runner.work_dir`
             basename = osp.basename(runner.work_dir.rstrip(osp.sep))
             self.out_dir = self.file_backend.join_path(self.out_dir, basename)
-            runner.logger.info(
-                f'Text logs will be saved to {self.out_dir} after the '
-                'training process.')
+            # print("before run", self.out_dir)
+            # runner.logger.info(
+            #     f'Text logs will be saved to {self.out_dir} after the '
+            #     'training process.')
 
-        self.json_log_path = f'{runner.timestamp}.json'
+        tensorlog_path = runner.work_dir+'/tensorboard_logs/'
+        
+        self.writer = SummaryWriter(tensorlog_path)
     
     
     
@@ -205,10 +209,16 @@ class EpochLossValuesLogging(Hook):
         tag_t, log_str_t = runner.log_processor.get_log_after_iter(
                  runner, batch_idx, 'train')
               
-        
-        print(" ================= from Epoch hook only =========") 
-        print(log_str_t)    
+        epoch = runner.epoch
+        # print(" ================= Epoch hook logging =========") 
+        # print(log_str_t)    
         
         # runner.logger.info(log_str_t)
+        # print("type of tag_t", type(tag_t))
+        # print(" values inside the tag")
+        # print(tag_t)
+        
+        self.writer.add_scalars('train_loss', tag_t, epoch)
         # runner.visualizer.add_scalars(
         #     tag_t, step=runner.iter + 1, file_path=self.json_log_path)
+        # print(" ================= from Epoch hook ending =========") 

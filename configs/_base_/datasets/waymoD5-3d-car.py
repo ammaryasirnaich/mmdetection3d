@@ -171,7 +171,7 @@ val_evaluator = dict(
     data_root='/workspace/data/waymo/waymo_format',
     convert_kitti_format=False,
     backend_args=backend_args,
-    pklfile_prefix= '/workspace/data/waymo/results'
+    pklfile_prefix= '/workspace/data/waymo/results_new'
     )
 
 # ## fast
@@ -220,6 +220,12 @@ val_evaluator = dict(
 
 test_evaluator = val_evaluator
 
-vis_backends = [dict(type='LocalVisBackend')]
+# vis_backends = [dict(type='LocalVisBackend')]
+vis_backends = [dict(type='TensorboardVisBackend')]
+
+
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+
+

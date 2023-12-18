@@ -184,8 +184,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if os.environ.get('DISPLAY', None) is not None and show:
             o3d_vis.create_window()
             self.view_control = o3d_vis.get_view_control()
+<<<<<<< HEAD
             
            
+=======
+               
+>>>>>>> 09af487192624b0bc901a6682ceb2aa5162f4c26
             
         return o3d_vis
 
