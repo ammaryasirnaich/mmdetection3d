@@ -904,10 +904,10 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         
 			
             field_of_view = 90.0
-            front = [ 0.21571775931412299, -0.8735742439688472, 0.43627272272140882 ]
-            lookat = [ 2.2623417377471924, 1.6297537088394165, 1.5626154541969299 ]
-            up = [ -0.091347320454373257, 0.42677861631519626, 0.89973089293515573 ]
-            zoom = 0.12000000000000006
+            front = [ 0.31215258736307588, -0.81399575814013969, 0.48986903140777999 ]
+            lookat =  [ 4.132611324527165, 5.5430605624474696, 3.8225081447928373 ]
+            up = [ -0.22829942339393036, 0.43625322647934289, 0.87038066135706516 ]
+            zoom = 0.10000000000000006
                     
             
             # Apply the parameters
@@ -931,7 +931,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             #     self.o3d_vis.create_window()
             #     self.view_control = self.o3d_vis.get_view_control()
             
-            self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_70_pct.png")
+            self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_90_pct.png")
             
             
             self.view_port = \
