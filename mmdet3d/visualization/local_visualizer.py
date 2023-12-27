@@ -918,20 +918,18 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.view_control.set_up(up)
             self.view_control.set_zoom(zoom)
             self.view_control.change_field_of_view(field_of_view)
-            # self.view_control.rotate(60,0)
+
             
-            # self.view_control.set_lookat(focus_point)
-            # self.view_control.set_front(camera_pos - focus_point)
-            # self.view_control.set_up(camera_up)
-            
-            # print("Field of view (after changing) %.2f" % self.view_control.get_field_of_view())                                   
+                                
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
             #     self.o3d_vis.create_window()
             #     self.view_control = self.o3d_vis.get_view_control()
             
-            self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_90_pct.png")
+            
+            ## uncommit the below file saving the scene into local location
+            # self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_10_pct.png")
             
             
             self.view_port = \
