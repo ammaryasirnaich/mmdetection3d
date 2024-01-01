@@ -1,0 +1,2 @@
+
+python tools/create_data.py waymo --root-path /import/digitreasure/openmm_processed_dataset/waymo/kitti_format --out-dir /import/digitreasure/openmm_processed_dataset/waymo/kitti_format --workers 1 --extra-tag waymo --only-gt-database

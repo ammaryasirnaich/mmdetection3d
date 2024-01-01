@@ -8,8 +8,11 @@
 
 
 
-python tools/create_data.py waymo --root-path /workspace/data/waymo --out-dir /workspace/data/waymo --workers 8 --extra-tag waymo --only-gt-database
+# python tools/create_data.py waymo --root-path /import/digitreasure/openmm_processed_dataset/waymo --out-dir /import/digitreasure/openmm_processed_dataset/waymo --workers 8 --extra-tag waymo --only-gt-database
+
+# export OMP_NUM_THREADS=1
+# export USE_SIMPLE_THREADED_LEVEL3= 1
+# python tools/create_data.py waymo --root-path /import/digitreasure/openmm_processed_dataset/waymov12 --out-dir /import/digitreasure/openmm_processed_dataset/waymov12 --workers 40 --extra-tag waymo
 
 
-
-
+python tools/create_data.py waymo --root-path /import/digitreasure/openmm_processed_dataset/waymov12/ --out-dir /import/digitreasure/openmm_processed_dataset/waymov12/ --workers 2 --extra-tag waymo --only-gt-database
