@@ -1,5 +1,7 @@
 _base_ = [
-    '../_base_/models/convit3D_kitti.py', '../_base_/datasets/kitti-3d-3class.py','../_base_/schedules/cyclic-40e.py'
+    '../_base_/models/convit3D_kitti.py',
+    '../_base_/datasets/kitti-3d-3class.py',
+    '../_base_/schedules/cyclic-40e.py'
 ]
 
 
@@ -89,6 +91,8 @@ log_config = dict(
     log_metric_by_epoch=True,
     hooks=[dict(type='TextLoggerHook'),
            dict(type='TensorboardLoggerHook')])
+
+custom_hooks = [dict(type='EpochLossValuesLogging')]
 
 checkpoint_config = dict(interval=1)
 
