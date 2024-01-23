@@ -30,6 +30,7 @@ model = dict(
         fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
         out_indices=(0, 1, 2 ),
         fps_sample_range_lists=((-1), (-1), (-1, -1)),
+        
         # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
         # fps_sample_range_lists=((-1), (-1), (512, -1)),
         
