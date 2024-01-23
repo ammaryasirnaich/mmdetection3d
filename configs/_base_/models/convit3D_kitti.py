@@ -30,9 +30,13 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 240),
-        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (512, -1)),
+        aggregation_channels=(64, 128, 256),
+        out_indices=(0, 1, 2 ),
+        fps_sample_range_lists=((-1), (-1), (-1, -1)),
+        
+        # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+        # fps_sample_range_lists=((-1), (-1), (512, -1)),
+        
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
             type='PointSAModuleMSG',
@@ -44,7 +48,7 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=240, #1024
+                embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=12 ,  # 12
                 mlp_ratio=4,
@@ -56,7 +60,7 @@ model = dict(
                 hybrid_backbone=None ,
                 global_pool=None,
                 local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=1,
+                locality_strength=0.5,  #1
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
@@ -98,19 +102,22 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
-        objectness_loss=dict(
-            type='mmdet.CrossEntropyLoss',
+        
+      objectness_loss=dict(
+            type='mmdet.FastFocalLoss',
             use_sigmoid=True,
-            reduction='sum',
+            gamma=2.0,
+            alpha=0.25,
             loss_weight=1.0),
+      
         center_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),    #1.0
         dir_class_loss=dict(
             type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),   #1.0
         size_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),  # 1.0
         corner_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         vote_loss=dict(

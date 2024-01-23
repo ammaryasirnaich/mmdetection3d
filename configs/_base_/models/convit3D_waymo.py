@@ -120,6 +120,8 @@ model = dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
 
 
+
+   
     # model training and testing settings
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
@@ -131,4 +133,6 @@ model = dict(
         per_class_proposal=True,
         max_output_num=100)
         )
+
+fp16 = dict(loss_scale='dynamic')
 
