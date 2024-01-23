@@ -17,6 +17,7 @@
 
             
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py"]
+            "args" :["/workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py","/workspace/data/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth"]
             // python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
 
             // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_ssdhead.py"]

@@ -75,6 +75,11 @@ def main(args):
         pred_score_thr=args.score_thr,
         vis_task='lidar_det')
     
+    
+    
+    
+    
+    
     visualizer.show()
     
 if __name__ == '__main__':

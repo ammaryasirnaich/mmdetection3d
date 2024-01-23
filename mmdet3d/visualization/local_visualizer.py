@@ -184,7 +184,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         if os.environ.get('DISPLAY', None) is not None and show:
             o3d_vis.create_window()
             self.view_control = o3d_vis.get_view_control()
-               
+            
+           
             
         return o3d_vis
 
@@ -901,25 +902,34 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     self.view_port)
                 
         
-            # zoom=100
-            # front=[0.4257, -0.2125, -0.8795]
-            # lookat=[2.6172, 2.0475, 1.532]
-            # up=[-0.0694, -0.9768, 0.2024]
-
-            # # Apply the parameters
-      
-            # self.view_control = self.view_control.get_view_control()
-            # # self.view_control.set_front(front)
-            # # self.view_control.set_lookat(lookat)
-            # # self.view_control.set_up(up)
-            # # self.view_control.set_zoom(zoom)
+			
+            field_of_view = 90.0
+            front = [ 0.31215258736307588, -0.81399575814013969, 0.48986903140777999 ]
+            lookat =  [ 4.132611324527165, 5.5430605624474696, 3.8225081447928373 ]
+            up = [ -0.22829942339393036, 0.43625322647934289, 0.87038066135706516 ]
+            zoom = 0.10000000000000006
+                    
             
-            print("Field of view (after changing) %.2f" % self.view_control.get_field_of_view())                                   
+            # Apply the parameters
+      
+            self.view_control = self.o3d_vis.get_view_control()
+            self.view_control.set_front(front)
+            self.view_control.set_lookat(lookat)
+            self.view_control.set_up(up)
+            self.view_control.set_zoom(zoom)
+            self.view_control.change_field_of_view(field_of_view)
+
+            
+                                
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
             #     self.o3d_vis.create_window()
             #     self.view_control = self.o3d_vis.get_view_control()
+            
+            
+            ## uncommit the below file saving the scene into local location
+            # self.o3d_vis.capture_screen_image("/workspace/data/kitti_detection/output_with_10_pct.png")
             
             
             self.view_port = \

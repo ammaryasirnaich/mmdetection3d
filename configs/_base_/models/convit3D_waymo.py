@@ -26,9 +26,14 @@ model = dict(
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
                      ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 240),
-        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        fps_sample_range_lists=((-1), (-1), (512, -1)),
+        aggregation_channels=(64, 128, 256),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
+        out_indices=(0, 1, 2 ),
+        fps_sample_range_lists=((-1), (-1), (-1, -1)),
+        
+        # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+        # fps_sample_range_lists=((-1), (-1), (512, -1)),
+        
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
             type='PointSAModuleMSG',
@@ -40,7 +45,7 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=240, #1024
+                embed_dim=256, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=12 ,  # 12
                 mlp_ratio=4,
@@ -52,7 +57,7 @@ model = dict(
                 hybrid_backbone=None ,
                 global_pool=None,
                 local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=1,
+                locality_strength=0.5,  #1 
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
@@ -60,7 +65,6 @@ model = dict(
                 fp_output_channel = 256,
                 rpn_feature_set = False,  
                 ), 
-
 
    bbox_head=dict(
         type='SSD3DHead',    #SSD3DHead , TransHead
@@ -94,11 +98,14 @@ model = dict(
             conv_cfg=dict(type='Conv1d'),
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
+        
+        
         objectness_loss=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='sum',
             loss_weight=1.0),
+        
         center_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         dir_class_loss=dict(
@@ -113,6 +120,8 @@ model = dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
 
 
+
+   
     # model training and testing settings
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
@@ -124,4 +133,6 @@ model = dict(
         per_class_proposal=True,
         max_output_num=100)
         )
+
+fp16 = dict(loss_scale='dynamic')
 
