@@ -156,6 +156,7 @@ env_cfg = dict(
 log_level = 'INFO'
 work_dir = './work_dirs/convit3D_kitti'
 load_from = None
+resume = True
 resume_from = './work_dirs/convit3D_kitti'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  

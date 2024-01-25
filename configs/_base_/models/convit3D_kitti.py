@@ -29,13 +29,14 @@ model = dict(
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
-                     ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 256),
+                     ((128, 128, 252), (128, 192, 252), (128, 256, 252))),   # ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
+        aggregation_channels=(64, 128, 252),
         out_indices=(0, 1, 2 ),
-        fps_sample_range_lists=((-1), (-1), (-1, -1)),
-        
+        # fps_sample_range_lists=((-1), (-1), (-1, -1)),
         # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        # fps_sample_range_lists=((-1), (-1), (512, -1)),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
+        
+        fps_sample_range_lists=((-1), (-1), (512, -1)),
         
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
@@ -48,7 +49,7 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=256, #1024
+                embed_dim=252, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=12 ,  # 12
                 mlp_ratio=4,
@@ -104,7 +105,7 @@ model = dict(
             bias=True),
         
       objectness_loss=dict(
-            type='mmdet.FastFocalLoss',
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
             gamma=2.0,
             alpha=0.25,
