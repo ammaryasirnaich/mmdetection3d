@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/convit3D.py',
+    '../_base_/models/convit3D_waymo.py',
     '../_base_/datasets/waymoD5-3d-3class.py',
     '../_base_/schedules/cyclic-40e.py'
 ]
@@ -205,10 +205,10 @@ env_cfg = dict(
 
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymmo'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymmo'
 # work_dir = './work_dirs/logtesting'
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_large_waymo'
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_mini_waymo'
 # resume_from = './work_dirs/logtesting'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  

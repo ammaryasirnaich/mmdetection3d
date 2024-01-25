@@ -1,5 +1,6 @@
 _base_ = [
-    '../_base_/models/convit3D.py',
+    '../_base_/models/convit3D_kitti.py',
+    # '../_base_/models/convit3D.py',
     '../_base_/datasets/kitti-3d-3class.py',
     '../_base_/schedules/cyclic-40e.py'
 ]

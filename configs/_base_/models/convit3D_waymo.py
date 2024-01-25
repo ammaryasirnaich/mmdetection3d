@@ -7,7 +7,7 @@ Model parameter settings
 voxel_size = [0.08, 0.08, 0.1] # no of voxel generated 91600
 
 # x=1408 , y=1600, z= 40
-
+pointcloudchannel=5
 
 model = dict(
     type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
@@ -19,20 +19,20 @@ model = dict(
     middle_encoder = None,
     backbone=dict(
         type='PointNet2SAMSG',
-        in_channels=5,
+        in_channels=pointcloudchannel,
         num_points=(4096, 1024, (256, 256)),   #(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
         sa_channels=(((16, 16, 32), (16, 16, 32), (32, 32, 64)),
                      ((64, 64, 128), (64, 64, 128), (64, 96, 128)),
-                     ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
-        aggregation_channels=(64, 128, 256),
-        fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
+                     ((128, 128, 252), (128, 192, 252), (128, 256, 252))),   # ((128, 128, 256), (128, 192, 256), (128, 256, 256))),
+        aggregation_channels=(64, 128, 252),
         out_indices=(0, 1, 2 ),
-        fps_sample_range_lists=((-1), (-1), (-1, -1)),
-        
+        # fps_sample_range_lists=((-1), (-1), (-1, -1)),
         # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        # fps_sample_range_lists=((-1), (-1), (512, -1)),
+        fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
+        
+        fps_sample_range_lists=((-1), (-1), (512, -1)),
         
         norm_cfg=dict(type='BN2d', eps=1e-3, momentum=0.1),
         sa_cfg=dict(
@@ -45,7 +45,7 @@ model = dict(
                 type='VisionTransformer',   
                 num_classes=3, 
                 # in_chans=256, #1024
-                embed_dim=256, #1024
+                embed_dim=252, #1024
                 depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=12 ,  # 12
                 mlp_ratio=4,
@@ -57,7 +57,7 @@ model = dict(
                 hybrid_backbone=None ,
                 global_pool=None,
                 local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=0.5,  #1 
+                locality_strength=0.5,  #1
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
@@ -65,6 +65,7 @@ model = dict(
                 fp_output_channel = 256,
                 rpn_feature_set = False,  
                 ), 
+
 
    bbox_head=dict(
         type='SSD3DHead',    #SSD3DHead , TransHead
@@ -99,29 +100,26 @@ model = dict(
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
         
-        
-        objectness_loss=dict(
-            type='mmdet.CrossEntropyLoss',
+      objectness_loss=dict(
+            type='mmdet.FocalLoss',
             use_sigmoid=True,
-            reduction='sum',
+            gamma=2.0,
+            alpha=0.25,
             loss_weight=1.0),
-        
+      
         center_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),    #1.0
         dir_class_loss=dict(
             type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),   #1.0
         size_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),  # 1.0
         corner_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         vote_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0)),
 
-
-
-   
     # model training and testing settings
    train_cfg=dict(
         sample_mode='spec', pos_distance_thr=10.0, expand_dims_length=0.05),
@@ -134,5 +132,63 @@ model = dict(
         max_output_num=100)
         )
 
+
+# custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
+# yapf:enable
+
+
+# fp16 settings
+# fp16 =dict(loss_scale=512.)
 fp16 = dict(loss_scale='dynamic')
+
+'''
+Log settings
+'''
+# default_scope = 'mmdet3d'
+
+# default_hooks = dict(
+#     timer=dict(type='IterTimerHook'),
+#     logger=dict(type='LoggerHook', interval=50),
+#     param_scheduler=dict(type='ParamSchedulerHook'),
+#     checkpoint=dict(type='CheckpointHook', interval=1),
+#     sampler_seed=dict(type='DistSamplerSeedHook'),
+#     visualization=dict(type='Det3DVisualizationHook',draw=True)
+#     )
+
+# log_config = dict(
+#     interval=50,
+#     by_epoch=True,
+#     hooks=[dict(type='TextLoggerHook'),
+#            dict(type='TensorboardLoggerHook')])
+
+# checkpoint_config = dict(interval=5)
+
+
+# train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+# val_cfg = dict(type='ValLoop')
+# test_cfg = dict(type='TestLoop')
+
+# env_cfg = dict(
+#     cudnn_benchmark=False,
+#     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+#     dist_cfg=dict(backend='nccl'),
+# )
+
+
+# log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+
+# log_level = 'INFO'
+# load_from = None
+# resume = True
+
+# trace_config = dict(type='tb_trace', dir_name= work_dir)
+# schedule_config= dict(type="schedule", wait=1,warmup=1,active=2)
+
+# profiler_config = dict(type='ProfilerHook',by_epoch=False,profile_iters=2,
+#                     record_shapes=True, profile_memory=True, with_flops =True, 
+#                         schedule = dict( wait=1,warmup=1,active=2),
+#                         on_trace_ready=dict(type='tb_trace', dir_name= work_dir))
+#                         # with_stack =True,
+
+
 
