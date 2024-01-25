@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/convit3D_waymo.py',
+    '../_base_/models/convit3D.py',
     '../_base_/datasets/waymoD5-3d-3class.py',
     '../_base_/schedules/cyclic-40e.py'
 ]
@@ -9,6 +9,7 @@ dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 
 point_cloud_range = [-76.8, -51.2, -2, 76.8, 51.2, 4]
+pointcloudchannel=5
 
 backend_args = None
 train_pipeline = [

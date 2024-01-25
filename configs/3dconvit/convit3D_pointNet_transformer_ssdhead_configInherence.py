@@ -1,11 +1,12 @@
 _base_ = [
-    '../_base_/models/convit3D_kitti.py',
+    '../_base_/models/convit3D.py',
     '../_base_/datasets/kitti-3d-3class.py',
     '../_base_/schedules/cyclic-40e.py'
 ]
 
 
 point_cloud_range = [0, -40, -5, 70, 40, 3]
+pointcloudchannel=4
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
 

@@ -12,6 +12,7 @@ voxel_size = [0.05, 0.05, 0.2]  # no of voxel generated 91600
                #      x  ,  y, z
                
 # voxel_size = [0.05, 0.05, 0.2]
+pointcloudchannel=4
 
 model = dict(
     type= 'ConVit3D',        #'ConVit3D', # Type of the Detector, refer to mmdet3d.models.detectors 
@@ -23,7 +24,7 @@ model = dict(
     middle_encoder = None,
     backbone=dict(
         type='PointNet2SAMSG',
-        in_channels=4,
+        in_channels=pointcloudchannel,
         num_points=(4096, 1024, (256, 256)),   #(4096, 512, (256, 256)),
         radii=((0.2, 0.4, 0.8), (0.4, 0.8, 1.6), (1.6, 3.2, 4.8)),
         num_samples=((32, 32, 64), (32, 32, 64), (32, 32, 32)),
