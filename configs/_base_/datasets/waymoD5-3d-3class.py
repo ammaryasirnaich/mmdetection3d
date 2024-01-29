@@ -7,7 +7,8 @@ dataset_type = 'WaymoDataset'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
-data_root = '/workspace/data/waymo/waymo_mini/'
+data_root = '/data/scratch/acw482/waymo/kitti_format/'
+# data_root = '/data/home/acw482/workspace/waymo_mini/'
 
 
 
