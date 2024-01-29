@@ -29,8 +29,8 @@ model = dict(
         aggregation_channels=(64, 128, 252),
         out_indices=(0, 1, 2 ),
         # fps_sample_range_lists=((-1), (-1), (-1, -1)),
-        # fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
-        fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
+        fps_mods=(('D-FPS'), ('FS'), ('F-FPS', 'D-FPS')),
+        # fps_mods=(('D-FPS'), ('D-FPS'), ('F-FPS', 'D-FPS')),
         
         fps_sample_range_lists=((-1), (-1), (512, -1)),
         
@@ -46,7 +46,7 @@ model = dict(
                 num_classes=3, 
                 # in_chans=256, #1024
                 embed_dim=252, #1024
-                depth = 12, #  Depths Transformer stage. Default 12
+                depth = 24, #  Depths Transformer stage. Default 12
                 num_heads=12 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
@@ -56,8 +56,8 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=0.5,  #1
+                local_up_to_layer=20 ,  #Consider how many layers to work for local feature aggregation
+                locality_strength=1,  #1
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
@@ -108,13 +108,13 @@ model = dict(
             loss_weight=1.0),
       
         center_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),    #1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),    #1.0
         dir_class_loss=dict(
             type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),   #1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),   #1.0
         size_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),  # 1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),  # 1.0
         corner_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         vote_loss=dict(
