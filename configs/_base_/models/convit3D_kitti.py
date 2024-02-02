@@ -61,8 +61,8 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
-                locality_strength=0.5,  #1
+                local_up_to_layer=24 ,  #Consider how many layers to work for local feature aggregation
+                locality_strength=1,  #1
                 use_pos_embed=False,
                 init_cfg=None,
                 pretrained=None,
@@ -113,13 +113,13 @@ model = dict(
             loss_weight=1.0),
       
         center_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),    #1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),    #1.0
         dir_class_loss=dict(
             type='mmdet.CrossEntropyLoss', reduction='sum', loss_weight=1.0),
         dir_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),   #1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),   #1.0
         size_res_loss=dict(
-            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=10.0),  # 1.0
+            type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),  # 1.0
         corner_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),
         vote_loss=dict(

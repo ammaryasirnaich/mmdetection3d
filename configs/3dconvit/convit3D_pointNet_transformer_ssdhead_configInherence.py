@@ -144,7 +144,7 @@ param_scheduler = [
 
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=5)
+train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -156,12 +156,12 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_kitti_depth_16'
+work_dir = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_depth_30'
 load_from = None
 resume = True
-resume_from = './work_dirs/convit3D_kitti_depth_16'
+resume_from = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_depth_30'
 workflow = [('train', 1),('val', 1)]  
-# workflow = [('val', 1)]  
+  
 
 
 
