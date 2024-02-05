@@ -69,7 +69,8 @@ test_pipeline = [
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
             dict(type='PointSample', num_points=32768),  #16384 ,32768
         ]),
-    dict(type='Pack3DDetInputs', keys=['points'])
+      dict(type='Pack3DDetInputs', keys=['points'],
+         meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
 ]
 
 
@@ -111,8 +112,8 @@ checkpoint_config = dict(interval=1)
 
 # In practice PointPillars also uses a different schedule
 # optimizer
-lr = 0.002 
-epoch_num = 80
+lr = 0.001 
+epoch_num = 87
 
 optim_wrapper = dict(
     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
@@ -168,7 +169,7 @@ param_scheduler = [
 # ]
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=10)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 

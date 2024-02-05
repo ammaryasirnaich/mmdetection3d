@@ -15,8 +15,14 @@ python -m pip install protobuf==3.20.0
 python -m pip install waymo-open-dataset-tf-2-6-0==1.4.7
 python -m pip install -U openmim
 mim install mmengine
-mim install 'mmcv>=2.0.1'
-mim install 'mmdet>=3.0.0'
+mim install 'mmcv==2.0.1'
+mim install 'mmdet==3.2.0'
+
+
+
+mmcv                        2.1.0
+mmdet                       3.2.0
+mmdet3d                     1.3.0   
 
 
 

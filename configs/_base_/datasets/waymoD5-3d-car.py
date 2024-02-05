@@ -171,9 +171,11 @@ test_dataloader = dict(
 ### local server 
 ## slow
 val_evaluator = dict(
-    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
-test_evaluator = val_evaluator
+    type='WaymoMetric', waymo_bin_file='/data/scratch/acw482/waymo/waymo_format/gt.bin',
+    result_prefix= './work_dirs/convit3D_PointNet_transformer_ssdhead_waymmo/results')
 
+
+test_evaluator = val_evaluator
 # vis_backends = [dict(type='LocalVisBackend')]
 vis_backends = [dict(type='TensorboardVisBackend')]
 
