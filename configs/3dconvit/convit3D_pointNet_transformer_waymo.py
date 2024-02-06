@@ -76,7 +76,7 @@ test_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=8 ,dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=4 ,dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -112,13 +112,16 @@ checkpoint_config = dict(interval=1)
 
 # In practice PointPillars also uses a different schedule
 # optimizer
-lr = 0.001 
-epoch_num = 87
+lr = 0.002 
+epoch_num = 80
 
+# optimizer
+lr = 0.002  # max learning rate
 optim_wrapper = dict(
-    optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
-
-
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
 
 # learning rate
 param_scheduler = [
@@ -127,7 +130,7 @@ param_scheduler = [
         begin=0,
         end=epoch_num,
         by_epoch=True,
-        milestones=[20, 40, 60, 70],
+        milestones=[245,60],
         gamma=0.1)
 ]
 

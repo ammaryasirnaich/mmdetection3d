@@ -6,11 +6,11 @@ dataset_type = 'WaymoDataset'
 # data_root = 'data/waymo/kitti_format/'
 
 
-# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
+data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
 
-data_root = '/data/scratch/acw482/waymo/kitti_format/'
+# data_root = '/data/scratch/acw482/waymo/kitti_format/'
 # data_root = '/data/home/acw482/workspace/waymo_mini/'
 
 
@@ -171,8 +171,8 @@ test_dataloader = dict(
 ### local server 
 ## slow
 val_evaluator = dict(
-    type='WaymoMetric', waymo_bin_file='/data/scratch/acw482/waymo/waymo_format/gt.bin',
-    result_prefix= './work_dirs/convit3D_PointNet_transformer_ssdhead_waymmo/results')
+    type='WaymoMetric', metric='mAP', waymo_bin_file=data_root+'gt.bin',
+    result_prefix= '/import/digitreasure/openmm_processed_dataset/waymo/results')
 
 
 test_evaluator = val_evaluator
