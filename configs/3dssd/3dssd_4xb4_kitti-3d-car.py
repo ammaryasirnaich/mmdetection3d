@@ -119,3 +119,6 @@ param_scheduler = [
         milestones=[45, 60],
         gamma=0.1)
 ]
+
+
+custom_hooks = [dict(type='EpochLossValuesLogging')]
