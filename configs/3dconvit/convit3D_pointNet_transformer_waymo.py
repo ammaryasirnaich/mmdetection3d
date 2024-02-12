@@ -75,10 +75,7 @@ test_pipeline = [
 
 
 
-train_dataloader = dict(
-    batch_size=8 ,dataset=dict(dataset=dict(pipeline=train_pipeline, )))
-test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
 
 
 
@@ -113,7 +110,7 @@ checkpoint_config = dict(interval=1)
 # In practice PointPillars also uses a different schedule
 # optimizer
 lr = 0.001 
-epoch_num = 87
+epoch_num = 90
 
 optim_wrapper = dict(
     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
@@ -169,7 +166,7 @@ param_scheduler = [
 # ]
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=5)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -179,6 +176,12 @@ env_cfg = dict(
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
     dist_cfg=dict(backend='nccl'),
 )
+
+
+train_dataloader = dict(
+    batch_size=8 ,dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # optimizer
 # lr = 0.0018 # max learning rate
@@ -201,16 +204,16 @@ env_cfg = dict(
 # #   - `enable` means enable scaling LR automatically
 # #       or not by default.
 # #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=2)
+auto_scale_lr = dict(enable=False, base_batch_size=8)
 
 
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_waymmo'
+work_dir = './work_dirs/convit3D_PointNet_transformer_ssdhead_waymmo_batch_8'
 # work_dir = './work_dirs/logtesting'
 resume=True
 load_from = None
-resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_waymo'
+resume_from = './work_dirs/convit3D_PointNet_transformer_ssdhead_waymo_batch_8'
 # resume_from = './work_dirs/logtesting'
 workflow = [('train', 1),('val', 1)]  
 # workflow = [('val', 1)]  
