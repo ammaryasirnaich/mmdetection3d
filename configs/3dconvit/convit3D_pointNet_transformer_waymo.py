@@ -78,7 +78,6 @@ test_pipeline = [
 
 
 
-
 '''
 Log settings
 '''
@@ -112,10 +111,13 @@ checkpoint_config = dict(interval=1)
 lr = 0.001 
 epoch_num = 90
 
+# optimizer
+lr = 0.002  # max learning rate
 optim_wrapper = dict(
-    optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
-
-
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
 
 # learning rate
 param_scheduler = [
@@ -124,7 +126,7 @@ param_scheduler = [
         begin=0,
         end=epoch_num,
         by_epoch=True,
-        milestones=[20, 40, 60, 70],
+        milestones=[245,60],
         gamma=0.1)
 ]
 
