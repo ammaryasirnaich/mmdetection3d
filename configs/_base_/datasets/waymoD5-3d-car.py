@@ -2,7 +2,8 @@
 # D5 in the config name means the whole dataset is divided into 5 folds
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
-data_root = 'data/waymo/kitti_format/'
+# data_root = 'data/waymo/kitti_format/'
+data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -62,8 +63,7 @@ train_pipeline = [
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
-        keys=['points'],
-        meta_keys=['box_type_3d', 'sample_idx', 'context_name', 'timestamp'])
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
@@ -165,7 +165,7 @@ test_dataloader = dict(
         backend_args=backend_args))
 
 val_evaluator = dict(
-    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
+    type='WaymoMetric', waymo_bin_file= data_root+'gt.bin')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

@@ -3,8 +3,8 @@
 # We only use one fold for efficient experiments
 dataset_type = 'WaymoDataset'
 # data_root = 's3://openmmlab/datasets/detection3d/waymo/kitti_format/'
-data_root = 'data/waymo/kitti_format/'
-
+# data_root = '/import/digitreasure/openmm_processed_dataset/waymo/waymo_mini/'
+data_root = '/import/digitreasure/openmm_processed_dataset/waymo/kitti_format/'
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
 # automatically infer from prefix (not support LMDB and Memcache yet)
@@ -170,7 +170,8 @@ test_dataloader = dict(
         backend_args=backend_args))
 
 val_evaluator = dict(
-    type='WaymoMetric', waymo_bin_file='./data/waymo/waymo_format/gt.bin')
+    type='WaymoMetric', waymo_bin_file= data_root+'gt.bin',
+    result_prefix= '/import/digitreasure/ammar_workspace/pointpiller/resultsBins')
 test_evaluator = val_evaluator
 
 vis_backends = [dict(type='LocalVisBackend')]

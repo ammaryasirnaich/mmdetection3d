@@ -121,7 +121,10 @@ class WaymoMetric(BaseMetric):
             result['scores_3d'] = scores_3d.cpu().numpy()
             result['labels_3d'] = labels_3d.cpu().numpy()
             result['sample_idx'] = data_sample['sample_idx']
-            result['context_name'] = data_sample['context_name']
+            if('context_name'  in data_sample):
+                result['context_name'] = data_sample['context_name']
+            else:
+                result['context_name'] = "Lidar"
             result['timestamp'] = data_sample['timestamp']
             self.results.append(result)
 
