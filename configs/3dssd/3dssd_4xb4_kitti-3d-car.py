@@ -5,7 +5,7 @@ _base_ = [
 
 # dataset settings
 dataset_type = 'KittiDataset'
-data_root = '/workspace/data/kitti_detection/kitti/'
+data_root = '/import/digitreasure/openmm_processed_dataset/kitti/'
 class_names = ['Car']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
 input_modality = dict(use_lidar=True, use_camera=False)
@@ -103,12 +103,10 @@ optim_wrapper = dict(
 )
 
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=1)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=80, val_interval=2)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-workflow = [('train', 1),('val', 1)]  
-  
 # learning rate
 param_scheduler = [
     dict(
@@ -121,4 +119,8 @@ param_scheduler = [
 ]
 
 
+
+workflow = [('train', 1),('val', 1)] 
+train_dataloader = dict(batch_size=4)
 custom_hooks = [dict(type='EpochLossValuesLogging')]
+workflow = [('train', 1),('val', 1)]  

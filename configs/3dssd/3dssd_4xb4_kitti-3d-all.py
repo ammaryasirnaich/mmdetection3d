@@ -5,7 +5,7 @@ _base_ = [
 
 # dataset settings
 dataset_type = 'KittiDataset'
-data_root = '/workspace/data/kitti_detection/kitti/'
+data_root = '/import/digitreasure/openmm_processed_dataset/kitti/'
 # class_names = ['Car']
 point_cloud_range = [0, -40, -5, 70, 40, 3]
 input_modality = dict(use_lidar=True, use_camera=False)
