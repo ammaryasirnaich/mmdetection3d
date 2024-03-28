@@ -7,7 +7,7 @@ model = dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
-            max_num_points=5,
+            max_num_points=35,
             point_cloud_range=[0, -40, -3, 70.4, 40, 1],
             voxel_size=voxel_size,
             max_voxels=(16000, 40000))),
@@ -297,6 +297,8 @@ visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 
+custom_hooks = [dict(type='EpochLossValuesLogging')]
+
 log_config = dict(
     interval=50,
     by_epoch=True,
@@ -338,51 +340,69 @@ optim_wrapper = dict(
     optimizer=dict(type='AdamW', lr=lr, betas=(0.95, 0.99), weight_decay=0.01),
     clip_grad=dict(max_norm=10, norm_type=2))
 # learning rate
-param_scheduler = [
-    # learning rate scheduler
-    # During the first 16 epochs, learning rate increases from 0 to lr * 10
-    # during the next 24 epochs, learning rate decreases from lr * 10 to
-    # lr * 1e-4
-    dict(
-        type='CosineAnnealingLR',
-        T_max=16,
-        eta_min=lr * 10,
-        begin=0,
-        end=16,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingLR',
-        T_max=24,
-        eta_min=lr * 1e-4,
-        begin=16,
-        end=40,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    # momentum scheduler
-    # During the first 16 epochs, momentum increases from 0 to 0.85 / 0.95
-    # during the next 24 epochs, momentum increases from 0.85 / 0.95 to 1
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=16,
-        eta_min=0.85 / 0.95,
-        begin=0,
-        end=16,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=24,
-        eta_min=1,
-        begin=16,
-        end=40,
-        by_epoch=True,
-        convert_to_iter_based=True)
-]
+
+# using the below lr and momentum_config setting instead of param scheular[]
+lr_config = dict(
+    policy='cyclic',
+    target_ratio=(10, 1e-4),
+    cyclic_times=1,
+    step_ratio_up=0.4,
+)
+momentum_config = dict(
+    policy='cyclic',
+    target_ratio=(0.85 / 0.95, 1),
+    cyclic_times=1,
+    step_ratio_up=0.4,
+)
+
+
+
+
+# param_scheduler = [
+#     # learning rate scheduler
+#     # During the first 16 epochs, learning rate increases from 0 to lr * 10
+#     # during the next 24 epochs, learning rate decreases from lr * 10 to
+#     # lr * 1e-4
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=16,
+#         eta_min=lr * 10,
+#         begin=0,
+#         end=16,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=24,
+#         eta_min=lr * 1e-4,
+#         begin=16,
+#         end=40,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     # momentum scheduler
+#     # During the first 16 epochs, momentum increases from 0 to 0.85 / 0.95
+#     # during the next 24 epochs, momentum increases from 0.85 / 0.95 to 1
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=16,
+#         eta_min=0.85 / 0.95,
+#         begin=0,
+#         end=16,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=24,
+#         eta_min=1,
+#         begin=16,
+#         end=40,
+#         by_epoch=True,
+#         convert_to_iter_based=True)
+# ]
 
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (6 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=80)
+auto_scale_lr = dict(enable=False, base_batch_size=4)

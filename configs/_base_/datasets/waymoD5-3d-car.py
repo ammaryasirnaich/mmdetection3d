@@ -171,8 +171,8 @@ test_dataloader = dict(
 ### local server 
 ## slow
 val_evaluator = dict(
-    type='WaymoMetric', metric='mAP', waymo_bin_file=data_root+'gt.bin',
-    result_prefix= '/import/digitreasure/openmm_processed_dataset/waymo/results')
+    type='WaymoMetric', metric='mAP', waymo_bin_file='/data/scratch/acw482/waymo/waymo_format/gt.bin',
+     result_prefix= '/data/home/acw482/workspace/model_results')
 
 
 test_evaluator = val_evaluator
