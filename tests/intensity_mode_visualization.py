@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.9, help='bbox score threshold')
+        '--score-thr', type=float, default=0.1, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -69,6 +69,7 @@ def main(args):
         data_input,
         data_sample=result,
         draw_gt=True,
+        draw_pred=True,
         show=args.show,
         wait_time=-1,
         out_file=args.out_dir,

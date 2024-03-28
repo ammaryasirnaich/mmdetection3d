@@ -306,4 +306,4 @@ momentum_config = dict(
 # gpu_ids = range(1)
 # samples_per_gpu=1 # batch size per GPU
 runner = dict(type='EpochBasedRunner', max_epochs=40)
-# runner = dict(type='IterBasedRunner', max_iters=100)
+# runner = dict(type='IterBasedRunner', max_iters=100)auto_scale_lr
