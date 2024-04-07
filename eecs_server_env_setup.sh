@@ -29,3 +29,8 @@ mmdet3d                     1.3.0
 # on server side for waymo library for validation
 scl enable devtoolset-7 bash
 module load bazel
+
+
+# checking gpu resource hpc
+module load nvtools
+nvitop 
