@@ -14,11 +14,12 @@
 # python tools/train.py /workspace/mmdetection3d/configs/3dconvit/conViT3D_PointRCNN_head.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-all.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-all.py
-# python tools/train.py /workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-car.py
+python tools/train.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py
 
 
 # python tools/train.py /workspace/mmdetection3d/configs/inet/inet_kitti_3d_all_update.py
-python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py
+# python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py
+# pytho  tools/train.py /import/digitreasure/ammar_workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-car.py
 
 # python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py
 

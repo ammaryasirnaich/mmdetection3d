@@ -206,7 +206,9 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # #   - `enable` means enable scaling LR automatically
 # #       or not by default.
 # #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=8)
+
+
+auto_scale_lr = dict(enable=False, base_batch_size=4)
 
 
 

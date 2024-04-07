@@ -28,10 +28,10 @@
 
 
 
-# CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
-# CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_24.pth"
-# SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
-# PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
+CONFIG_FILE="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py"
+CKPT_PATH="/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth"
+SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
+PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
 
 # CONFIG_FILE="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py"
 # CKPT_PATH="/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_80.pth"
@@ -42,7 +42,7 @@
 #     --task lidar_det --show-dir /workspace/conVit3D/show_results
 
 # python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
-python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} 
+python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det
 
 
 
