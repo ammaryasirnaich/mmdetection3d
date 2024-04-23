@@ -40,13 +40,14 @@ class Mlp(nn.Module):
         x = self.drop(x)
         return x
 
+
+
+"""
 class RelPositionalEncoding3D(nn.Module):
     def __init__(self, input_dim, max_points):
         super(RelPositionalEncoding3D, self).__init__()
         self.input_dim = input_dim
         self.max_points = max_points
-
-        # self.position_encodings = nn.Parameter(torch.randn(max_points, input_dim))
 
     def forward(self, points):
         
@@ -62,6 +63,11 @@ class RelPositionalEncoding3D(nn.Module):
         # Concatenate positions and distances
         encodings = torch.cat([positions, distances.unsqueeze(-1)], dim=-1)
         return encodings
+"""
+
+
+
+
 
 
 class GPSA(nn.Module):
@@ -82,7 +88,8 @@ class GPSA(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
         self.locality_strength = locality_strength
         self.gating_param = nn.Parameter(torch.ones(self.num_heads))
-        self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
+        # self.embd_3d_encodding = RelPositionalEncoding3D(3,dim)
+       
         self.apply(self._init_weights)
         
         if use_local_init:
@@ -105,15 +112,58 @@ class GPSA(nn.Module):
         B, N, C = x.shape
 
         if not hasattr(self, 'rel_indices') or self.rel_indices.shape[0]!=B:
-            self.rel_indices = self.embd_3d_encodding(voxel_coord)
+            # self.rel_indices = self.embd_3d_encodding(voxel_coord)
+            
+            # print(f"shape of self.rel_indices is {self.rel_indices.shape}") 
+            # print(f"shape of voxel_coord {voxel_coord.shape}")
+            self.rel_indices = self.RelPositionalEncoding3D_test(voxel_coord)
+            # print(f"shape of self.rel_indices is {test_shape.shape}")
            
         attn = self.get_attention(x)
-        # print(" x attn", x.shape)
-       
+        # print(f" x attn shape {x.shape}")
         attn = self.proj(attn) 
         attn = self.proj_drop(attn)
 
         return attn
+
+    
+    def RelPositionalEncoding3D_test(self, point_clouds):
+  
+        """
+        Calculate the relative position vectors and distances for a batch of 3D point clouds.
+
+        Args:
+        point_clouds (torch.Tensor): Tensor of shape (batch_size, num_points, 3) containing
+                                    the x, y, z coordinates for each point in each point cloud.
+
+        Returns:
+        torch.Tensor: A 4D tensor of shape (batch_size, num_points, num_points, 4) containing the 
+                    relative position vectors and Euclidean distances between each pair of points 
+                    in the point clouds.
+        """
+       
+        print(f"point_clouds shape {point_clouds.shape}")
+       
+        # Ensure the input is a floating point tensor for accurate calculations
+        # point_clouds = point_clouds.float()
+        
+
+        # Expand point_clouds to shape [batch_size, num_points, 1, 3]
+        point_clouds_expanded = point_clouds.unsqueeze(2)
+        
+        # Expand point_clouds again in another dimension to shape [batch_size, 1, num_points, 3]
+        point_clouds_expanded_again = point_clouds.unsqueeze(1)
+        
+        # Subtract the expanded tensors to get relative positions: shape [batch_size, num_points, num_points, 3]
+        relative_positions = point_clouds_expanded - point_clouds_expanded_again
+        
+        # Calculate the Euclidean distance: shape [batch_size, num_points, num_points]
+        distances = torch.norm(relative_positions, dim=3, keepdim=True)
+        
+        # Concatenate the relative positions with their corresponding distances
+        relative_positions_with_distances = torch.cat((relative_positions, distances), dim=3)
+        
+        return relative_positions_with_distances
 
 
     def get_attention(self, x):    
@@ -161,7 +211,8 @@ class GPSA(nn.Module):
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
         return attn
-    
+   
+    """ 
     def local_init(self, locality_strength=1.):
         
         self.v.weight.data.copy_(torch.eye(self.dim))
@@ -195,6 +246,8 @@ class GPSA(nn.Module):
                     self.pos_proj.weight.data[position,0] = 2*(h1-center)*locality_distance
                     position +=1
         self.pos_proj.weight.data *= locality_strength
+        
+    """
     
     def local_init_3d_relaxed(self,locality_strength=1.):
         '''
@@ -236,7 +289,7 @@ class GPSA(nn.Module):
         self.pos_proj.weight.data[:,2] = wdata[:self.num_heads,2]
         self.pos_proj.weight.data[:,3] = wdata[:self.num_heads,3]
 
-        return wdata
+        
         
 
 
@@ -289,7 +342,7 @@ class Block(nn.Module):
             self.attn = MHSA(dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop, **kwargs)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
-        mlp_hidden_dim = int(dim * mlp_ratio)
+        mlp_hidden_dim = int(dim * mlp_ratio) # upsampling the features with the ratio of 4
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
     def forward(self, x, voxel_coords):
@@ -373,7 +426,6 @@ class VisionTransformer(nn.Module):
         self.pos_drop = nn.Dropout(p=drop_rate)
         self.i = 0
         self.rpn_feature_set = rpn_feature_set
-
         
         self.blocks = nn.ModuleList([
             Block(
@@ -386,13 +438,14 @@ class VisionTransformer(nn.Module):
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, norm_layer=norm_layer,
                 use_gpsa=False)
-            for i in range(depth)])
+            for i in range(self.depth)])
+        
         self.norm = norm_layer(embed_dim)
 
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
        
-        self.transformer_head .apply(self._init_weights)
+        self.transformer_head.apply(self._init_weights)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -403,21 +456,15 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-
+    
     def forward_features(self, x, voxel_coors):
-        
-          
         # print("input to visualTransformer shape", x.shape)
         # print("voxel_coors to visualTransformer shape", voxel_coors.shape)
-
         x = x.permute(0,2,1)
-        # x = self.pos_drop(x)
-
-            
+        # x = self.pos_drop(x)            
         for u,blk in enumerate(self.blocks):
             # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
-
         x = self.norm(x)
 
         return x
