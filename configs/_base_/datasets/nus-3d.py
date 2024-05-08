@@ -11,7 +11,7 @@ class_names = [
 ]
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = 'data/nuscenes/'
+data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(use_lidar=True, use_camera=False)
@@ -53,6 +53,8 @@ train_pipeline = [
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
+    # dict(type='PointSample', num_points=32768),
+    dict(type='PointSample', num_points=40000),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -82,6 +84,8 @@ test_pipeline = [
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
+            # dict(type='PointSample', num_points=32768),
+            dict(type='PointSample', num_points=40000),
             dict(
                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),

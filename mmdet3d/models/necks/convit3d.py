@@ -499,3 +499,44 @@ class VisionTransformer(nn.Module):
         return feat_dict
     
     
+    
+    
+###### code analysis has to be done    
+class CoordinateRefinementModule(nn.Module):
+    def __init__(self, num_attention_heads):
+        super(CoordinateRefinementModule, self).__init__()
+        self.num_attention_heads = num_attention_heads
+
+    def forward(self, local_transformer_output, centroid_points):
+        """
+        Args:
+            local_transformer_output (Tensor): Output features from the last Local Transformer layer
+                Shape: (batch_size, num_points, feature_dim)
+            centroid_points (Tensor): Coordinates of the centroid points
+                Shape: (batch_size, num_centroids, 3)
+
+        Returns:
+            refined_centroids (Tensor): Refined coordinates of the centroid points
+                Shape: (batch_size, num_centroids, 3)
+        """
+        batch_size, num_points, feature_dim = local_transformer_output.shape
+        _, num_centroids, _ = centroid_points.shape
+
+        # Extract attention maps from the last Local Transformer layer
+        attention_maps = local_transformer_output[:, :, :feature_dim // self.num_attention_heads]
+
+        # Compute average attention map
+        avg_attention_map = attention_maps.mean(dim=-1)  # (batch_size, num_points)
+
+        # Select attention weights for the centroid points
+        centroid_attention_weights = avg_attention_map[:, centroid_points[:, :, 0].long()]  # (batch_size, num_centroids)
+
+        # Compute refined centroid coordinates as weighted average
+        refined_centroids = torch.bmm(
+            centroid_attention_weights.unsqueeze(1),
+            centroid_points.permute(0, 2, 1)
+        ).squeeze(1)  # (batch_size, num_centroids, (features)3)
+
+        return refined_centroids
+
+    
