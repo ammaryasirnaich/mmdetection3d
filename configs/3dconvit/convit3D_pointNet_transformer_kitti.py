@@ -96,55 +96,72 @@ log_config = dict(
 
 custom_hooks = [dict(type='EpochLossValuesLogging')]
 
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=5)
 
 
 # In practice PointPillars also uses a different schedule
 # optimizer
-lr = 0.001
-epoch_num = 80
+# lr = 0.001
+epoch_num = 170
 
+# optim_wrapper = dict(
+#     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
+# param_scheduler = [
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=epoch_num * 0.4,
+#         eta_min=lr * 10,
+#         begin=0,
+#         end=epoch_num * 0.4,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=epoch_num * 0.6,
+#         eta_min=lr * 1e-4,
+#         begin=epoch_num * 0.4,
+#         end=epoch_num * 1,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=epoch_num * 0.4,
+#         eta_min=0.85 / 0.95,
+#         begin=0,
+#         end=epoch_num * 0.4,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=epoch_num * 0.6,
+#         eta_min=1,
+#         begin=epoch_num * 0.4,
+#         end=epoch_num * 1,
+#         convert_to_iter_based=True)
+# ]
+
+# optimizer
+lr = 0.002  # max learning rate
 optim_wrapper = dict(
-    optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+    clip_grad=dict(max_norm=35, norm_type=2),
+)
+
+# learning rate
 param_scheduler = [
     dict(
-        type='CosineAnnealingLR',
-        T_max=epoch_num * 0.4,
-        eta_min=lr * 10,
+        type='MultiStepLR',
         begin=0,
-        end=epoch_num * 0.4,
+        end=80,
         by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingLR',
-        T_max=epoch_num * 0.6,
-        eta_min=lr * 1e-4,
-        begin=epoch_num * 0.4,
-        end=epoch_num * 1,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=epoch_num * 0.4,
-        eta_min=0.85 / 0.95,
-        begin=0,
-        end=epoch_num * 0.4,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=epoch_num * 0.6,
-        eta_min=1,
-        begin=epoch_num * 0.4,
-        end=epoch_num * 1,
-        convert_to_iter_based=True)
+        milestones=[45, 60],
+        gamma=0.1)
 ]
 
 
-
-
 # training schedule for 1x
-train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=1)
+train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=40)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -156,11 +173,11 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_depth_30'
+work_dir = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_May_2024'
 load_from = None
 resume = True
-resume_from = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_depth_30'
-workflow = [('train', 1),('val', 1)]  
+resume_from = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_May_2024'
+workflow = [('train', 1)]  
   
 
 
