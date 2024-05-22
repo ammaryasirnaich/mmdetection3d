@@ -142,7 +142,7 @@ class GPSA(nn.Module):
                     in the point clouds.
         """
        
-        print(f"point_clouds shape {point_clouds.shape}")
+        # print(f"point_clouds shape {point_clouds.shape}")
        
         # Ensure the input is a floating point tensor for accurate calculations
         # point_clouds = point_clouds.float()
