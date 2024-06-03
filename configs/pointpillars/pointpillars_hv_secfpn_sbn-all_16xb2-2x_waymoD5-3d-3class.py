@@ -21,7 +21,7 @@ auto_scale_lr = dict(enable=False, base_batch_size=4)
 checkpoint_config = dict(interval=1)
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=40, val_interval=10)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=40, val_interval=40)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
