@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from typing import Tuple
-
+import pandas as pd
 import numpy as np
-import torch
+import torchname_to_rgb
 import trimesh
 
 from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
@@ -175,3 +175,46 @@ def proj_camera_bbox3d_to_img(bboxes_3d: CameraInstance3DBoxes,
     imgfov_pts_2d = uv_origin[..., :2].reshape(num_bbox, 8, 2).numpy()
 
     return imgfov_pts_2d
+
+
+
+
+def write_bbox_statistics(pred_bbox: np.ndarray, gt_bbox: np.ndarray, out_filename: str):
+    
+    def get_targ_range(xyx_location:np.ndarray):
+        return np.linalg.norm(xyx_location - (0.0,0.0,0.0))
+       
+    df = pd.read_csv("/workspace/data/kitti_detection/model_output_results/prediction_analytics.csv")
+    row = 1
+    if not df.empty:
+        row = df.index[-1]
+        row +=1
+    
+    
+    range = []
+    if(len(pred_bbox)>0):
+        for box in pred_bbox:
+            target_range =get_targ_range(box[:3])
+            range.append(target_range)
+        
+    df.at[row,'scene_no'] = out_filename
+    df.at[row,'pre_object_number'] = len(pred_bbox)
+    df.at[row,'pred_max_range'] = max(range)
+    
+    range.clear()
+    
+    if(len(gt_bbox)>0):
+        for box in gt_bbox:
+            target_range =get_targ_range(box[:3])
+            range.append(target_range)
+        
+    df.at[row,'scene_no'] = out_filename
+    df.at[row,'gt_object_number'] =  len(gt_bbox)
+    df.at[row,'gt_max_range'] = max(range)
+    
+    df.to_csv('/workspace/data/kitti_detection/model_output_results/prediction_analytics.csv', index=False)
+    
+
+    
+        
+     

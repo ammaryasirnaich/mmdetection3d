@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from typing import List, Optional, Sequence, Tuple, Union
+from os import path as osp
 
 import matplotlib.pyplot as plt
 import mmcv
@@ -28,15 +29,17 @@ from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
                                 Det3DDataSample, LiDARInstance3DBoxes,
                                 PointData, points_cam2img)
 from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
-                        proj_lidar_bbox3d_to_img, to_depth_mode)
+                        proj_lidar_bbox3d_to_img, to_depth_mode,
+                        write_obj, write_oriented_bbox, write_bbox_statistics)
 
-try:
-    import open3d as o3d
-    from open3d import geometry
-    from open3d.visualization import Visualizer
-except ImportError:
-    o3d = geometry = Visualizer = None
+# try:
+#     import open3d as o3d
+#     from open3d import geometry
+#     from open3d.visualization import Visualizer
+# except ImportError:
+#     o3d = geometry = Visualizer = None
 
+o3d = geometry = Visualizer = None
 
 @VISUALIZERS.register_module()
 class Det3DLocalVisualizer(DetLocalVisualizer):
@@ -232,14 +235,22 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         render_option = self.o3d_vis.get_render_option()
         if render_option is not None:
             render_option.point_size = points_size
-            render_option.background_color = np.asarray([0, 0, 0])
+            # render_option.background_color = np.asarray([0, 0, 0]) # black
+            render_option.background_color = np.asarray([255, 255, 255])  # white background
 
         points = points.copy()
         pcd = geometry.PointCloud()
         if mode == 'xyz':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-            points_colors = np.tile(
-                np.array(points_color), (points.shape[0], 1))
+            ###@ giving color based on intensity
+            intensity = points[:, 3]
+
+            # Normalize intensity values to the range [0, 1]
+            normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
+
+            # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
+            color_map = plt.get_cmap('plasma')
+            points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
         elif mode == 'xyzrgb':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
             points_colors = points[:, 3:6]
@@ -602,6 +613,14 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         seg_points = copy.deepcopy(seg_mask_colors)
         seg_points[:, 0] += offset
         self.set_points(seg_points, pcd_mode=2, vis_mode='add', mode='xyzrgb')
+    
+    def get_single_color(self, color:str,len_target:int):
+        from webcolors import name_to_rgb
+        try:
+            rgb_tuple_list = [name_to_rgb(color)]* len_target
+            return rgb_tuple_list
+        except ValueError:
+            print("Color not found.")
 
     def _draw_instances_3d(self,
                            data_input: dict,
@@ -609,7 +628,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                            input_meta: dict,
                            vis_task: str,
                            show_pcd_rgb: bool = False,
-                           palette: Optional[List[tuple]] = None) -> dict:
+                           palette: Optional[List[tuple]] = None,
+                           color_pen = Optional [str]) -> dict:
         """Draw 3D instances of GT or prediction.
 
         Args:
@@ -641,6 +661,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             points = data_input['points']
             check_type('points', points, (np.ndarray, Tensor))
             points = tensor2ndarray(points)
+            
+            # print("3dInstance contained:", type(bboxes_3d))
 
             if not isinstance(bboxes_3d, DepthInstance3DBoxes):
                 points, bboxes_3d_depth = to_depth_mode(points, bboxes_3d)
@@ -663,6 +685,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
 
             self.set_points(
                 points, pcd_mode=2, mode='xyzrgb' if show_pcd_rgb else 'xyz')
+            
+             ###@ checking condition
+            if (len(color_pen))>0:
+                # forcing a color
+                colors = self.get_single_color(color_pen,bboxes_3d_depth.shape[0])
+            
             self.draw_bboxes_3d(bboxes_3d_depth, bbox_color=colors)
 
             data_3d['bboxes_3d'] = tensor2ndarray(bboxes_3d_depth.tensor)
@@ -859,6 +887,23 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             if hasattr(self, 'view_port'):
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
+                
+            			
+            field_of_view = 90.0
+            front = [ 0.31215258736307588, -0.81399575814013969, 0.48986903140777999 ]
+            lookat =  [ 4.132611324527165, 5.5430605624474696, 3.8225081447928373 ]
+            up = [ -0.22829942339393036, 0.43625322647934289, 0.87038066135706516 ]
+            zoom = 0.10000000000000006
+                        
+            # Apply the parameters
+      
+            self.view_control = self.o3d_vis.get_view_control()
+            self.view_control.set_front(front)
+            self.view_control.set_lookat(lookat)
+            self.view_control.set_up(up)
+            self.view_control.set_zoom(zoom)
+            self.view_control.change_field_of_view(field_of_view)
+                
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
@@ -996,12 +1041,27 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 'multi-modality_det'
         ]:
             self.o3d_vis = self._initialize_o3d_vis(show=show)
+        
+        self.draw_gt= draw_gt  ,  #draw_gt
+        
+        self.dataPack = dict()
 
-        if draw_gt and data_sample is not None:
+        # if draw_gt and data_sample is not None:
+        #     if 'gt_instances_3d' in data_sample:
+        #         gt_data_3d = self._draw_instances_3d(
+        #             data_input, data_sample.gt_instances_3d,
+        #             data_sample.metainfo, vis_task, show_pcd_rgb, palette)
+        if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
-                gt_data_3d = self._draw_instances_3d(
-                    data_input, data_sample.gt_instances_3d,
-                    data_sample.metainfo, vis_task, show_pcd_rgb, palette)
+                gt_instances_3d = data_sample.gt_instances_3d
+                if len(gt_instances_3d) > 0:
+                    gt_data_3d = self._draw_instances_3d(
+                        data_input, gt_instances_3d,
+                        data_sample.metainfo, vis_task, show_pcd_rgb, palette,'green')
+                    
+                    self.dataPack['gt_3bbox']= gt_data_3d['bboxes_3d']
+                    self.dataPack['gt_points']= gt_data_3d['points']
+                    
             if 'gt_instances' in data_sample:
                 if len(data_sample.gt_instances) > 0:
                     assert 'img' in data_input
@@ -1032,7 +1092,21 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                                        pred_instances_3d,
                                                        data_sample.metainfo,
                                                        vis_task, show_pcd_rgb,
-                                                       palette)
+                                                       palette,'blue')
+                
+                # print("bbox from path:",data_sample.lidar_path)
+                # print("gt_instances_3d.bboxes_3d")
+                # print(data_sample.gt_instances_3d.bboxes_3d)
+                # print("pred_instances_3d.bboxes_3d")
+                # print(pred_instances_3d.bboxes_3d)
+                
+                if len(pred_instances_3d)>0:
+                    self.dataPack['pred_3bbox']= pred_data_3d['bboxes_3d']
+                else:
+                    self.dataPack['pred_3bbox']= np.zeros((1,7),dtype=float)
+                # self.dataPack['pred_points']= pred_data_3d['points']
+
+                
             if 'pred_instances' in data_sample:
                 if 'img' in data_input and len(data_sample.pred_instances) > 0:
                     pred_instances = data_sample.pred_instances
@@ -1098,3 +1172,16 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                              out_file[:-4] + '_2d' + out_file[-4:])
         else:
             self.add_image(name, drawn_img_3d, step)
+            filename = osp.basename(o3d_save_path).split('.')[0]
+            out_file = osp.dirname(o3d_save_path)
+            # write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            # write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.obj'),color='red')
+            # write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.obj'),color='green')
+            
+            write_obj(self.dataPack['gt_points'],osp.join(out_file, f'{filename}_points.obj'))
+            write_oriented_bbox(self.dataPack['gt_3bbox'],osp.join(out_file, f'{filename}_gt.ply'),obj_type='gt')
+            write_oriented_bbox(self.dataPack['pred_3bbox'],osp.join(out_file, f'{filename}_pred.ply'),obj_type='pred')       
+            write_bbox_statistics(self.dataPack['pred_3bbox'],self.dataPack['gt_3bbox'],filename)
+            
+            
+            
