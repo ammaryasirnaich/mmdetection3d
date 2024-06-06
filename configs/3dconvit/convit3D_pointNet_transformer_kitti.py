@@ -102,7 +102,7 @@ checkpoint_config = dict(interval=5)
 # In practice PointPillars also uses a different schedule
 # optimizer
 # lr = 0.001
-epoch_num = 170
+epoch_num = 40
 
 # optim_wrapper = dict(
 #     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
@@ -173,10 +173,10 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_May_2024'
+work_dir = '/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_kitti_June_2024'
 load_from = None
 resume = True
-resume_from = '/workspace/data/kitti_detection/model_output_results/convit3D_kitti_May_2024'
+resume_from = '/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_kitti_June_2024'
 workflow = [('train', 1)]  
   
 

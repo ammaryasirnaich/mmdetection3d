@@ -3,7 +3,7 @@ import copy
 from typing import Tuple
 import pandas as pd
 import numpy as np
-import torchname_to_rgb
+import torch 
 import trimesh
 
 from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,

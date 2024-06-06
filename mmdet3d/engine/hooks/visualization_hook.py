@@ -14,6 +14,7 @@ from mmengine.visualization import Visualizer
 
 from mmdet3d.registry import HOOKS
 from mmdet3d.structures import Det3DDataSample
+from mmdet3d.visualization.get3dInstancefrompkl import *
 
 
 @HOOKS.register_module()
@@ -224,6 +225,15 @@ class Det3DVisualizationHook(Hook):
                     o3d_save_path = osp.basename(lidar_path).split(
                         '.')[0] + '.png'
                     o3d_save_path = osp.join(self.test_out_dir, o3d_save_path)
+                    
+                                
+                ##getting GT 3D instance
+                # print("visual instance called for:", lidar_path)
+                
+                lidarInstance = lidar_path.split('/')[-1]
+                if(self.draw_gt):
+                    data_sample.gt_instances_3d = get_3dInstance_from_pklfile(lidarInstance)
+
 
             self._visualizer.add_datasample(
                 'test sample',

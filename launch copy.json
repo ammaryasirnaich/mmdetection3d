@@ -1,0 +1,94 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            // "program": "/workspace/mmdetection3d/tools/train.py",  // for training
+            // "program": "/workspace/mmdetection3d/tools/test.py", // for testing
+            // "program": "/workspace/mmdetection3d/tools/analysis_tools/get_flops.py", // Model Complexity
+            "program": "tests/intensity_mode_visualization.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+
+            
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py"]
+            "args" :["/workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymo-3d-car.py","/workspace/data/waymo/hv_pointpillars_secfpn_sbn_2x16_2x_waymoD5-3d-car_20200901_204315-302fc3e7.pth"]
+            // python tools/test.py ${CONFIG_FILE} ${CKPT_PATH} --task lidar_det --show --show-dir ${SHOW_DIR}
+
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_ssdhead.py"]
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py"]
+            
+            // "args": ["/workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-all.py"]
+            
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3d_PointNet_anchorFree.py"]
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/conViT3D_PointRCNN_head.py"]
+            // "args": ["/workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-car.py"]
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/conVit3DKitti-car.py"]
+            
+
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/boundingBox_on_convit3D.py",
+            //            "/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__14_August/epoch_202.pth", 
+            //         "--task","lidar_det","--show","--show-dir","/workspace/mmdetection3d/working_dir"]
+            // /workspace/mmdetection3d/demo/data/kitti/000008.bin
+            // /workspace/data/kitti_detection/kitti/training/velodyne_reduced/000049.bin
+
+            // for sample for prediction 000173.bin, 000016.bin 
+            "args": ["/workspace/data/kitti_detection/kitti/training/velodyne/000173.bin","/workspace/mmdetection3d/working_dir/IVEFpnt/inet_kitti_3d_all_update.py","/workspace/mmdetection3d/working_dir/IVEFpnt/epoch_40.pth","--show"]
+
+        //     "args": ["/workspace/mmdetection3d/working_dir/IVEFpnt/inet_kitti_3d_all_update.py",
+        //     "/workspace/mmdetection3d/working_dir/IVEFpnt/epoch_40.pth", 
+        //  "--task","lidar_det"]
+
+
+            // "args": ["/workspace/mmdetection3d/working_dir/intensityAware_35pnt/intensityNetKitti_all_objects.py",
+            //            "/workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth", 
+            //         "--task","lidar_det","--show","--show-dir","/workspace/data/kitti_detection/model_output_results/IVEFResults"]
+
+
+
+
+            // "args": ["/workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_ssdhead_configInherence.py",
+            //            "/workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead__01_Sep/epoch_5.pth", 
+            //         "--task","lidar_det","--show","--show-dir","/workspace/mmdetection3d/working_dir"]
+
+
+            // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py","--resume-from","/workspace/mmdetection3d/working_dir/intensityAware/epoch_1.pth"] // for training 
+            // "args": ["/workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py", "--shape=[15347, 8, 7]"] // for model complexity
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/mmdetection3d/working_dir/epoch_40.pth","--eval","mAP","--eval-options","'show=True'","'out_dir=/workspace/mmdetection3d/working_dir/show_results'"]
+
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car_20200924_211301-1f5ad833.pth",
+            //    "--eval","mAP" ]
+            // "args": ["/workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py","/workspace/working_dir/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class_20200925_110059-05f67bdf.pth",
+            //     "--eval","mAP","--eval-options","show=","True","out_dir","/workspace/working_dir/show_results"  ]
+                
+        }
+    ]
+}
+
+
+// python tools/test.py /workspace/mmdetection3d/configs/second/mmdetection3d/hv_second_secfpn_fp16_6x8_80e_kitti-3d-car.py /workspace/mmdetection3d/working_dir/hv_second_kitti-3d-car.pth --eval 'mAP' --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/show_results'
+
+ 
+// python tools/create_data.py kitti --root-path /workspace/mmdetection3d/data/kitti/ --out-dir /workspace/mmdetection3d/data/kitti/
+
+// /workspace/mmdetection3d/working_dir/epoch_40.pth
+
+// Evaluation command for Second Model
+// python tools/test.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/second/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/second'
+// python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py /workspace/mmdetection3d/working_dir/second/epoch_40.pth
+// python tools/analysis_tools/get_flops.py /workspace/mmdetection3d/configs/second/hv_second_secfpn_fp16_6x8_80e_kitti-3d-3class.py  --shape [40000 4]
+
+
+
+
+// Evaluation command for Intensity Aware Network
+// python tools/test.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_40.pth --eval mAP --eval-options 'show=True' 'out_dir=/workspace/mmdetection3d/working_dir/intensityAware_35pnt/'
+
+/// FLOPS and FPS calculation for Intensity Aware model
+// python tools/analysis_tools/get_flops.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py --shape [40000 4]
+// python tools/analysis_tools/benchmark.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py /workspace/mmdetection3d/working_dir/intensityAware_35pnt/epoch_80.pth
