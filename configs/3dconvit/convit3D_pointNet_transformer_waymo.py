@@ -168,7 +168,7 @@ param_scheduler = [
 # ]
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=40)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=50)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
