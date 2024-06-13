@@ -65,11 +65,6 @@ class RelPositionalEncoding3D(nn.Module):
         return encodings
 """
 
-
-
-
-
-
 class GPSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.,
                  locality_strength=1., use_local_init=True):
@@ -429,13 +424,13 @@ class VisionTransformer(nn.Module):
         
         self.blocks = nn.ModuleList([
             Block(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                dim=self.embed_dim, num_heads=self.num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, norm_layer=norm_layer,
                 use_gpsa=True,
                 locality_strength=locality_strength)
             if i<local_up_to_layer else
             Block(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                dim=self.embed_dim, num_heads=self.num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, norm_layer=norm_layer,
                 use_gpsa=False)
             for i in range(self.depth)])
@@ -443,9 +438,11 @@ class VisionTransformer(nn.Module):
         self.norm = norm_layer(embed_dim)
 
         #Transformer head
-        self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity()
-       
+        self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
         self.transformer_head.apply(self._init_weights)
+        
+        
+        self.coordrefine = CoordinateRefinementModule(self.num_heads)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -507,10 +504,10 @@ class CoordinateRefinementModule(nn.Module):
         super(CoordinateRefinementModule, self).__init__()
         self.num_attention_heads = num_attention_heads
 
-    def forward(self, local_transformer_output, centroid_points):
+    def forward(self, transformer_output, centroid_points):
         """
         Args:
-            local_transformer_output (Tensor): Output features from the last Local Transformer layer
+            transformer_output (Tensor): Output features from the last Local Transformer layer
                 Shape: (batch_size, num_points, feature_dim)
             centroid_points (Tensor): Coordinates of the centroid points
                 Shape: (batch_size, num_centroids, 3)
@@ -519,11 +516,11 @@ class CoordinateRefinementModule(nn.Module):
             refined_centroids (Tensor): Refined coordinates of the centroid points
                 Shape: (batch_size, num_centroids, 3)
         """
-        batch_size, num_points, feature_dim = local_transformer_output.shape
+        batch_size, num_points, feature_dim = transformer_output.shape
         _, num_centroids, _ = centroid_points.shape
 
         # Extract attention maps from the last Local Transformer layer
-        attention_maps = local_transformer_output[:, :, :feature_dim // self.num_attention_heads]
+        attention_maps = transformer_output[:, :, :feature_dim // self.num_attention_heads]
 
         # Compute average attention map
         avg_attention_map = attention_maps.mean(dim=-1)  # (batch_size, num_points)

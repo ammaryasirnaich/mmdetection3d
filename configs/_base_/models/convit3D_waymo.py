@@ -46,7 +46,7 @@ model = dict(
                 num_classes=3, 
                 # in_chans=256, #1024
                 embed_dim=252, #1024
-                depth = 30, #  Depths Transformer stage. Default 12
+                depth = 12, #  Depths Transformer stage. Default 12
                 num_heads=9 ,  # 12
                 mlp_ratio=4,
                 qkv_bias=False ,
@@ -56,7 +56,7 @@ model = dict(
                 drop_path_rate=0, 
                 hybrid_backbone=None ,
                 global_pool=None,
-                local_up_to_layer=24 ,  #Consider how many layers to work for local feature aggregation
+                local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
                 locality_strength=1,  #1
                 use_pos_embed=False,
                 init_cfg=None,
@@ -100,13 +100,11 @@ model = dict(
             norm_cfg=dict(type='BN1d', eps=1e-3, momentum=0.1),
             bias=True),
         
-      objectness_loss=dict(
-            type='mmdet.FocalLoss',
+        objectness_loss=dict(
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
+            reduction='sum',
             loss_weight=1.0),
-      
         center_loss=dict(
             type='mmdet.SmoothL1Loss', reduction='sum', loss_weight=1.0),    #1.0
         dir_class_loss=dict(

@@ -100,45 +100,7 @@ checkpoint_config = dict(interval=5)
 
 
 # In practice PointPillars also uses a different schedule
-# optimizer
-# lr = 0.001
 epoch_num = 40
-
-# optim_wrapper = dict(
-#     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
-# param_scheduler = [
-#     dict(
-#         type='CosineAnnealingLR',
-#         T_max=epoch_num * 0.4,
-#         eta_min=lr * 10,
-#         begin=0,
-#         end=epoch_num * 0.4,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingLR',
-#         T_max=epoch_num * 0.6,
-#         eta_min=lr * 1e-4,
-#         begin=epoch_num * 0.4,
-#         end=epoch_num * 1,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingMomentum',
-#         T_max=epoch_num * 0.4,
-#         eta_min=0.85 / 0.95,
-#         begin=0,
-#         end=epoch_num * 0.4,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingMomentum',
-#         T_max=epoch_num * 0.6,
-#         eta_min=1,
-#         begin=epoch_num * 0.4,
-#         end=epoch_num * 1,
-#         convert_to_iter_based=True)
-# ]
 
 # optimizer
 lr = 0.002  # max learning rate

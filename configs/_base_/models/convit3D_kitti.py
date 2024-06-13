@@ -139,7 +139,6 @@ model = dict(
 
 
 # custom_hooks = [ dict(type='TensorboardImageLoggerHook') ]
-# yapf:enable
 
 
 # fp16 settings
