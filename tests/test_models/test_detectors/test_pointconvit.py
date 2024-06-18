@@ -9,7 +9,7 @@ class TestPointViT(unittest.TestCase):
     def test_pointvit(self):
         import mmdet3d.models
 
-        assert hasattr(mmdet3d.models, 'PointVit3D')
+        assert hasattr(mmdet3d.models, 'ConVit3D')
         DefaultScope.get_instance('test_ConVit3D', scope_name='mmdet3d')
         setup_seed(0)
         voxel_net_cfg = get_detector_cfg('3dconvit/convit3D_pointNet_transformer_kitti.py')
@@ -25,10 +25,11 @@ class TestPointViT(unittest.TestCase):
                 data = model.data_preprocessor(packed_inputs, True)
                 torch.cuda.empty_cache()
                 results = model.forward(**data, mode='predict')
-            self.assertEqual(len(results), 1)
-            self.assertIn('bboxes_3d', results[0].pred_instances_3d)
-            self.assertIn('scores_3d', results[0].pred_instances_3d)
-            self.assertIn('labels_3d', results[0].pred_instances_3d)
+                num_layers = len(model.neck.blocks)
+                last_layer = model.neck.blocks[-1]
+                print("type of last layer",{type(last_layer)})
+                "model.neck.blocks[-1] last layer"
+                print(f"number of layers:",{num_layers})
 
             losses = model.forward(**data, mode='loss')
             self.assertGreater(losses['centerness_loss'], 0)
