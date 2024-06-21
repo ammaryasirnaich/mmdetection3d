@@ -2,7 +2,7 @@ _base_ = [
     '../_base_/models/convit3D_kitti.py',
     # '../_base_/models/convit3D.py',
     '../_base_/datasets/kitti-3d-3class.py',
-    '../_base_/schedules/cyclic-40e.py'
+    '../_base_/schedules/schedule-2x.py'
 ]
 
 
@@ -68,7 +68,7 @@ test_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -100,26 +100,26 @@ checkpoint_config = dict(interval=5)
 
 
 # In practice PointPillars also uses a different schedule
-epoch_num = 40
+epoch_num = 80
 
 # optimizer
-lr = 0.002  # max learning rate
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
-    clip_grad=dict(max_norm=35, norm_type=2),
-)
+# lr = 0.002  # max learning rate
+# optim_wrapper = dict(
+#     type='OptimWrapper',
+#     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.),
+#     clip_grad=dict(max_norm=35, norm_type=2),
+# )
 
-# learning rate
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=80,
-        by_epoch=True,
-        milestones=[45, 60],
-        gamma=0.1)
-]
+# # learning rate
+# param_scheduler = [
+#     dict(
+#         type='MultiStepLR',
+#         begin=0,
+#         end=80,
+#         by_epoch=True,
+#         milestones=[45, 60],
+#         gamma=0.1)
+# ]
 
 
 # training schedule for 1x
@@ -135,10 +135,10 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = '/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_kitti_June_2024'
+work_dir = './work_dirs/convit3D_kitti_21_June_2024'
 load_from = None
 resume = True
-resume_from = '/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_kitti_June_2024'
+resume_from = './work_dirs/convit3D_kitti_21_June_2024'
 workflow = [('train', 1)]  
   
 
