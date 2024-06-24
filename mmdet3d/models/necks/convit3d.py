@@ -438,11 +438,11 @@ class VisionTransformer(nn.Module):
         self.norm = norm_layer(embed_dim)
 
         #Transformer head
-        self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
-        self.transformer_head.apply(self._init_weights)
+        # self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
+        # self.transformer_head.apply(self._init_weights)
         
         
-        self.coordrefine = CoordinateRefinementModule(self.num_heads)
+        # self.coordrefine = CoordinateRefinementModule(self.num_heads)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -472,7 +472,7 @@ class VisionTransformer(nn.Module):
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
         # print("attend output shape before head",attend.shape)
-        attend = self.transformer_head(attend)  
+        # attend = self.transformer_head(attend)  
         # create new feature 
         
         if (self.rpn_feature_set):
@@ -497,7 +497,7 @@ class VisionTransformer(nn.Module):
     
     
     
-    
+'''
 ###### code analysis has to be done    
 class CoordinateRefinementModule(nn.Module):
     def __init__(self, num_attention_heads):
@@ -535,5 +535,5 @@ class CoordinateRefinementModule(nn.Module):
         ).squeeze(1)  # (batch_size, num_centroids, (features)3)
 
         return refined_centroids
-
+'''    
     
