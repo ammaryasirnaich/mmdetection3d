@@ -438,7 +438,7 @@ class VisionTransformer(nn.Module):
         self.norm = norm_layer(embed_dim)
 
         #Transformer head
-        # self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
+        self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
         # self.transformer_head.apply(self._init_weights)
         
         
@@ -472,7 +472,7 @@ class VisionTransformer(nn.Module):
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
         # print("attend output shape before head",attend.shape)
-        # attend = self.transformer_head(attend)  
+        attend = self.transformer_head(attend)  
         # create new feature 
         
         if (self.rpn_feature_set):
