@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from .bev import bev_3D_to_2D
+import copy
 
 
 class Mlp(nn.Module):
@@ -118,6 +119,7 @@ class GPSA(nn.Module):
         # print(f" x attn shape {x.shape}")
         attn = self.proj(attn) 
         attn = self.proj_drop(attn)
+        self.atttion_map = copy.deepcopy(attn)
 
         return attn
 
@@ -321,7 +323,7 @@ class MHSA(nn.Module):
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
-        
+        self.atttion_map = copy.deepcopy(attn)
         return attn
     
 class Block(nn.Module):
@@ -489,7 +491,8 @@ class VisionTransformer(nn.Module):
             return [x]
         else:
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
-            
+        
+        self.voxel_coord = voxel_coors
         # print("fp_features shape",feat_dict["fp_features"].shape)
         # print("fp_xyz shape",feat_dict["fp_xyz"].shape)
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)

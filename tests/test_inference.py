@@ -10,27 +10,7 @@ from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
 from mmdet3d.apis.inference import *
 
 import open3d as o3d
-
-
-
-
-
-def get_pointcloud(point:np):
-    pcd = o3d.geometry.PointCloud()
-    xyz = point[:, :3]
-    
-    # Assign points to the point cloud object
-    pcd.points = o3d.utility.Vector3dVector(xyz)
-    
-    # Optionally, add colors based on reflectance values or other criteria
-    # Here we simply use a grayscale color based on reflectance
-    reflectance = point[:, 3]
-    # colors = np.zeros((reflectance.shape[0], 3))
-    # colors[:, 0] = colors[:, 1] = colors[:, 2] = reflectance / reflectance.max()
-    colors = [[0.5, 0.5, 0.5] for i in range(points.shape[0])]
-    pcd.colors = o3d.utility.Vector3dVector(colors)
-        
-    return pcd    
+import matplotlib.pyplot as plt
 
 
 
@@ -52,40 +32,105 @@ checkpoint=rootpath+'epoch_80.pth'
 
 file ='/workspace/mmdetection3d/demo/data/kitti/000008.bin'
 pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin'
-points = np.fromfile(file, dtype=np.float32).reshape(-1,4)
-model = init_model(config,checkpoint)
-# _,data = inference_detector(model,points)
-
-
-# num_gt_instance = 2
-# packed_inputs = create_detector_inputs(
-# num_points=10, num_gt_instance=num_gt_instance)
-# packed_inputs['points'] = [points]
-
-
-# if torch.cuda.is_available():
-#     model = model.cuda()
-#     # test simple_test
-#     with torch.no_grad():
-#         data = model.data_preprocessor(packed_inputs, True)
-#         torch.cuda.empty_cache()
-#         results = model.forward(**data, mode='predict')
-
-# print(model)
 
 
 
-# # If you want to save the visualization to a file
-# o3d.io.write_point_cloud("attention_map.pcd", points)
+def get_pointcloud(point:np):
+    pcd = o3d.geometry.PointCloud()
+    xyz = point[:, :3]
+    
+    # Assign points to the point cloud object
+    pcd.points = o3d.utility.Vector3dVector(xyz)
+    
+     ###@ giving color based on intensity
+    intensity = points[:, 3]
 
-# Visualize the point cloud
-vis = o3d.visualization.Visualizer()
-pcd = get_pointcloud(points)
-# vis.draw_geometries([get_pointcloud(points)], window_name="Attention Map Visualization")
-vis.create_window()
-vis.add_geometry(pcd)
-# vis.get_render_option().point_size = 2
-vis.run()
+    # Normalize intensity values to the range [0, 1]
+    normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
+
+    # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
+    color_map = plt.get_cmap('plasma')
+    points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
+
+    pcd.colors = o3d.utility.Vector3dVector(points_colors)
+    return pcd
+   
+def demo_point_visualize():
+    import open3d as o3d
+    import numpy as np
+
+    # Example point cloud data (randomly generated for demonstration)
+    num_points = 10
+    points = np.random.rand(num_points, 3)
+    sizes = np.random.rand(num_points) * 0.05  # Random sizes for demonstration
+
+    # Create an empty geometry list to store the spheres
+    geometries = []
+
+    # Create a sphere for each point with a specific size
+    for i in range(num_points):
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=sizes[i])
+        sphere.translate(points[i])
+        sphere.paint_uniform_color([1, 0, 0])  # Optional: color the spheres red
+        geometries.append(sphere)
+
+    # Visualize all the spheres (representing points with different sizes)
+    o3d.visualization.draw_geometries(geometries, window_name="Point Cloud with Variable Sizes")
+    
+
+
+if __name__ == "__main__":
+    points = np.fromfile(file, dtype=np.float32).reshape(-1,4)
+    # model = init_model(config,checkpoint)
+    # _,data = inference_detector(model,points)
+
+
+    # num_gt_instance = 2
+    # packed_inputs = create_detector_inputs(
+    # num_points=10, num_gt_instance=num_gt_instance)
+    # packed_inputs['points'] = [points]
+
+    # points = torch.from_numpy(points).to('cuda:0')
+    # print(type(points))
+    # print(points.is_cuda)
+    # print(points.shape)
+    
+    # if torch.cuda.is_available():
+    #     model = model.cuda()
+    #     # test simple_test
+    #     with torch.no_grad():
+    #         data = model.data_preprocessor(packed_inputs, True)
+    #         pnt = data['inputs']['points']
+    #         points = data['inputs']['points']
+    #         print(len(points))
+    #         stack_points = torch.stack(points)
+    #         print(stack_points.shape)
+    #         print(type(stack_points))
+    #         print(stack_points.is_cuda)
+    #         torch.cuda.empty_cache()
+            # results = model.forward(**data, mode='predict')
+            
+
+        # x = self.backbone(stack_points)
+        # points = torch.stack(packed_inputs['points'])
+        # x = model.backbone(points)
+        # print("shape of backbone:", x.shape)    
+        # if self.with_neck:
+            # x = self.neck(x)
+
+    # print(model)
+    demo_point_visualize()
+
+
+    # # Visualize the point cloud
+    # vis = o3d.visualization.Visualizer()
+    # vis.create_window()
+    # pcd_raw = get_pointcloud(points)
+    # # vis.draw_geometries([get_pointcloud(points)], window_name="Attention Map Visualization")
+    # vis.add_geometry(pcd_raw)
+
+    # vis.get_render_option().point_size = 2
+    # vis.run()
 
     
 
