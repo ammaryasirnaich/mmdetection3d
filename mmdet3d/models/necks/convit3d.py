@@ -493,6 +493,7 @@ class VisionTransformer(nn.Module):
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
         
         self.voxel_coord = voxel_coors
+
         # print("fp_features shape",feat_dict["fp_features"].shape)
         # print("fp_xyz shape",feat_dict["fp_xyz"].shape)
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
