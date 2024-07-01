@@ -97,6 +97,11 @@ def visualize_maps(attention_map_info,raw_pointcloud):
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
     attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)
    
+    point_attention = np.concatenate((attention_points,attention_map),axis=1)
+    # print("shape of point attention:", point_attention.shape)
+    # np.savez('poin_attention',point_attention)
+    np.savez('raw_pointclouds',raw_pointcloud)
+   
     # 'plasma', 'viridis'
     pcd_raw = get_pointcloud(raw_pointcloud,"None")   #"plasma"
     pcd_atten = get_pointcloud(attention_points,"None")
@@ -106,9 +111,28 @@ def visualize_maps(attention_map_info,raw_pointcloud):
    # Set colors based on attention weights
     attention_weights = get_normlized_dimensions(attention_map)
     print("attention_weights:", attention_weights.shape)
-    weight_colors = plt.get_cmap("plasma")(attention_weights)[:, :3]  # Use a colormap to map attention weights to colors
+    weight_colors = plt.get_cmap("hot")(attention_weights)[:, :3]  # Use a colormap to map attention weights to colors
     print(weight_colors.shape)
     pcd_atten.colors = o3d.utility.Vector3dVector(weight_colors)
+    
+    # Create a list of spheres for each point to visualize their sizes
+    spheres = []
+    min_size = 0.1
+    max_size = 0.5
+    point_sizes = min_size + (max_size - min_size) * attention_weights
+
+    for point, color, size in zip(attention_points, weight_colors, point_sizes):
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=size)
+        sphere.translate(point)
+        sphere.paint_uniform_color(color)  # Paint the sphere with the corresponding color
+        spheres.append(sphere)
+
+    # Combine all spheres into a single geometry
+    combined_mesh = o3d.geometry.TriangleMesh()
+    for sphere in spheres:
+        combined_mesh += sphere
+
+
     
     nor_dim = get_normlized_dimensions(raw_pointcloud)
     raw_pnt_colors = plt.get_cmap("binary")(nor_dim)[:, :3]  # Use a colormap to map attention weights to colors
@@ -121,15 +145,57 @@ def visualize_maps(attention_map_info,raw_pointcloud):
     vis.create_window()
     vis.add_geometry(pcd_raw)
     vis.add_geometry(pcd_atten)
+    
+    vis.add_geometry(combined_mesh)
 
     vis.get_render_option().point_size = 2
     vis.run()
     
+    
+def testingsizingpointclouds():
+    # Generate a hypothetical point cloud (3D points)
+    num_points = 100
+    point_cloud = np.random.rand(num_points, 3)  # Random points in 3D
+
+    # Generate hypothetical attention weights
+    attention_weights = np.random.rand(num_points)
+
+    # Calculate weight colors
+    weight_colors = plt.get_cmap("hot")(attention_weights)[:, :3]
+
+    # Resize points based on attention weights
+    # Normalize the attention weights to get sizes in a reasonable range for visualization
+    min_size = 0.01
+    max_size = 0.1
+    point_sizes = min_size + (max_size - min_size) * attention_weights
+
+    # Create an Open3D PointCloud object
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(point_cloud)
+    pcd.colors = o3d.utility.Vector3dVector(weight_colors)
+    
+    # Create a list of spheres for each point to visualize their sizes
+    spheres = []
+    for point, color, size in zip(point_cloud, weight_colors, point_sizes):
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=size)
+        sphere.translate(point)
+        sphere.paint_uniform_color(color)  # Paint the sphere with the corresponding color
+        spheres.append(sphere)
+
+    # Combine all spheres into a single geometry
+    combined_mesh = o3d.geometry.TriangleMesh()
+    for sphere in spheres:
+        combined_mesh += sphere
+
+    # Visualize the point cloud with resized points
+    o3d.visualization.draw_geometries([combined_mesh])
+    o3d.visualization.get_render_option().point_size = 2
+
 
 def main():
     attention_map_info,raw_pointclouds =get_attention_map()
     visualize_maps(attention_map_info,raw_pointclouds)
-    
+    # testingsizingpointclouds()
     print()
 
 
