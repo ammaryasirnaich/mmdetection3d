@@ -6,20 +6,57 @@ from mmdet3d.visualization import Det3DLocalVisualizer
 import open3d as o3d
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.image as mpimg
 
 from scipy.stats import norm 
 import statistics 
 
 
-def get_attention_map():  
-    rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
+
+def extract_layer_attent_maps(inferencer):
+    attention_maps = {}
+    neck = inferencer.model.neck
+    # print("no of block", len(neck.blocks))
+    last_layer_attention = neck.blocks[-1]
+    # print("last_layer_attention type:",type(last_layer_attention.attn))
+    # print("last_layer_attention shape:",last_layer_attention.attn.atttion_map.shape)
+    # print("last_layer_attention cooridnate shape:",neck.voxel_coord.shape)
+    attention_maps['attention_map']=last_layer_attention.attn.atttion_map
+    attention_maps['points'] = neck.voxel_coord
+   
+    
+    # for block in inferencer.model.neck.blocks:
+    #     print("block:",type(block))
+    #     print("module:",module)
+    #     if 'attention' in name.lower() and hasattr(module, 'attn_probs'):
+    #         attention_maps.append((name, module.attn_probs))
+    
+    return attention_maps
+
+def get_pointcloud(point:np, colormap:str):
+    pcd = o3d.geometry.PointCloud()
+    xyz = point[:, :3]
+    # Assign points to the point cloud object
+    pcd.points = o3d.utility.Vector3dVector(xyz)
+    return pcd 
+
+
+def get_normlized_dimensions(attention_maps):
+    # Normalize attention maps for visualization
+    norm_dim = np.mean(attention_maps, axis=1)
+    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))    
+    return norm_dim
+
+def get_attention_map(config_file,checkpoint_file,pcd_file):  
+    # rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
   
     # file ='/workspace/mmdetection3d/demo/data/kitti/000008.bin'
-    pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin'
-  
+    # scene_id='000010'
+    # pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/'+scene_id+'.bin'
+    # image_path = '/workspace/data/kitti_detection/kitti/testing/'+scene_id+'.png'
     # Paths to model config, checkpoint, and input data
-    config_file = rootpath+'convit3D_pointNet_transformer_kitti.py'
-    checkpoint_file =rootpath+'epoch_80.pth'
+    # config_file = rootpath+'convit3D_pointNet_transformer_kitti.py'
+    # checkpoint_file =rootpath+'epoch_80.pth'
     point_cloud_file = pcd_file
 
     raw_pntcloud = np.fromfile(point_cloud_file, dtype=np.float32).reshape(-1, 4)
@@ -45,56 +82,7 @@ def get_attention_map():
     attention_maps_info = extract_layer_attent_maps(inferencer)
     return attention_maps_info , raw_pntcloud
 
-def extract_layer_attent_maps(inferencer):
-    attention_maps = {}
-    neck = inferencer.model.neck
-    # print("no of block", len(neck.blocks))
-    last_layer_attention = neck.blocks[-1]
-    # print("last_layer_attention type:",type(last_layer_attention.attn))
-    # print("last_layer_attention shape:",last_layer_attention.attn.atttion_map.shape)
-    # print("last_layer_attention cooridnate shape:",neck.voxel_coord.shape)
-    attention_maps['attention_map']=last_layer_attention.attn.atttion_map
-    attention_maps['points'] = neck.voxel_coord
-   
-    
-    # for block in inferencer.model.neck.blocks:
-    #     print("block:",type(block))
-    #     print("module:",module)
-    #     if 'attention' in name.lower() and hasattr(module, 'attn_probs'):
-    #         attention_maps.append((name, module.attn_probs))
-    
-    return attention_maps
-
-def get_pointcloud(point:np, colormap:str):
-    pcd = o3d.geometry.PointCloud()
-    
-    print("shape of point:",point.shape)
-    
-    xyz = point[:, :3]
-  
-    # Assign points to the point cloud object
-    pcd.points = o3d.utility.Vector3dVector(xyz)
-    # if(point.shape[1]>3):
-    #     ###@ giving color based on intensity
-    #     intensity = point[:, 3]
-
-    #     # Normalize intensity values to the range [0, 1]
-    #     normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
-    #     # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
-    #     color_map = plt.get_cmap(colormap)
-    #     points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
-    #     pcd.colors = o3d.utility.Vector3dVector(points_colors)
-    return pcd 
-
-
-def get_normlized_dimensions(attention_maps):
-    # Normalize attention maps for visualization
-    norm_dim = np.mean(attention_maps, axis=1)
-    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))    
-    return norm_dim
-
-
-def visualize_maps(attention_map_info,raw_pointcloud):
+def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
     
     
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
@@ -139,21 +127,31 @@ def visualize_maps(attention_map_info,raw_pointcloud):
     vis.add_geometry(pcd_raw)
     vis.add_geometry(attnt_points)
     vis.get_render_option().point_size = 2
-    
-    # # Plot the color bar using Matplotlib
-    # Generate and save the color bar
-    plt.figure(figsize=(6, 1))
-    norm = plt.Normalize(vmin=0, vmax=1)
-    cm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
-    # cm.set_array([])
-    plt.colorbar(cm, orientation='vertical', label='Attention Weights')
-    plt.show()
-    # plt.show()    
     vis.run()
-
-
     
+    print(to_plot_image_barplot)
     
+    # if to_plot_image_barplot==True:    
+    # Display the 2D camera image
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    image = mpimg.imread(image_path)
+    ax[0].imshow(image)
+    ax[0].axis('off')
+    ax[0].set_title('2D Camera Image')
+
+    # Display the color bar
+    norm = plt.Normalize(vmin=0, vmax=1)
+    sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+    sm.set_array([])
+    plt.colorbar(sm, ax=ax[1],orientation='vertical', label='Attention Weights')
+    ax[1].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+    print("pass")
+    
+   
+
 def testingsizingpointclouds(attention_map_info,raw_pointcloud):
 
     # Assuming attention_map_info is a dictionary containing 'attention_map' and 'points'
@@ -256,8 +254,20 @@ def plot_gaussian(attention_weights):
     plt.show()
 
 def main():
-    attention_map_info,raw_pointclouds =get_attention_map()
-    visualize_maps(attention_map_info,raw_pointclouds)
+    rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
+
+    # scene_id='000010'
+    scene_id='000003'
+    scene_id='000008'
+    pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/'+scene_id+'.bin'
+    image_path = '/workspace/data/kitti_detection/kitti/testing/image_2/'+scene_id+'.png'
+    ###Paths to model config, checkpoint, and input data
+    config_file = rootpath+'convit3D_pointNet_transformer_kitti.py'
+    checkpoint_file =rootpath+'epoch_80.pth'
+    
+    
+    attention_map_info,raw_pointclouds =get_attention_map(config_file,checkpoint_file,pcd_file)
+    visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=True)
     # testingsizingpointclouds(attention_map_info,raw_pointclouds)
     # colorbarplot()
     print()
