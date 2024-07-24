@@ -5,6 +5,7 @@ from mmdet3d.structures import Det3DDataSample
 from mmdet3d.visualization import Det3DLocalVisualizer
 import open3d as o3d
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 from scipy.stats import norm 
 import statistics 
@@ -89,7 +90,7 @@ def get_pointcloud(point:np, colormap:str):
 def get_normlized_dimensions(attention_maps):
     # Normalize attention maps for visualization
     norm_dim = np.mean(attention_maps, axis=1)
-    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))
+    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))    
     return norm_dim
 
 
@@ -97,28 +98,19 @@ def visualize_maps(attention_map_info,raw_pointcloud):
     
     
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
-    attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)
-   
-    # point_attention = np.concatenate((attention_points,attention_map),axis=1)
-    # print("shape of point attention:", point_attention.shape)
-    # np.savez('poin_attention',point_attention)
-    # np.savez('raw_pointclouds',raw_pointcloud)
-   
-    # 'plasma', 'viridis'
-
-    # pcd_atten = get_pointcloud(attention_points,"None")
-    # vis.draw_geometries([get_pointcloud(points)], window_name="Attention Map Visualization")
-   
-   
-   # Set colors based on attention weights
+    attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)   
+    
+    # 1,2 Normalize the attention weights with Averaging Across Dimensions on attention_map
     attention_weights = get_normlized_dimensions(attention_map)
-    weight_colors = plt.get_cmap("hot")(attention_weights)[:, :3]  # Use a colormap to map attention weights to colors
-    print("attention_weights:", attention_weights.shape)
-    print("attentn color:",weight_colors.shape)
-    # pcd_atten.colors = o3d.utility.Vector3dVector(weight_colors)
-    
-    # plot_gaussian(weight_colors)
-    
+   # Use a colormap to map attention weights to colors
+    # 3. Creating Spheres for each point in the point cloud
+    colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
+    n_bins = 100  # Discretize the colormap
+    cmap_name = 'custom_attention'
+    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+    # Map attention weights to colors using the custom colormap
+    weight_colors = cm(attention_weights)[:, :3]
+
     # Create a list of spheres for each point to visualize their sizes
     spheres = []
     min_size = 0.01
@@ -145,68 +137,96 @@ def visualize_maps(attention_map_info,raw_pointcloud):
 
     vis.create_window()
     vis.add_geometry(pcd_raw)
-    # vis.add_geometry(pcd_atten)
     vis.add_geometry(attnt_points)
     vis.get_render_option().point_size = 2
     
     # # Plot the color bar using Matplotlib
-    # fig, ax = plt.subplots(figsize=(6, 1))
-    # fig.subplots_adjust(bottom=0.5)
-    # cmap = plt.get_cmap("hot")
-    # # Create a color bar based on the colormap
-    # norm = plt.Normalize(vmin=weight_colors.min(), vmax=weight_colors.max())
-    # cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), cax=ax, orientation='horizontal')
-    # cbar.set_label('Normalized Attention Weights')
-
-    # plt.show()
-    
-    
-    
+    # Generate and save the color bar
+    plt.figure(figsize=(6, 1))
+    norm = plt.Normalize(vmin=0, vmax=1)
+    cm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+    # cm.set_array([])
+    plt.colorbar(cm, orientation='vertical', label='Attention Weights')
+    plt.show()
+    # plt.show()    
     vis.run()
-    
-    
-def testingsizingpointclouds():
-    # Generate a hypothetical point cloud (3D points)
-    num_points = 100
-    point_cloud = np.random.rand(num_points, 3)  # Random points in 3D
 
-    # Generate hypothetical attention weights
-    attention_weights = np.random.rand(num_points)
-
-    # Calculate weight colors
-    weight_colors = plt.get_cmap("hot")(attention_weights)[:, :3]
-    
-    cmap = plt.get_cmap("hot")
-    color = cmap(attention_weights)
 
     
-    # Resize points based on attention weights
-    # Normalize the attention weights to get sizes in a reasonable range for visualization
-    min_size = 0.01
-    max_size = 0.1
-    point_sizes = min_size + (max_size - min_size) * attention_weights
-
-    # Create an Open3D PointCloud object
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(point_cloud)
-    pcd.colors = o3d.utility.Vector3dVector(weight_colors)
     
-    # Create a list of spheres for each point to visualize their sizes
+def testingsizingpointclouds(attention_map_info,raw_pointcloud):
+
+    # Assuming attention_map_info is a dictionary containing 'attention_map' and 'points'
+    # For demonstration, we'll create dummy data
+    # attention_map_info = {
+    #     'attention_map': torch.randn(512, 256),
+    #     'points': torch.randn(512, 3)
+    # }
+
+    # Extract attention map and points from the dictionary
+    attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
+    attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)
+
+    # 1. Averaging Across Dimensions on attention_map to reduce the dimension
+    averaged_attention = attention_map.mean(axis=1)
+
+    # 2. Normalize the attention weights
+    min_val = averaged_attention.min()
+    max_val = averaged_attention.max()
+    normalized_attention_weights = (averaged_attention - min_val) / (max_val - min_val)
+
+    # 3. Creating Spheres for each point in the point cloud
+    colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
+    n_bins = 100  # Discretize the colormap
+    cmap_name = 'custom_attention'
+    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+    
+    # Map attention weights to colors using the custom colormap
+    weight_colors = cm(normalized_attention_weights)[:, :3]
+
+    # Create spheres for visualization
     spheres = []
-    for point, color, size in zip(point_cloud, weight_colors, point_sizes):
+    min_size = 0.01
+    max_size = 0.5
+    point_sizes = min_size + (max_size - min_size) * normalized_attention_weights
+
+    for point, color, size in zip(attention_points, weight_colors, point_sizes):
         sphere = o3d.geometry.TriangleMesh.create_sphere(radius=size)
         sphere.translate(point)
         sphere.paint_uniform_color(color)  # Paint the sphere with the corresponding color
         spheres.append(sphere)
 
-    # Combine all spheres into a single geometry
-    combined_mesh = o3d.geometry.TriangleMesh()
+    # 5. Combining Geometries into a single TriangleMesh object for visualization
+    attnt_points = o3d.geometry.TriangleMesh()
     for sphere in spheres:
-        combined_mesh += sphere
+        attnt_points += sphere
 
-    # Visualize the point cloud with resized points
-    o3d.visualization.draw_geometries([combined_mesh])
-    o3d.visualization.get_render_option().point_size = 2
+    # 4. Visualize the normalized weights using Open3D
+    # o3d.visualization.draw_geometries([attnt_points])
+
+    # 6. Add a color bar to the visualization
+    # Generate and save the color bar
+    plt.figure(figsize=(6, 1))
+    norm = plt.Normalize(vmin=0, vmax=1)
+    cm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+    # cm.set_array([])
+    plt.colorbar(cm, orientation='vertical', label='Attention Weights')
+    plt.show()
+    # plt.savefig('colorbar.png', bbox_inches='tight')
+
+   
+def colorbarplot():
+    cm = plt.cm.get_cmap('RdYlBu')
+    xy = range(20)
+    z = xy
+    colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
+    n_bins = 100  # Discretize the colormap
+    cmap_name = 'custom_attention'
+    norm = plt.Normalize(vmin=0, vmax=1)
+    cm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+    # cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+    plt.colorbar(cm, orientation='horizontal', label='Attention Weights')
+    plt.show()
 
 
 def plot_gaussian(attention_weights):
@@ -238,7 +258,8 @@ def plot_gaussian(attention_weights):
 def main():
     attention_map_info,raw_pointclouds =get_attention_map()
     visualize_maps(attention_map_info,raw_pointclouds)
-    # testingsizingpointclouds()
+    # testingsizingpointclouds(attention_map_info,raw_pointclouds)
+    # colorbarplot()
     print()
 
 
