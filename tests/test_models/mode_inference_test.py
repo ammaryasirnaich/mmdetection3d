@@ -7,6 +7,7 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.image as mpimg
+import copy
 
 from scipy.stats import norm 
 import statistics 
@@ -44,23 +45,10 @@ def get_pointcloud(point:np, colormap:str):
 def get_normlized_dimensions(attention_maps):
     # Normalize attention maps for visualization
     norm_dim = np.mean(attention_maps, axis=1)
-    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))    
+    norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))
     return norm_dim
 
 def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):  
-    # rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
-  
-    # file ='/workspace/mmdetection3d/demo/data/kitti/000008.bin'
-    # scene_id='000010'
-    # # scene_id='000003'
-    # # scene_id='000008'
-    # pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/'+scene_id+'.bin'
-    # image_path = '/workspace/data/kitti_detection/kitti/testing/'+scene_id+'.png'
-    # ##Paths to model config, checkpoint, and input data
-    # config_file = rootpath+'convit3D_pointNet_transformer_kitti.py'
-    # checkpoint_file =rootpath+'epoch_80.pth'
-    # point_cloud_file = pcd_file
-
 
     config_file = config_file_path
     checkpoint_file =chckpoint_file_path
@@ -75,7 +63,6 @@ def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):
         device='cuda:0'
     )
 
-           
     # Perform inference
     result = inferencer(
         inputs=dict(points=raw_pntcloud),
@@ -84,33 +71,34 @@ def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):
     
     ## Extract predictions
     # det3DdataSample = result['predictions'][0].pred_instances_3d
-    
     # Extract attention maps
     attention_maps_info = extract_layer_attent_maps(inferencer)
     return attention_maps_info , raw_pntcloud
 
-def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
-    
+
+def get_3d_scene_data(attention_map_info,raw_pointcloud):
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
     attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)   
-    
+ 
     # 1,2 Normalize the attention weights with Averaging Across Dimensions on attention_map
-    norm_attention_weights = get_normlized_dimensions(attention_map)
+    normalized_attention_weights = get_normlized_dimensions(attention_map)
+ 
    # Use a colormap to map attention weights to colors
+
     # 3. Creating Spheres for each point in the point cloud
     colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
     n_bins = 100  # Discretize the colormap
     cmap_name = 'custom_attention'
     cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+
     # Map attention weights to colors using the custom colormap
-    weight_colors = cm(norm_attention_weights)[:, :3]
-   
- 
-    # Create a list of spheres for each point to visualize their sizes
+    weight_colors = cm(normalized_attention_weights)[:, :3]
+
+    # Create spheres for visualization
     spheres = []
     min_size = 0.01
     max_size = 0.5
-    point_sizes = min_size + (max_size - min_size) * norm_attention_weights
+    point_sizes = min_size + (max_size - min_size) * normalized_attention_weights
 
     for point, color, size in zip(attention_points, weight_colors, point_sizes):
         sphere = o3d.geometry.TriangleMesh.create_sphere(radius=size)
@@ -118,19 +106,25 @@ def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_ba
         sphere.paint_uniform_color(color)  # Paint the sphere with the corresponding color
         spheres.append(sphere)
 
-    # Combine all spheres into a single geometry
-    attnt_points = o3d.geometry.TriangleMesh()
+    # 5. Combining Geometries into a single TriangleMesh object for visualization
+    attnt_points_spheres = o3d.geometry.TriangleMesh()
     for sphere in spheres:
-        attnt_points += sphere
-
-   
+        attnt_points_spheres += sphere
+        
+        
     pcd_raw = get_pointcloud(raw_pointcloud,"None")   #"plasma"
     raw_pnt_nor_dim = get_normlized_dimensions(raw_pointcloud)
     raw_pnt_colors = plt.get_cmap("binary")(raw_pnt_nor_dim)[:, :3]  # Use a colormap to map attention weights to colors
     pcd_raw.colors = o3d.utility.Vector3dVector(raw_pnt_colors)
     
-   
+    return pcd_raw,attnt_points_spheres
+
+
+def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
+        
+    pcd_raw, attnt_points = get_3d_scene_data(attention_map_info,raw_pointcloud)
     vis = o3d.visualization.Visualizer()
+    
     vis.create_window()
     vis.add_geometry(pcd_raw)
     vis.add_geometry(attnt_points)
@@ -273,7 +267,7 @@ def main():
     
     
     attention_map_info,raw_pointclouds =get_attention_map(config_file,checkpoint_file,pcd_file)
-    visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=True)
+    visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=False)
     # testingsizingpointclouds(attention_map_info,raw_pointclouds)
     # colorbarplot()
     print()
