@@ -47,17 +47,24 @@ def get_normlized_dimensions(attention_maps):
     norm_dim = (norm_dim - np.min(norm_dim)) / (np.max(norm_dim) - np.min(norm_dim))    
     return norm_dim
 
-def get_attention_map(config_file,checkpoint_file,pcd_file):  
+def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):  
     # rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
   
     # file ='/workspace/mmdetection3d/demo/data/kitti/000008.bin'
     # scene_id='000010'
+    # # scene_id='000003'
+    # # scene_id='000008'
     # pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/'+scene_id+'.bin'
     # image_path = '/workspace/data/kitti_detection/kitti/testing/'+scene_id+'.png'
-    # Paths to model config, checkpoint, and input data
+    # ##Paths to model config, checkpoint, and input data
     # config_file = rootpath+'convit3D_pointNet_transformer_kitti.py'
     # checkpoint_file =rootpath+'epoch_80.pth'
-    point_cloud_file = pcd_file
+    # point_cloud_file = pcd_file
+
+
+    config_file = config_file_path
+    checkpoint_file =chckpoint_file_path
+    point_cloud_file = pcd_path
 
     raw_pntcloud = np.fromfile(point_cloud_file, dtype=np.float32).reshape(-1, 4)
     
@@ -84,12 +91,11 @@ def get_attention_map(config_file,checkpoint_file,pcd_file):
 
 def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
     
-    
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
     attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)   
     
     # 1,2 Normalize the attention weights with Averaging Across Dimensions on attention_map
-    attention_weights = get_normlized_dimensions(attention_map)
+    norm_attention_weights = get_normlized_dimensions(attention_map)
    # Use a colormap to map attention weights to colors
     # 3. Creating Spheres for each point in the point cloud
     colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
@@ -97,13 +103,14 @@ def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_ba
     cmap_name = 'custom_attention'
     cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
     # Map attention weights to colors using the custom colormap
-    weight_colors = cm(attention_weights)[:, :3]
-
+    weight_colors = cm(norm_attention_weights)[:, :3]
+   
+ 
     # Create a list of spheres for each point to visualize their sizes
     spheres = []
     min_size = 0.01
     max_size = 0.5
-    point_sizes = min_size + (max_size - min_size) * attention_weights
+    point_sizes = min_size + (max_size - min_size) * norm_attention_weights
 
     for point, color, size in zip(attention_points, weight_colors, point_sizes):
         sphere = o3d.geometry.TriangleMesh.create_sphere(radius=size)
@@ -116,40 +123,39 @@ def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_ba
     for sphere in spheres:
         attnt_points += sphere
 
+   
     pcd_raw = get_pointcloud(raw_pointcloud,"None")   #"plasma"
     raw_pnt_nor_dim = get_normlized_dimensions(raw_pointcloud)
     raw_pnt_colors = plt.get_cmap("binary")(raw_pnt_nor_dim)[:, :3]  # Use a colormap to map attention weights to colors
     pcd_raw.colors = o3d.utility.Vector3dVector(raw_pnt_colors)
     
+   
     vis = o3d.visualization.Visualizer()
-
     vis.create_window()
     vis.add_geometry(pcd_raw)
     vis.add_geometry(attnt_points)
     vis.get_render_option().point_size = 2
     vis.run()
     
-    print(to_plot_image_barplot)
-    
-    # if to_plot_image_barplot==True:    
-    # Display the 2D camera image
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    image = mpimg.imread(image_path)
-    ax[0].imshow(image)
-    ax[0].axis('off')
-    ax[0].set_title('2D Camera Image')
+    if to_plot_image_barplot==True:    
+        # Display the 2D camera image
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        image = mpimg.imread(image_path)
+        ax[0].imshow(image)
+        ax[0].axis('off')
+        ax[0].set_title('2D Camera Image')
 
-    # Display the color bar
-    norm = plt.Normalize(vmin=0, vmax=1)
-    sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
-    sm.set_array([])
-    plt.colorbar(sm, ax=ax[1],orientation='vertical', label='Attention Weights')
-    ax[1].axis('off')
+        # Display the color bar
+        norm = plt.Normalize(vmin=0, vmax=1)
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+        sm.set_array([])
+        plt.colorbar(sm, ax=ax[1],orientation='vertical', label='Attention Weights')
+        ax[1].axis('off')
 
-    plt.tight_layout()
-    plt.show()
-    print("pass")
-    
+        plt.tight_layout()
+        plt.show()
+        print("pass")
+        
    
 
 def testingsizingpointclouds(attention_map_info,raw_pointcloud):
@@ -257,7 +263,7 @@ def main():
     rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
 
     # scene_id='000010'
-    scene_id='000003'
+    # scene_id='000003'
     scene_id='000008'
     pcd_file ='/workspace/data/kitti_detection/kitti/testing/velodyne_reduced/'+scene_id+'.bin'
     image_path = '/workspace/data/kitti_detection/kitti/testing/image_2/'+scene_id+'.png'
