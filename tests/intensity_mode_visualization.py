@@ -5,6 +5,7 @@ from mmdet3d.apis import inference_detector, init_model
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.visualization.get3dInstancefrompkl import *
 from mmdet3d.structures import Det3DDataSample
+from test_models import mode_inference_test 
 
 def parse_args():
     parser = ArgumentParser()
@@ -14,7 +15,7 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.1, help='bbox score threshold')
+        '--score-thr', type=float, default=0.7, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -45,8 +46,6 @@ def main(args):
     
     
     
-    
-    
     # lidarinstanceName= '000008.bin'
     
     lidarinstanceName = args.pcd
@@ -61,6 +60,9 @@ def main(args):
     
     print("bbox thresold value:", args.score_thr)
     
+    ### plotting attention maps
+    attention_map_info,raw_pointclouds = mode_inference_test.get_attention_map(args.config,args.checkpoint,args.pcd)
+    _, attnt_points = mode_inference_test.get_3d_scene_data(attention_map_info,raw_pointclouds)
     
 
     # show the results
@@ -74,7 +76,8 @@ def main(args):
         wait_time=-1,
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
-        vis_task='lidar_det')
+        vis_task='lidar_det',
+        attnt_points=attnt_points)
     
     
     

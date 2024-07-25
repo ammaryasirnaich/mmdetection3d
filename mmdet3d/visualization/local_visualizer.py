@@ -32,14 +32,14 @@ from .vis_utils import (proj_camera_bbox3d_to_img, proj_depth_bbox3d_to_img,
                         proj_lidar_bbox3d_to_img, to_depth_mode,
                         write_obj, write_oriented_bbox, write_bbox_statistics)
 
-# try:
-#     import open3d as o3d
-#     from open3d import geometry
-#     from open3d.visualization import Visualizer
-# except ImportError:
-#     o3d = geometry = Visualizer = None
+try:
+    import open3d as o3d
+    from open3d import geometry
+    from open3d.visualization import Visualizer
+except ImportError:
+    o3d = geometry = Visualizer = None
 
-o3d = geometry = Visualizer = None
+# o3d = geometry = Visualizer = None
 
 @VISUALIZERS.register_module()
 class Det3DLocalVisualizer(DetLocalVisualizer):
@@ -904,6 +904,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.view_control.set_zoom(zoom)
             self.view_control.change_field_of_view(field_of_view)
                 
+                
+            
+                
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
             # if not hasattr(self, 'view_control'):
@@ -985,7 +988,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0,
-                       show_pcd_rgb: bool = False) -> None:
+                       show_pcd_rgb: bool = False,
+                       attnt_points: o3d.geometry.TriangleMesh= None) -> None:
         """Draw datasample and save to all backends.
 
         - If GT and prediction are plotted at the same time, they are displayed
@@ -1046,11 +1050,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         
         self.dataPack = dict()
 
-        # if draw_gt and data_sample is not None:
-        #     if 'gt_instances_3d' in data_sample:
-        #         gt_data_3d = self._draw_instances_3d(
-        #             data_input, data_sample.gt_instances_3d,
-        #             data_sample.metainfo, vis_task, show_pcd_rgb, palette)
+
         if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_instances_3d = data_sample.gt_instances_3d
@@ -1127,7 +1127,11 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.pred_pts_seg, palette,
                                        keep_index)
-
+        
+        
+        
+        self.o3d_vis.add_geometry(attnt_points)
+        
         # monocular 3d object detection image
         if vis_task in ['mono_det', 'multi-modality_det']:
             if gt_data_3d is not None and pred_data_3d is not None:

@@ -12,6 +12,12 @@ import copy
 from scipy.stats import norm 
 import statistics 
 
+from mmdet3d.structures import (BaseInstance3DBoxes, Box3DMode,
+                                CameraInstance3DBoxes, Coord3DMode,
+                                DepthInstance3DBoxes, DepthPoints,
+                                Det3DDataSample, LiDARInstance3DBoxes,
+                                PointData, points_cam2img)
+
 
 
 def extract_layer_attent_maps(inferencer):
@@ -76,9 +82,15 @@ def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):
     return attention_maps_info , raw_pntcloud
 
 
-def get_3d_scene_data(attention_map_info,raw_pointcloud):
+def get_3d_scene_data(attention_map_info,raw_pointcloud, pcd_mode=Coord3DMode.LIDAR):
     attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
     attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)   
+ 
+
+        # for now we convert points into depth mode for visualization
+    if pcd_mode != Coord3DMode.DEPTH:
+        attention_points = Coord3DMode.convert(attention_points, pcd_mode, Coord3DMode.DEPTH)
+ 
  
     # 1,2 Normalize the attention weights with Averaging Across Dimensions on attention_map
     normalized_attention_weights = get_normlized_dimensions(attention_map)
@@ -97,7 +109,7 @@ def get_3d_scene_data(attention_map_info,raw_pointcloud):
     # Create spheres for visualization
     spheres = []
     min_size = 0.01
-    max_size = 0.5
+    max_size = 0.2
     point_sizes = min_size + (max_size - min_size) * normalized_attention_weights
 
     for point, color, size in zip(attention_points, weight_colors, point_sizes):
@@ -124,7 +136,7 @@ def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_ba
         
     pcd_raw, attnt_points = get_3d_scene_data(attention_map_info,raw_pointcloud)
     vis = o3d.visualization.Visualizer()
-    
+   
     vis.create_window()
     vis.add_geometry(pcd_raw)
     vis.add_geometry(attnt_points)
@@ -256,6 +268,8 @@ def plot_gaussian(attention_weights):
 def main():
     rootpath="/workspace/data/kitti_detection/model_output_results/convit3D_kitti_24_June_2024/"
 
+    
+
     # scene_id='000010'
     # scene_id='000003'
     scene_id='000008'
@@ -271,6 +285,9 @@ def main():
     # testingsizingpointclouds(attention_map_info,raw_pointclouds)
     # colorbarplot()
     print()
+    
+    
+    
 
 
 if __name__ == '__main__':
