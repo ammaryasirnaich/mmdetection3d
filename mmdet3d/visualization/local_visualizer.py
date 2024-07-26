@@ -888,14 +888,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
                 
-            			
+            ## setting the open3d scene view			
             field_of_view = 90.0
-            front = [ 0.31215258736307588, -0.81399575814013969, 0.48986903140777999 ]
-            lookat =  [ 4.132611324527165, 5.5430605624474696, 3.8225081447928373 ]
-            up = [ -0.22829942339393036, 0.43625322647934289, 0.87038066135706516 ]
+            front = [ 0.35280563112365365, -0.7357615405095248, 0.57808575674763996 ]
+            lookat = [ 2.8992433768999648, 4.4243453992099688, 2.6482333890260148 ]
+            up = [ -0.25920238514439076, 0.51678582987742161, 0.81593291977549443 ]
             zoom = 0.10000000000000006
                         
-            # Apply the parameters
+           
+
       
             self.view_control = self.o3d_vis.get_view_control()
             self.view_control.set_front(front)

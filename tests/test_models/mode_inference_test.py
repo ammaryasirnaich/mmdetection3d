@@ -145,8 +145,13 @@ def get_3d_scene_data(attention_map_info,raw_pointcloud, pcd_mode=Coord3DMode.LI
 def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
         
         
-    pcd_raw, attnt_points = get_3d_scene_data(attention_map_info,raw_pointcloud)
+    pcd_raw, attnt_points = get_3d_scene_data(attention_map_info,raw_pointcloud,pcd_mode=Coord3DMode.DEPTH)
     
+    # 3. Creating Spheres for each point in the point cloud
+    colors = [(1, 1, 1), (1, 1, 0), (1, 0, 0)]  # White to yellow to red
+    n_bins = 100  # Discretize the colormap
+    cmap_name = 'custom_attention'
+    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
     
     vis = o3d.visualization.Visualizer()
    
@@ -187,8 +192,8 @@ def testingsizingpointclouds(attention_map_info,raw_pointcloud):
     # }
 
     # Extract attention map and points from the dictionary
-    attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
-    attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)
+    attention_map = attention_map_info['attention_map']
+    attention_points = attention_map_info['points']
 
     # 1. Averaging Across Dimensions on attention_map to reduce the dimension
     averaged_attention = attention_map.mean(axis=1)
@@ -298,7 +303,8 @@ def main():
     attention_map_info,raw_pointclouds =get_attention_map(config_file,checkpoint_file,pcd_file)
     
     
-    visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=False)
+    visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=True)
+    
     # testingsizingpointclouds(attention_map_info,raw_pointclouds)
     # colorbarplot()
     print()

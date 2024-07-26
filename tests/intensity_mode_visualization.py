@@ -44,16 +44,13 @@ def main(args):
     points = data['inputs']['points']
     data_input = dict(points=points)
     
-    
-    
     # lidarinstanceName= '000008.bin'
     
     lidarinstanceName = args.pcd
     lidarinstanceName = lidarinstanceName.split("/")[-1]
 
     gt_instances_3d = get_3dInstance_from_pklfile(lidarinstanceName)
-
-
+    
     # gt_det3d_data_sample = Det3DDataSample()
     # gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
     result.gt_instances_3d = gt_instances_3d
@@ -61,7 +58,7 @@ def main(args):
     print("bbox thresold value:", args.score_thr)
     
     
-        # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
+    # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
     current_map = np.fromfile('/workspace/data/kitti_detection/current_attention_map.pt') 
     current_point_attention_points = np.fromfile('/workspace/data/kitti_detection/current_voxel_coors.pt')
     
@@ -92,10 +89,6 @@ def main(args):
         pred_score_thr=args.score_thr,
         vis_task='lidar_det',
         attnt_points=attnt_points)
-    
-    
-    
-    
     
     
     visualizer.show()
