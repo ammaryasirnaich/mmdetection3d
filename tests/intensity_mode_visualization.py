@@ -74,6 +74,7 @@ def main(args):
         draw_pred=True,
         show=args.show,
         wait_time=-1,
+        o3d_save_path='/workspace/data/kitti_detection/kitti_scene_output',
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
         vis_task='lidar_det',

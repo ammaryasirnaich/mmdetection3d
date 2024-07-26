@@ -249,7 +249,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
 
             # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
-            color_map = plt.get_cmap('plasma')
+            color_map = plt.get_cmap('Greys')  # 'Greys,plasma'
             points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
         elif mode == 'xyzrgb':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
@@ -1129,8 +1129,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                                        keep_index)
         
         
-        
-        self.o3d_vis.add_geometry(attnt_points)
+        ## atting attention points
+        if attnt_points is not None:
+            self.o3d_vis.add_geometry(attnt_points)
         
         # monocular 3d object detection image
         if vis_task in ['mono_det', 'multi-modality_det']:
