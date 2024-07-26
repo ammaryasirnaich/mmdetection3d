@@ -26,12 +26,20 @@ def extract_layer_attent_maps(inferencer):
     # print("no of block", len(neck.blocks))
     last_layer_attention = neck.blocks[-1]
     # print("last_layer_attention type:",type(last_layer_attention.attn))
-    # print("last_layer_attention shape:",last_layer_attention.attn.atttion_map.shape)
+    print("last_layer_attention shape:",last_layer_attention.attn.atttion_map.shape)
     # print("last_layer_attention cooridnate shape:",neck.voxel_coord.shape)
-    attention_maps['attention_map']=last_layer_attention.attn.atttion_map
-    attention_maps['points'] = neck.voxel_coord
+    # attention_maps['attention_map']=last_layer_attention.attn.atttion_map
+    # attention_maps['points'] = neck.voxel_coord
    
     
+    attention_maps['attention_map']=torch.load('/workspace/data/kitti_detection/attention_map.pt').squeeze(0).cpu().detach().numpy()
+    attention_maps['points'] = torch.load('/workspace/data/kitti_detection/voxel_coord.pt').squeeze(0).cpu().detach().numpy()
+
+    print(attention_maps['attention_map'].shape)
+    print(attention_maps['points'].shape)
+    
+
+ 
     # for block in inferencer.model.neck.blocks:
     #     print("block:",type(block))
     #     print("module:",module)
@@ -75,6 +83,7 @@ def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):
         return_datasamples=True
     )
     
+    
     ## Extract predictions
     # det3DdataSample = result['predictions'][0].pred_instances_3d
     # Extract attention maps
@@ -83,8 +92,9 @@ def get_attention_map(config_file_path,chckpoint_file_path,pcd_path):
 
 
 def get_3d_scene_data(attention_map_info,raw_pointcloud, pcd_mode=Coord3DMode.LIDAR):
-    attention_map = attention_map_info['attention_map'].cpu().numpy().squeeze(0)
-    attention_points = attention_map_info['points'].cpu().numpy().squeeze(0)   
+
+    attention_map = attention_map_info['attention_map']
+    attention_points = attention_map_info['points']
  
 
         # for now we convert points into depth mode for visualization
@@ -94,7 +104,7 @@ def get_3d_scene_data(attention_map_info,raw_pointcloud, pcd_mode=Coord3DMode.LI
  
     # 1,2 Normalize the attention weights with Averaging Across Dimensions on attention_map
     normalized_attention_weights = get_normlized_dimensions(attention_map)
- 
+    
    # Use a colormap to map attention weights to colors
 
     # 3. Creating Spheres for each point in the point cloud
@@ -134,7 +144,10 @@ def get_3d_scene_data(attention_map_info,raw_pointcloud, pcd_mode=Coord3DMode.LI
 
 def visualize_maps(attention_map_info,raw_pointcloud,image_path,to_plot_image_barplot=True):
         
+        
     pcd_raw, attnt_points = get_3d_scene_data(attention_map_info,raw_pointcloud)
+    
+    
     vis = o3d.visualization.Visualizer()
    
     vis.create_window()
@@ -280,7 +293,11 @@ def main():
     checkpoint_file =rootpath+'epoch_80.pth'
     
     
+    
+    
     attention_map_info,raw_pointclouds =get_attention_map(config_file,checkpoint_file,pcd_file)
+    
+    
     visualize_maps(attention_map_info,raw_pointclouds,image_path,to_plot_image_barplot=False)
     # testingsizingpointclouds(attention_map_info,raw_pointclouds)
     # colorbarplot()

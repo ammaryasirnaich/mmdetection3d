@@ -60,8 +60,21 @@ def main(args):
     
     print("bbox thresold value:", args.score_thr)
     
+    
+        # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
+    current_map = np.fromfile('/workspace/data/kitti_detection/current_attention_map.pt') 
+    current_point_attention_points = np.fromfile('/workspace/data/kitti_detection/current_voxel_coors.pt')
+    
+    # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
+    prev_map = np.fromfile('/workspace/data/kitti_detection/pre_attention_map.pt') 
+    prev_point_attention_points = np.fromfile('/workspace/data/kitti_detection/pre_voxel_coors.pt')
+    
+
+    
     ### plotting attention maps
     attention_map_info,raw_pointclouds = mode_inference_test.get_attention_map(args.config,args.checkpoint,args.pcd)
+    
+    
     _, attnt_points = mode_inference_test.get_3d_scene_data(attention_map_info,raw_pointclouds)
     
 

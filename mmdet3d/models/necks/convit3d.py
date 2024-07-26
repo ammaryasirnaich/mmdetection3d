@@ -11,6 +11,7 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 from .bev import bev_3D_to_2D
 import copy
+import numpy
 
 
 class Mlp(nn.Module):
@@ -287,10 +288,6 @@ class GPSA(nn.Module):
         self.pos_proj.weight.data[:,3] = wdata[:self.num_heads,3]
 
         
-        
-
-
-
 class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
@@ -464,8 +461,12 @@ class VisionTransformer(nn.Module):
         for u,blk in enumerate(self.blocks):
             # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
+        
+       
+        torch.save(x,'/workspace/data/kitti_detection/attention_map.pt')
+        torch.save(voxel_coors,'/workspace/data/kitti_detection/voxel_coord.pt')
+        
         x = self.norm(x)
-
         return x
 
     def forward(self, feat_dict):
