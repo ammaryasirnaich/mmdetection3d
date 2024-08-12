@@ -106,10 +106,9 @@ model = dict(
             bias=True),
         
       objectness_loss=dict(
-            type='mmdet.FocalLoss',
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
+            reduction='sum',
             loss_weight=1.0),
       
         center_loss=dict(

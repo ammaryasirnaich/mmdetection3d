@@ -54,6 +54,7 @@ train_pipeline = [
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='PointShuffle'),
+    dict(type='PointSample', num_points=32768),  #16384
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -83,7 +84,8 @@ test_pipeline = [
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
             dict(
-                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+             dict(type='PointSample', num_points=32768),  #16384
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]

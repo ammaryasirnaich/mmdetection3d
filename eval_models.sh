@@ -33,12 +33,13 @@
 # SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
 # PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
 
-CONFIG_FILE="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py "
-CKPT_PATH="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_Augustepoch_80.pth"
+# CONFIG_FILE="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py "
+# CKPT_PATH="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_Augustepoch_80.pth"
 # SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
 
 
-
+CONFIG_FILE="/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_waymmo_batch_4_jun_12/convit3D_pointNet_transformer_waymo.py"
+CKPT_PATH="/import/digitreasure/ammar_workspace/mmdetection3d/work_dirs/convit3D_waymmo_batch_4_jun_12/epoch_150.pth"
 # python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \
 #     /workspace/mmdetection3d/work_dirs/convit3D_PointNet_transformer_ssdhead/epoch_80.pth\
 #     --task lidar_det --show-dir /workspace/conVit3D/show_results
