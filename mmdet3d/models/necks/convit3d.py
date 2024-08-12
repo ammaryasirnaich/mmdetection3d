@@ -10,7 +10,8 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from .bev import bev_3D_to_2D
-
+import copy
+import numpy
 
 
 class Mlp(nn.Module):
@@ -119,6 +120,7 @@ class GPSA(nn.Module):
         # print(f" x attn shape {x.shape}")
         attn = self.proj(attn) 
         attn = self.proj_drop(attn)
+        self.atttion_map = copy.deepcopy(attn)
 
         return attn
 
@@ -286,10 +288,6 @@ class GPSA(nn.Module):
         self.pos_proj.weight.data[:,3] = wdata[:self.num_heads,3]
 
         
-        
-
-
-
 class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
@@ -322,6 +320,7 @@ class MHSA(nn.Module):
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
+        self.atttion_map = copy.deepcopy(attn)
         return attn
     
 class Block(nn.Module):
@@ -467,6 +466,11 @@ class VisionTransformer(nn.Module):
                 x = torch.cat((cls_tokens, x), dim=1)
             # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
+        
+       
+        torch.save(x,'/workspace/data/kitti_detection/attention_map.pt')
+        torch.save(voxel_coors,'/workspace/data/kitti_detection/voxel_coord.pt')
+        
         x = self.norm(x)
         return x
 
@@ -493,7 +497,9 @@ class VisionTransformer(nn.Module):
             return [x]
         else:
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
-            
+        
+        self.voxel_coord = voxel_coors
+
         # print("fp_features shape",feat_dict["fp_features"].shape)
         # print("fp_xyz shape",feat_dict["fp_xyz"].shape)
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
@@ -501,7 +507,7 @@ class VisionTransformer(nn.Module):
     
     
     
-    
+'''
 ###### code analysis has to be done    
 class CoordinateRefinementModule(nn.Module):
     def __init__(self, num_attention_heads):
@@ -539,5 +545,5 @@ class CoordinateRefinementModule(nn.Module):
         ).squeeze(1)  # (batch_size, num_centroids, (features)3)
 
         return refined_centroids
-
+'''    
     

@@ -5,6 +5,7 @@ from mmdet3d.apis import inference_detector, init_model
 from mmdet3d.registry import VISUALIZERS
 from mmdet3d.visualization.get3dInstancefrompkl import *
 from mmdet3d.structures import Det3DDataSample
+from test_models import mode_inference_test 
 
 def parse_args():
     parser = ArgumentParser()
@@ -14,7 +15,7 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
-        '--score-thr', type=float, default=0.1, help='bbox score threshold')
+        '--score-thr', type=float, default=0.7, help='bbox score threshold')
     parser.add_argument(
         '--out-dir', type=str, default='demo', help='dir to save results')
     parser.add_argument(
@@ -43,24 +44,35 @@ def main(args):
     points = data['inputs']['points']
     data_input = dict(points=points)
     
-    
-    
-    
-    
     # lidarinstanceName= '000008.bin'
     
     lidarinstanceName = args.pcd
     lidarinstanceName = lidarinstanceName.split("/")[-1]
 
     gt_instances_3d = get_3dInstance_from_pklfile(lidarinstanceName)
-
-
+    
     # gt_det3d_data_sample = Det3DDataSample()
     # gt_det3d_data_sample.gt_instances_3d = gt_instances_3d
     result.gt_instances_3d = gt_instances_3d
     
     print("bbox thresold value:", args.score_thr)
     
+    
+    # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
+    current_map = np.fromfile('/workspace/data/kitti_detection/current_attention_map.pt') 
+    current_point_attention_points = np.fromfile('/workspace/data/kitti_detection/current_voxel_coors.pt')
+    
+    # torch.save(attention_map, '/workspace/data/kitti_detection/attention_weights.pt')
+    prev_map = np.fromfile('/workspace/data/kitti_detection/pre_attention_map.pt') 
+    prev_point_attention_points = np.fromfile('/workspace/data/kitti_detection/pre_voxel_coors.pt')
+    
+
+    
+    ### plotting attention maps
+    attention_map_info,raw_pointclouds = mode_inference_test.get_attention_map(args.config,args.checkpoint,args.pcd)
+    
+    
+    _, attnt_points = mode_inference_test.get_3d_scene_data(attention_map_info,raw_pointclouds)
     
 
     # show the results
@@ -72,13 +84,11 @@ def main(args):
         draw_pred=True,
         show=args.show,
         wait_time=-1,
+        o3d_save_path='/workspace/data/kitti_detection/kitti_scene_output',
         out_file=args.out_dir,
         pred_score_thr=args.score_thr,
-        vis_task='lidar_det')
-    
-    
-    
-    
+        vis_task='lidar_det',
+        attnt_points=attnt_points)
     
     
     visualizer.show()
