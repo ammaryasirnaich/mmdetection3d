@@ -1,10 +1,20 @@
 # mm3d/models/backbones/multi_modal_backbone.py
+# Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple, Union
 
-import torch.nn as nn
-from mmdet3d.models import builder
-from mmdet3d.models.backbones import BaseBackbone
+import torch
+from mmengine.structures import InstanceData
 
-class MultiModalBackbone(BaseBackbone):
+from mmdet3d.models.detectors import Base3DDetector
+from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
+from mmdet3d.registry import MODELS, TASK_UTILS
+from mmdet3d.structures.bbox_3d import get_proj_mat_by_coord_type
+from mmdet3d.structures.det3d_data_sample import SampleList
+from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
+
+
+
+class MultiModalBackbone(Base3DDetector):
     '''
     img_backbone: Builds the image backbone (e.g., ResNet) using provided configuration.
     pts_backbone: Builds the point cloud backbone (e.g., PointNet++).
@@ -17,16 +27,16 @@ class MultiModalBackbone(BaseBackbone):
                  img_neck_cfg=None, 
                  pts_neck_cfg=None):
         super(MultiModalBackbone, self).__init__()
-        self.img_backbone = builder.build_backbone(img_backbone_cfg)
-        self.pts_backbone = builder.build_backbone(pts_backbone_cfg)
+        self.img_backbone = MODELS.build(img_backbone_cfg)
+        self.pts_backbone = MODELS.build(pts_backbone_cfg)
         
         if img_neck_cfg:
-            self.img_neck = builder.build_neck(img_neck_cfg)
+            self.img_neck = MODELS.build(img_neck_cfg)
         else:
             self.img_neck = None
         
         if pts_neck_cfg:
-            self.pts_neck = builder.build_neck(pts_neck_cfg)
+            self.pts_neck = MODELS.build(pts_neck_cfg)
         else:
             self.pts_neck = None
 
