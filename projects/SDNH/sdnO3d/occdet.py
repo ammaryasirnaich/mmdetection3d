@@ -1,17 +1,20 @@
 # mm3d/models/detectors/occupancy_detector.py
+from collections import OrderedDict
+from copy import deepcopy
+from typing import Dict, List, Optional, Tuple
 
-from typing import List, Tuple, Union
-
+import numpy as np
 import torch
-from mmengine.structures import InstanceData
+import torch.distributed as dist
+from mmengine.utils import is_list_of
+from torch import Tensor
+from torch.nn import functional as F
 
-from mmdet3d.models.detectors import Base3DDetector
-from mmdet3d.models.layers.fusion_layers.point_fusion import point_sample
-from mmdet3d.registry import MODELS, TASK_UTILS
-from mmdet3d.structures.bbox_3d import get_proj_mat_by_coord_type
-from mmdet3d.structures.det3d_data_sample import SampleList
-from mmdet3d.utils import ConfigType, OptConfigType, OptInstanceList
-
+from mmdet3d.models import Base3DDetector
+from mmdet3d.registry import MODELS
+from mmdet3d.structures import Det3DDataSample
+from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
+from .ops import Voxelization
 
 
 
