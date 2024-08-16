@@ -1,22 +1,16 @@
 _base_ = [
-     '../_base_/models/pointpillars_hv_fpn_nus.py',
+    #  '../_base_/models/pointpillars_hv_fpn_nus.py',
+     '../_base_/models/convit3D_kitti.py',
     # '../_base_/models/convit3D_waymo.py',
-    '../_base_/datasets/nus-3d.py'
+    '../_base_/datasets/nus-3d.py',
+     '../_base_/schedules/schedule-2x.py'
 ]
 
 
-# _base_ = [
-#     '../_base_/models/pointpillars_hv_fpn_nus.py',
-#     '../_base_/datasets/nus-3d.py',
-#     '../_base_/schedules/schedule-2x.py',
-#     '../_base_/default_runtime.py',
-# ]
-
+dataset_type = 'NuScenesDataset'
+# pointcloudchannel=5
 point_cloud_range = [-50, -50, -5, 50, 50, 3]
 voxel_size = [0.25, 0.25, 8]
-
-backend_args = None
-
 
 
 # train_pipeline = [
@@ -38,26 +32,19 @@ backend_args = None
 #                 scale_ratio_range=[1., 1.],
 #                 translation_std=[0, 0, 0]),
 #             dict(type='RandomFlip3D'),
-#             dict(type='PointSample', num_points=32768),
 #             dict(
-#                 type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+#                 type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+#                 dict(type='PointSample', num_points=32768),
 #         ]),
 #     dict(type='Pack3DDetInputs', keys=['points'])
 # ]
 
 
 
-# train_dataloader = dict(
-#     batch_size=4, dataset=dict(pipeline=train_pipeline ))
-# test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-
-
 '''
 Log settings
 '''
 default_scope = 'mmdet3d'
-
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
@@ -85,31 +72,16 @@ epoch_num = 80
 
 # optimizer
 resume = True
-lr = 0.002
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=0.002, weight_decay=0.0),
-    clip_grad=dict(max_norm=35, norm_type=2))
-param_scheduler = [
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=80,
-        by_epoch=True,
-        milestones=[
-            45,
-            60,
-        ],
-        gamma=0.1),
-]
-
-
 # training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=40)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-auto_scale_lr = dict(enable=False, base_batch_size=32)
+# train_dataloader = dict(
+#     batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+# test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+
 
 env_cfg = dict(
     cudnn_benchmark=False,
@@ -118,10 +90,10 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = './work_dirs/convit3dNusence'
+work_dir = './work_dirs/convit3dNusence_21_june'
 load_from = None
 resume = True
-resume_from = './work_dirs/convit3dNusence'
+resume_from = './work_dirs/convit3dNusence_21_june'
 workflow = [('train', 1),('val', 1)]  
   
 

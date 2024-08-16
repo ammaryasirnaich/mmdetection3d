@@ -249,7 +249,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             normalized_intensity = (intensity - np.min(intensity)) / (np.max(intensity) - np.min(intensity))
 
             # Map normalized intensity values to colors using a colormap (e.g., 'plasma' colormap)
-            color_map = plt.get_cmap('plasma')
+            color_map = plt.get_cmap('Greys')  # 'Greys,plasma'
             points_colors = color_map(normalized_intensity)[:, :3]  # Exclude alpha channel
         elif mode == 'xyzrgb':
             pcd.points = o3d.utility.Vector3dVector(points[:, :3])
@@ -888,14 +888,15 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 self.view_control.convert_from_pinhole_camera_parameters(
                     self.view_port)
                 
-            			
+            ## setting the open3d scene view			
             field_of_view = 90.0
-            front = [ 0.31215258736307588, -0.81399575814013969, 0.48986903140777999 ]
-            lookat =  [ 4.132611324527165, 5.5430605624474696, 3.8225081447928373 ]
-            up = [ -0.22829942339393036, 0.43625322647934289, 0.87038066135706516 ]
+            front = [ 0.35280563112365365, -0.7357615405095248, 0.57808575674763996 ]
+            lookat = [ 2.8992433768999648, 4.4243453992099688, 2.6482333890260148 ]
+            up = [ -0.25920238514439076, 0.51678582987742161, 0.81593291977549443 ]
             zoom = 0.10000000000000006
                         
-            # Apply the parameters
+           
+
       
             self.view_control = self.o3d_vis.get_view_control()
             self.view_control.set_front(front)
@@ -903,6 +904,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
             self.view_control.set_up(up)
             self.view_control.set_zoom(zoom)
             self.view_control.change_field_of_view(field_of_view)
+                
+                
+            
                 
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
@@ -985,7 +989,8 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                        vis_task: str = 'mono_det',
                        pred_score_thr: float = 0.3,
                        step: int = 0,
-                       show_pcd_rgb: bool = False) -> None:
+                       show_pcd_rgb: bool = False,
+                       attnt_points: o3d.geometry.TriangleMesh= None) -> None:
         """Draw datasample and save to all backends.
 
         - If GT and prediction are plotted at the same time, they are displayed
@@ -1046,11 +1051,7 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
         
         self.dataPack = dict()
 
-        # if draw_gt and data_sample is not None:
-        #     if 'gt_instances_3d' in data_sample:
-        #         gt_data_3d = self._draw_instances_3d(
-        #             data_input, data_sample.gt_instances_3d,
-        #             data_sample.metainfo, vis_task, show_pcd_rgb, palette)
+
         if self.draw_gt and data_sample is not None:
             if 'gt_instances_3d' in data_sample:
                 gt_instances_3d = data_sample.gt_instances_3d
@@ -1127,7 +1128,12 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                 self._draw_pts_sem_seg(data_input['points'],
                                        data_sample.pred_pts_seg, palette,
                                        keep_index)
-
+        
+        
+        ## atting attention points
+        if attnt_points is not None:
+            self.o3d_vis.add_geometry(attnt_points)
+        
         # monocular 3d object detection image
         if vis_task in ['mono_det', 'multi-modality_det']:
             if gt_data_3d is not None and pred_data_3d is not None:

@@ -56,9 +56,9 @@ model = dict(
                 mlp_ratio=4,
                 qkv_bias=False ,
                 qk_scale=None ,
-                drop_rate=0,
+                drop_rate=0.0,
                 attn_drop_rate=0,
-                drop_path_rate=0, 
+                drop_path_rate=0.1, 
                 hybrid_backbone=None ,
                 global_pool=None,
                 local_up_to_layer=10 ,  #Consider how many layers to work for local feature aggregation
@@ -106,10 +106,9 @@ model = dict(
             bias=True),
         
       objectness_loss=dict(
-            type='mmdet.FocalLoss',
+            type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
+            reduction='sum',
             loss_weight=1.0),
       
         center_loss=dict(

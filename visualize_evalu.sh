@@ -7,4 +7,11 @@
 # python demo/pcd_demo.py /workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000003.bin configs/pointpillars/pointpillars_hv_secfpn_8xb6-160e_kitti-3d-car.py /workspace/data/kitti_detection/models_to_test/pointpiller/hv_pointpillars_secfpn_6x8_160e_kitti-3d-3class_20220301_150306-37dc2420.pth --out-dir ./
 
 
-python demo/pcd_demo.py /workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000009.bin /workspace/data/kitti_detection/model_output_results/intensityAware_35pnt/intensityNetKitti_all_objects.py /workspace/data/kitti_detection/model_output_results/intensityAware_35pnt/epoch_80.pth --show --out-dir ./working_dir/IVEF
+# python demo/pcd_demo.py /workspace/data/kitti_detection/kitti/testing/velodyne_reduced/000009.bin /workspace/data/kitti_detection/model_output_results/intensityAware_35pnt/intensityNetKitti_all_objects.py /workspace/data/kitti_detection/model_output_results/intensityAware_35pnt/epoch_80.pth --show --out-dir ./working_dir/IVEF
+
+
+
+CONFIG_FILE="/import/digitreasure/ammar_workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_nusence.py"
+# CONFIG_FILE="/import/digitreasure/ammar_workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py"
+GPU_NUM=2
+CUDA_VISIBLE_DEVICES=0,1 ./tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM}

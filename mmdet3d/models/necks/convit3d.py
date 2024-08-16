@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from .bev import bev_3D_to_2D
+import copy
+import numpy
 
 
 class Mlp(nn.Module):
@@ -118,6 +120,7 @@ class GPSA(nn.Module):
         # print(f" x attn shape {x.shape}")
         attn = self.proj(attn) 
         attn = self.proj_drop(attn)
+        self.atttion_map = copy.deepcopy(attn)
 
         return attn
 
@@ -285,10 +288,6 @@ class GPSA(nn.Module):
         self.pos_proj.weight.data[:,3] = wdata[:self.num_heads,3]
 
         
-        
-
-
-
 class MHSA(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
@@ -321,7 +320,7 @@ class MHSA(nn.Module):
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)
-        
+        self.atttion_map = copy.deepcopy(attn)
         return attn
     
 class Block(nn.Module):
@@ -421,6 +420,7 @@ class VisionTransformer(nn.Module):
         self.pos_drop = nn.Dropout(p=drop_rate)
         self.i = 0
         self.rpn_feature_set = rpn_feature_set
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         
         self.blocks = nn.ModuleList([
             Block(
@@ -436,12 +436,12 @@ class VisionTransformer(nn.Module):
             for i in range(self.depth)])
         
         self.norm = norm_layer(embed_dim)
+        
 
         #Transformer head
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
+        trunc_normal_(self.cls_token, std=.02)
         self.transformer_head.apply(self._init_weights)
-        
-        
         self.coordrefine = CoordinateRefinementModule(self.num_heads)
 
     def _init_weights(self, m):
@@ -457,13 +457,21 @@ class VisionTransformer(nn.Module):
     def forward_features(self, x, voxel_coors):
         # print("input to visualTransformer shape", x.shape)
         # print("voxel_coors to visualTransformer shape", voxel_coors.shape)
+        B=x.shape[0]
         x = x.permute(0,2,1)
-        # x = self.pos_drop(x)            
+        # x = self.pos_drop(x)
+        cls_tokens = self.cls_token.expand(B, -1, -1)        
         for u,blk in enumerate(self.blocks):
+            if u == self.local_up_to_layer :
+                x = torch.cat((cls_tokens, x), dim=1)
             # print("input after permute", x.shape)
             x = blk(x,voxel_coors)
+        
+       
+        torch.save(x,'/workspace/data/kitti_detection/attention_map.pt')
+        torch.save(voxel_coors,'/workspace/data/kitti_detection/voxel_coord.pt')
+        
         x = self.norm(x)
-
         return x
 
     def forward(self, feat_dict):
@@ -472,7 +480,7 @@ class VisionTransformer(nn.Module):
         attend= self.forward_features(x, voxel_coors)
         #pass through transformer head
         # print("attend output shape before head",attend.shape)
-        attend = self.transformer_head(attend)  
+        attend = self.transformer_head(attend)   
         # create new feature 
         
         if (self.rpn_feature_set):
@@ -489,7 +497,9 @@ class VisionTransformer(nn.Module):
             return [x]
         else:
             feat_dict["sa_features"][-1] = attend.permute(0,2,1).contiguous()
-            
+        
+        self.voxel_coord = voxel_coors
+
         # print("fp_features shape",feat_dict["fp_features"].shape)
         # print("fp_xyz shape",feat_dict["fp_xyz"].shape)
         # print("attend output shape after permute",feat_dict["sa_features"][-1].shape)
@@ -497,7 +507,7 @@ class VisionTransformer(nn.Module):
     
     
     
-    
+'''
 ###### code analysis has to be done    
 class CoordinateRefinementModule(nn.Module):
     def __init__(self, num_attention_heads):
@@ -535,5 +545,5 @@ class CoordinateRefinementModule(nn.Module):
         ).squeeze(1)  # (batch_size, num_centroids, (features)3)
 
         return refined_centroids
-
+'''    
     

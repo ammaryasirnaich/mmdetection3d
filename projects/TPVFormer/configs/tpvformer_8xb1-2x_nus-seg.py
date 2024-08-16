@@ -4,7 +4,7 @@ custom_imports = dict(
     imports=['projects.TPVFormer.tpvformer'], allow_failed_imports=False)
 
 dataset_type = 'NuScenesSegDataset'
-data_root = 'data/nuscenes/'
+data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     pts_semantic_mask='lidarseg/v1.0-trainval',
