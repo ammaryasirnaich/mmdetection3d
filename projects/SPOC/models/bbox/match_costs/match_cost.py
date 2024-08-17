@@ -28,7 +28,7 @@ class BBox3DL1Cost(object):
         return bbox_cost * self.weight
 
 
-@MATCH_COST.register_module()
+@TASK_UTILS.register_module()
 class BBoxBEVL1Cost(object):
     def __init__(self, weight, pc_range):
         self.weight = weight
@@ -44,7 +44,7 @@ class BBoxBEVL1Cost(object):
         return reg_cost * self.weight
 
 
-@MATCH_COST.register_module()
+@TASK_UTILS.register_module()
 class IoU3DCost(object):
     def __init__(self, weight):
         self.weight = weight

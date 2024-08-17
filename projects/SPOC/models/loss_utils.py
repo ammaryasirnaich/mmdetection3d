@@ -100,7 +100,7 @@ class GeoScalLoss(nn.Module):
         return self.loss_weight * torch.mean(loss)
 
 
-@LOSSES.register_module()
+@MODELS.register_module()
 class SemScalLoss(nn.Module):
     def __init__(self, 
                  num_classes,
@@ -309,7 +309,8 @@ def flatten_probas(probas, labels, ignore=None):
 
 
 # https://github.com/facebookresearch/Mask2Former/blob/main/mask2former/modeling/criterion.py#L90
-@LOSSES.register_module()
+# @LOSSES.register_module()
+@MODELS.register_module()
 class Mask2FormerLoss(nn.Module):
     def __init__(self, 
                  num_classes,

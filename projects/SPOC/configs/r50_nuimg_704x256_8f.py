@@ -1,6 +1,12 @@
 dataset_type = 'NuSceneOcc'
-dataset_root = 'data/nuscenes/'
-occ_gt_root = 'data/nuscenes/occ3d'
+dataset_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+occ_gt_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/occ3d'
+
+
+custom_imports = dict(imports=['projects.SPOC.models.sparseocc'],allow_failed_imports=False)
+
+
+
 
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
@@ -12,6 +18,7 @@ img_norm_cfg = dict(
     std=[58.395, 57.120, 57.375],
     to_rgb=True
 )
+
 
 # For nuScenes we usually do 10-class detection
 det_class_names = [
@@ -218,7 +225,7 @@ checkpoint_config = dict(interval=1, max_keep_ckpts=1)
 log_config = dict(
     interval=1,
     hooks=[
-        dict(type='MyTextLoggerHook', interval=1, reset_flag=True),
+        # dict(type='MyTextLoggerHook', interval=1, reset_flag=True),
         dict(type='MyTensorboardLoggerHook', interval=500, reset_flag=True)
     ]
 )

@@ -5,4 +5,4 @@ from .sparseocc_head import SparseOccHead
 from .sparseocc_transformer import SparseOccTransformer
 from .loss_utils import *
 
-__all__ = []
+__all__ = ["SparseOcc","SparseOccHead","SparseOccTransformer"]

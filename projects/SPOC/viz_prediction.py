@@ -77,9 +77,9 @@ def main():
     importlib.import_module('loaders')
 
     # MMCV, please shut up
-    from mmengine.utils.logging import logger_initialized
-    logger_initialized['root'] = logging.Logger(__name__, logging.WARNING)
-    logger_initialized['mmengine'] = logging.Logger(__name__, logging.WARNING)
+    # from mmengine.utils.logging import logger_initialized
+    # logger_initialized['root'] = logging.Logger(__name__, logging.WARNING)
+    # logger_initialized['mmengine'] = logging.Logger(__name__, logging.WARNING)
 
     # you need one GPU
     assert torch.cuda.is_available()

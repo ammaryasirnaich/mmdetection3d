@@ -7,9 +7,14 @@ import logging
 import datetime
 import socket
 import wandb
-from mmengine.runner.hooks import HOOKS
-from mmengine.runner.hooks.logger import LoggerHook, TextLoggerHook
-from mmengine.runner.dist_utils import master_only
+# from mmengine.runner.hooks import HOOKS
+from mmengine.hooks import LoggerHook
+# from mmengine.logging import TextLoggerHook
+from mmengine.dist import master_only
+
+from mmengine.hooks import Hook
+
+from mmdet3d.registry import HOOKS
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -41,91 +46,91 @@ def backup_code(work_dir, verbose=False):
             shutil.copy2(src, dst)
 
 
-@HOOKS.register_module()
-class MyTextLoggerHook(TextLoggerHook):
-    def _log_info(self, log_dict, runner):
-        # print exp name for users to distinguish experiments
-        # at every ``interval_exp_name`` iterations and the end of each epoch
-        if runner.meta is not None and 'exp_name' in runner.meta:
-            if (self.every_n_iters(runner, self.interval_exp_name)) or (
-                    self.by_epoch and self.end_of_epoch(runner)):
-                exp_info = f'Exp name: {runner.meta["exp_name"]}'
-                runner.logger.info(exp_info)
+# @HOOKS.register_module()
+# class MyTextLoggerHook(TextLoggerHook):
+#     def _log_info(self, log_dict, runner):
+#         # print exp name for users to distinguish experiments
+#         # at every ``interval_exp_name`` iterations and the end of each epoch
+#         if runner.meta is not None and 'exp_name' in runner.meta:
+#             if (self.every_n_iters(runner, self.interval_exp_name)) or (
+#                     self.by_epoch and self.end_of_epoch(runner)):
+#                 exp_info = f'Exp name: {runner.meta["exp_name"]}'
+#                 runner.logger.info(exp_info)
 
-        # by epoch: Epoch [4][100/1000]
-        # by iter:  Iter [100/100000]
-        if self.by_epoch:
-            log_str = f'Epoch [{log_dict["epoch"]}/{runner.max_epochs}]' \
-                        f'[{log_dict["iter"]}/{len(runner.data_loader)}] '
-        else:
-            log_str = f'Iter [{log_dict["iter"]}/{runner.max_iters}] '
+#         # by epoch: Epoch [4][100/1000]
+#         # by iter:  Iter [100/100000]
+#         if self.by_epoch:
+#             log_str = f'Epoch [{log_dict["epoch"]}/{runner.max_epochs}]' \
+#                         f'[{log_dict["iter"]}/{len(runner.data_loader)}] '
+#         else:
+#             log_str = f'Iter [{log_dict["iter"]}/{runner.max_iters}] '
 
-        log_str += 'loss: %.2f, ' % log_dict['loss']
+#         log_str += 'loss: %.2f, ' % log_dict['loss']
 
-        if 'time' in log_dict.keys():
-            # MOD: skip the first iteration since it's not accurate
-            if runner.iter == self.start_iter:
-                time_sec_avg = log_dict['time']
-            else:
-                self.time_sec_tot += (log_dict['time'] * self.interval)
-                time_sec_avg = self.time_sec_tot / (runner.iter - self.start_iter)
+#         if 'time' in log_dict.keys():
+#             # MOD: skip the first iteration since it's not accurate
+#             if runner.iter == self.start_iter:
+#                 time_sec_avg = log_dict['time']
+#             else:
+#                 self.time_sec_tot += (log_dict['time'] * self.interval)
+#                 time_sec_avg = self.time_sec_tot / (runner.iter - self.start_iter)
 
-            eta_sec = time_sec_avg * (runner.max_iters - runner.iter - 1)
-            eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
-            log_str += f'eta: {eta_str}, '
-            log_str += f'time: {log_dict["time"]:.2f}s, ' \
-                        f'data: {log_dict["data_time"] * 1000:.0f}ms, '
-            # statistic memory
-            if torch.cuda.is_available():
-                log_str += f'mem: {log_dict["memory"]}M'
+#             eta_sec = time_sec_avg * (runner.max_iters - runner.iter - 1)
+#             eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
+#             log_str += f'eta: {eta_str}, '
+#             log_str += f'time: {log_dict["time"]:.2f}s, ' \
+#                         f'data: {log_dict["data_time"] * 1000:.0f}ms, '
+#             # statistic memory
+#             if torch.cuda.is_available():
+#                 log_str += f'mem: {log_dict["memory"]}M'
 
-        runner.logger.info(log_str)
+#         runner.logger.info(log_str)
 
-    def log(self, runner):
-        if 'eval_iter_num' in runner.log_buffer.output:
-            # this doesn't modify runner.iter and is regardless of by_epoch
-            cur_iter = runner.log_buffer.output.pop('eval_iter_num')
-        else:
-            cur_iter = self.get_iter(runner, inner_iter=True)
+#     def log(self, runner):
+#         if 'eval_iter_num' in runner.log_buffer.output:
+#             # this doesn't modify runner.iter and is regardless of by_epoch
+#             cur_iter = runner.log_buffer.output.pop('eval_iter_num')
+#         else:
+#             cur_iter = self.get_iter(runner, inner_iter=True)
 
-        log_dict = {
-            'mode': self.get_mode(runner),
-            'epoch': self.get_epoch(runner),
-            'iter': cur_iter
-        }
+#         log_dict = {
+#             'mode': self.get_mode(runner),
+#             'epoch': self.get_epoch(runner),
+#             'iter': cur_iter
+#         }
 
-        # only record lr of the first param group
-        cur_lr = runner.current_lr()
-        if isinstance(cur_lr, list):
-            log_dict['lr'] = cur_lr[0]
-        else:
-            assert isinstance(cur_lr, dict)
-            log_dict['lr'] = {}
-            for k, lr_ in cur_lr.items():
-                assert isinstance(lr_, list)
-                log_dict['lr'].update({k: lr_[0]})
+#         # only record lr of the first param group
+#         cur_lr = runner.current_lr()
+#         if isinstance(cur_lr, list):
+#             log_dict['lr'] = cur_lr[0]
+#         else:
+#             assert isinstance(cur_lr, dict)
+#             log_dict['lr'] = {}
+#             for k, lr_ in cur_lr.items():
+#                 assert isinstance(lr_, list)
+#                 log_dict['lr'].update({k: lr_[0]})
 
-        if 'time' in runner.log_buffer.output:
-            # statistic memory
-            if torch.cuda.is_available():
-                log_dict['memory'] = self._get_max_memory(runner)
+#         if 'time' in runner.log_buffer.output:
+#             # statistic memory
+#             if torch.cuda.is_available():
+#                 log_dict['memory'] = self._get_max_memory(runner)
 
-        log_dict = dict(log_dict, **runner.log_buffer.output)
+#         log_dict = dict(log_dict, **runner.log_buffer.output)
 
-        # MOD: disable writing to files
-        # self._dump_log(log_dict, runner)
-        self._log_info(log_dict, runner)
+#         # MOD: disable writing to files
+#         # self._dump_log(log_dict, runner)
+#         self._log_info(log_dict, runner)
 
-        return log_dict
+#         return log_dict
 
-    def after_train_epoch(self, runner):
-        if 'eval_iter_num' in runner.log_buffer.output:
-            runner.log_buffer.output.pop('eval_iter_num')
+#     def after_train_epoch(self, runner):
+#         if 'eval_iter_num' in runner.log_buffer.output:
+#             runner.log_buffer.output.pop('eval_iter_num')
 
-        if runner.log_buffer.ready:
-            metrics = self.get_loggable_tags(runner)
-            runner.logger.info('--- Evaluation Results ---')
-            runner.logger.info('RayIoU: %.4f' % metrics['val/RayIoU'])
+#         if runner.log_buffer.ready:
+#             metrics = self.get_loggable_tags(runner)
+#             runner.logger.info('--- Evaluation Results ---')
+#             runner.logger.info('RayIoU: %.4f' % metrics['val/RayIoU'])
 
 
 @HOOKS.register_module()

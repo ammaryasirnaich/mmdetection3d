@@ -10,7 +10,6 @@ from mmdet3d.registry import MODELS
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from .utils import pad_multiple, GpuPhotoMetricDistortion
 
-
 @MODELS.register_module()
 class SparseOcc(MVXTwoStageDetector):
     def __init__(self,

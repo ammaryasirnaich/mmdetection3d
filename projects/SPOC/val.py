@@ -8,11 +8,15 @@ import torch.distributed
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from mmengine import Config
-from mmengine.model import MMDataParallel, MMDistributedDataParallel
+# from mmengine.model import MMDataParallel, MMDistributedDataParallel
+from mmengine.model import MMDistributedDataParallel
+from torch.nn import DataParallel
 from mmengine.runner import load_checkpoint
-from mmdet.apis import set_random_seed, multi_gpu_test, single_gpu_test
-from mmdet3d.datasets import build_dataset, build_dataloader
-from mmdet3d.models import build_model
+# from mmdet.apis import set_random_seed, multi_gpu_test, single_gpu_test
+# from mmdet3d.datasets import build_dataset, build_dataloader
+# from mmdet3d.models import build_model
+
+from mmdet3d.registry import MODELS
 
 
 def evaluate(dataset, results):
@@ -42,9 +46,9 @@ def main():
     importlib.import_module('loaders')
 
     # MMCV, please shut up
-    from mmengine.utils.logging import logger_initialized
-    logger_initialized['root'] = logging.Logger(__name__, logging.WARNING)
-    logger_initialized['mmengine'] = logging.Logger(__name__, logging.WARNING)
+    # from mmengine.utils.logging import logger_initialized
+    # logger_initialized['root'] = logging.Logger(__name__, logging.WARNING)
+    # logger_initialized['mmengine'] = logging.Logger(__name__, logging.WARNING)
 
     # you need GPUs
     assert torch.cuda.is_available()
@@ -72,12 +76,12 @@ def main():
         dist.init_process_group('nccl', init_method='env://')
 
     logging.info('Setting random seed: 0')
-    set_random_seed(0, deterministic=True)
+    # set_random_seed(0, deterministic=True)
     cudnn.benchmark = True
 
     logging.info('Loading validation set from %s' % cfgs.data.val.data_root)
-    val_dataset = build_dataset(cfgs.data.val)
-    val_loader = build_dataloader(
+    val_dataset = MODELS.build(cfgs.data.val)
+    val_loader = MODELS.build(
         val_dataset,
         samples_per_gpu=args.batch_size,
         workers_per_gpu=cfgs.data.workers_per_gpu,
@@ -88,13 +92,13 @@ def main():
     )
 
     logging.info('Creating model: %s' % cfgs.model.type)
-    model = build_model(cfgs.model)
+    model = MODELS.build(cfgs.model)
     model.cuda()
 
     if world_size > 1:
         model = MMDistributedDataParallel(model, [local_rank], broadcast_buffers=False)
     else:
-        model = MMDataParallel(model, [0])
+        model = MMDistributedDataParallel(model, [0])
 
     if os.path.isfile(args.weights):
         logging.info('Loading checkpoint from %s' % args.weights)
@@ -103,13 +107,13 @@ def main():
             logger=logging.Logger(__name__, logging.ERROR)
         )
 
-    if world_size > 1:
-        results = multi_gpu_test(model, val_loader, gpu_collect=True)
-    else:
-        results = single_gpu_test(model, val_loader)
+    # if world_size > 1:
+    #     results = multi_gpu_test(model, val_loader, gpu_collect=True)
+    # else:
+    #     results = single_gpu_test(model, val_loader)
 
-    if local_rank == 0:
-        evaluate(val_dataset, results)
+    # if local_rank == 0:
+    #     evaluate(val_dataset, results)
 
 
 if __name__ == '__main__':
