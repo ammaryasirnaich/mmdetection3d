@@ -1,3 +1,5 @@
-from .dummy_resnet import DummyResNet
+# from .dummy_resnet import DummyTest
+from .dummy_resnet import SparseOcc
 
-__all__ = ['DummyResNet']
+
+__all__ = ['SparseOcc']

@@ -6,12 +6,13 @@ from mmengine.dist import get_dist_info
 from mmdet.utils.memory import cast_tensor_type
 # from mmengine.runner import force_fp32, auto_fp16
 # from mmdet.models import DETECTORS
-from mmdet3d.registry import MODELS
-from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
+from mmengine.registry import MODELS
+from mmdet3d.models import MVXTwoStageDetector
 from .utils import pad_multiple, GpuPhotoMetricDistortion
 
 @MODELS.register_module()
 class SparseOcc(MVXTwoStageDetector):
+    print("SparOcc called from project folder")
     def __init__(self,
                  pts_voxel_layer=None,
                  pts_voxel_encoder=None,

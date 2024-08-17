@@ -58,7 +58,7 @@ model = dict(
         img_pad_cfg=dict(size_divisor=32)),
     use_mask_camera=False,
     img_backbone=dict(
-        type='ResNet',
+        type='mmdet.ResNet',
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
@@ -68,51 +68,10 @@ model = dict(
         style='pytorch',
         with_cp=True),
     img_neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=_dim_,
         num_outs=4),
-    pts_bbox_head=dict(
-        type='SparseOccHead',
-        class_names=occ_class_names,
-        embed_dims=_dim_,
-        occ_size=occ_size,
-        pc_range=point_cloud_range,
-        transformer=dict(
-            type='SparseOccTransformer',
-            embed_dims=_dim_,
-            num_layers=_num_layers_,
-            num_frames=_num_frames_,
-            num_points=_num_points_,
-            num_groups=_num_groups_,
-            num_queries=_num_queries_,
-            num_levels=4,
-            num_classes=len(occ_class_names),
-            pc_range=point_cloud_range,
-            occ_size=occ_size,
-            topk_training=_topk_training_,
-            topk_testing=_topk_testing_),
-        loss_cfgs=dict(
-            loss_mask2former=dict(
-                type='Mask2FormerLoss',
-                num_classes=len(occ_class_names),
-                no_class_weight=0.1,
-                loss_cls_weight=2.0,
-                loss_mask_weight=5.0,
-                loss_dice_weight=5.0,
-            ),
-            loss_geo_scal=dict(
-                type='GeoScalLoss',
-                num_classes=len(occ_class_names),
-                loss_weight=1.0
-            ),
-            loss_sem_scal=dict(
-                type='SemScalLoss',
-                num_classes=len(occ_class_names),
-                loss_weight=1.0
-            )
-        ),
-    ),
 )
 
 ida_aug_conf = {

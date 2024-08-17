@@ -5,16 +5,16 @@ from mmdet3d.registry import MODELS
 from mmdet3d.models import MVXTwoStageDetector
 
 
-# @MODELS.register_module()
-# class DummyTest(ResNet):
-#     """Implements a dummy ResNet wrapper for demonstration purpose.
-#     Args:
-#         **kwargs: All the arguments are passed to the parent class.
-#     """
+@MODELS.register_module()
+class DummyTest(ResNet):
+    """Implements a dummy ResNet wrapper for demonstration purpose.
+    Args:
+        **kwargs: All the arguments are passed to the parent class.
+    """
 
-#     def __init__(self, **kwargs) -> None:
-#         print('Hello world!')
-#         super().__init__(**kwargs)
+    def __init__(self, **kwargs) -> None:
+        print('DummyTest called!')
+        super().__init__(**kwargs)
 
 
 @MODELS.register_module()
