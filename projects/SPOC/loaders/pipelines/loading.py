@@ -2,15 +2,16 @@ import os
 import mmcv
 import torch
 import numpy as np
-from mmdet.datasets import PIPELINES
+# from mmdet3d.registry import PIPELINES
+from mmdet3d.registry import TRANSFORMS
 from numpy.linalg import inv
 # from mmcv.runner import get_dist_info
 from mmengine.dist import get_dist_info
 # from mmcv.parallel import DataContainer as DC
 from mmengine.structures import BaseDataElement as DC
-# from mmdet.datasets.pipelines import to_tensor
+# from mmdet.datasets.TRANSFORMS import to_tensor
 # from mmengine.dataset.utils import to_tensor
-from mmdet.datasets.pipelines.formating import to_tensor
+from mmdet.datasets.pipeline.formating import to_tensor
 from torchvision.transforms.functional import rotate
 
 
@@ -40,7 +41,7 @@ def compose_lidar2img(ego2global_translation_curr,
     return lidar2img
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadMultiViewImageFromMultiSweeps(object):
     def __init__(self,
                  sweeps_num=5,
@@ -170,7 +171,7 @@ class LoadMultiViewImageFromMultiSweeps(object):
             return self.load_offline(results)
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class LoadOccGTFromFile(object):
     def __init__(self, num_classes=18, inst_class_ids=[]):
         self.num_classes = num_classes
@@ -245,8 +246,8 @@ class LoadOccGTFromFile(object):
         return results
 
 
-# https://github.com/HuangJunJie2017/BEVDet/blob/58c2587a8f89a1927926f0bdb6cde2917c91a9a5/mmdet3d/datasets/pipelines/loading.py#L1177
-@PIPELINES.register_module()
+# https://github.com/HuangJunJie2017/BEVDet/blob/58c2587a8f89a1927926f0bdb6cde2917c91a9a5/mmdet3d/datasets/TRANSFORMS/loading.py#L1177
+@TRANSFORMS.register_module()
 class BEVAug(object):
     def __init__(self, bda_aug_conf, classes, is_train=True):
         self.bda_aug_conf = bda_aug_conf

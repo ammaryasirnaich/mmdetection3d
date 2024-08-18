@@ -3,10 +3,10 @@ import torch
 import numpy as np
 from PIL import Image
 from numpy import random
-from mmdet.datasets import PIPELINES
+# from mmdet3d.registry import PIPELINES
+from mmdet3d.registry import TRANSFORMS
 
-
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class PadMultiViewImage(object):
     """Pad the multi-view image.
     There are two padding modes: (1) pad to a fixed size and (2) pad to the
@@ -65,7 +65,7 @@ class PadMultiViewImage(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class NormalizeMultiviewImage(object):
     """Normalize the image.
     Added key is "img_norm_cfg".
@@ -113,7 +113,7 @@ class NormalizeMultiviewImage(object):
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class PhotoMetricDistortionMultiViewImage:
     """Apply photometric distortion to image sequentially, every transformation
     is applied with a probability of 0.5. The position of random contrast is in
@@ -215,7 +215,7 @@ class PhotoMetricDistortionMultiViewImage:
         return repr_str
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class RandomTransformImage(object):
     def __init__(self, ida_aug_conf=None, training=True):
         self.ida_aug_conf = ida_aug_conf
@@ -341,7 +341,7 @@ class RandomTransformImage(object):
         return resize, resize_dims, crop, flip, rotate
 
 
-@PIPELINES.register_module()
+@TRANSFORMS.register_module()
 class GlobalRotScaleTransImage(object):
     def __init__(self,
                  rot_range=[-0.3925, 0.3925],

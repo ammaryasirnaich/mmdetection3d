@@ -4,7 +4,7 @@ import glob
 import torch
 import numpy as np
 from tqdm import tqdm
-from mmdet.datasets import DATASETS
+from mmdet3d.registry import DATASETS
 from mmdet3d.datasets import NuScenesDataset
 from nuscenes.eval.common.utils import Quaternion
 from nuscenes.utils.geometry_utils import transform_matrix

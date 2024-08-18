@@ -234,19 +234,27 @@ test_dataloader = dict(
     ),
 )
 
-train_dataloader = dict(
-    dataset=dict(
-        dataset=dict(pipeline=train_pipeline, modality=input_modality)))
-val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, modality=input_modality))
-test_dataloader = val_dataloader
+# train_dataloader = dict(
+#     dataset=dict(
+#         dataset=dict(pipeline=train_pipeline, modality=input_modality)))
+# val_dataloader = dict(
+#     dataset=dict(pipeline=test_pipeline, modality=input_modality))
+# test_dataloader = val_dataloader
 
+
+val_evaluator = dict(
+    type='NuScenesMetric',
+    data_root=dataset_root,
+    ann_file=dataset_root + 'nuscenes_infos_val.pkl',
+    metric='bbox',
+    backend_args=backend_args)
+test_evaluator = val_evaluator
 
 
 
 # runtime settings
 train_cfg = dict(by_epoch=True, max_epochs=24, val_interval=1)
-val_cfg = dict()
+val_cfg = dict(type='ValLoop')
 test_cfg = dict()
 
 
