@@ -5,9 +5,10 @@ from PIL import Image
 from numpy import random
 # from mmdet3d.registry import PIPELINES
 from mmdet3d.registry import TRANSFORMS
+from mmcv.transforms.base import BaseTransform
 
 @TRANSFORMS.register_module()
-class PadMultiViewImage(object):
+class PadMultiViewImage(BaseTransform):   #object
     """Pad the multi-view image.
     There are two padding modes: (1) pad to a fixed size and (2) pad to the
     minimum size that is divisible by some number.
@@ -66,7 +67,7 @@ class PadMultiViewImage(object):
 
 
 @TRANSFORMS.register_module()
-class NormalizeMultiviewImage(object):
+class NormalizeMultiviewImage(BaseTransform):
     """Normalize the image.
     Added key is "img_norm_cfg".
     Args:
@@ -114,7 +115,7 @@ class NormalizeMultiviewImage(object):
 
 
 @TRANSFORMS.register_module()
-class PhotoMetricDistortionMultiViewImage:
+class PhotoMetricDistortionMultiViewImage(BaseTransform):
     """Apply photometric distortion to image sequentially, every transformation
     is applied with a probability of 0.5. The position of random contrast is in
     second or second to last.
@@ -216,7 +217,7 @@ class PhotoMetricDistortionMultiViewImage:
 
 
 @TRANSFORMS.register_module()
-class RandomTransformImage(object):
+class RandomTransformImage(BaseTransform):
     def __init__(self, ida_aug_conf=None, training=True):
         self.ida_aug_conf = ida_aug_conf
         self.training = training
@@ -342,7 +343,7 @@ class RandomTransformImage(object):
 
 
 @TRANSFORMS.register_module()
-class GlobalRotScaleTransImage(object):
+class GlobalRotScaleTransImage(BaseTransform):
     def __init__(self,
                  rot_range=[-0.3925, 0.3925],
                  scale_ratio_range=[0.95, 1.05],
