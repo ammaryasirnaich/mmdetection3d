@@ -5,7 +5,7 @@ occ_gt_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nus
 
 custom_imports = dict(imports=['projects.SPOC.models'],allow_failed_imports=False)
 
-
+backend_args = None
 
 
 # If point cloud range is changed, the models should also change their point
@@ -112,9 +112,16 @@ test_pipeline = [
          meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar'))
 ]
 
-data = dict(
-    workers_per_gpu=8,
-    train=dict(
+
+
+batch_size = 8
+
+# Configuration for Train Dataloader
+train_dataloader = dict(
+    batch_size=batch_size,  # Set appropriate batch size
+    num_workers=8,
+    shuffle=True,
+    dataset=dict(
         type=dataset_type,
         data_root=dataset_root,
         occ_gt_root=occ_gt_root,
@@ -122,9 +129,16 @@ data = dict(
         pipeline=train_pipeline,
         classes=det_class_names,
         modality=input_modality,
-        test_mode=False
+        test_mode=False,
     ),
-    val=dict(
+)
+
+# Configuration for Validation Dataloader
+val_dataloader = dict(
+    batch_size=1,  # Set appropriate batch size
+    num_workers=8,
+    shuffle=False,
+    dataset=dict(
         type=dataset_type,
         data_root=dataset_root,
         occ_gt_root=occ_gt_root,
@@ -132,9 +146,16 @@ data = dict(
         pipeline=test_pipeline,
         classes=det_class_names,
         modality=input_modality,
-        test_mode=True
+        test_mode=True,
     ),
-    test=dict(
+)
+
+# Configuration for Test Dataloader
+test_dataloader = dict(
+    batch_size=4,  # Set appropriate batch size
+    num_workers=8,
+    shuffle=False,
+    dataset=dict(
         type=dataset_type,
         data_root=dataset_root,
         occ_gt_root=occ_gt_root,
@@ -142,9 +163,26 @@ data = dict(
         pipeline=test_pipeline,
         classes=det_class_names,
         modality=input_modality,
-        test_mode=True
+        test_mode=True,
     ),
 )
+
+train_dataloader = dict(
+    dataset=dict(
+        dataset=dict(pipeline=train_pipeline, modality=input_modality)))
+val_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, modality=input_modality))
+test_dataloader = val_dataloader
+
+
+
+
+# runtime settings
+train_cfg = dict(by_epoch=True, max_epochs=24, val_interval=1)
+val_cfg = dict()
+test_cfg = dict()
+
+
 
 optimizer = dict(
     type='AdamW',
@@ -168,7 +206,7 @@ lr_config = dict(
     gamma=0.2
 )
 total_epochs = 24
-batch_size = 8
+
 
 # load pretrained weights
 load_from = 'pretrain/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'

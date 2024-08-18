@@ -187,6 +187,9 @@ data = dict(
     ),
 )
 
+
+
+
 optimizer = dict(
     type='AdamW',
     lr=5e-4,
@@ -197,6 +200,7 @@ optimizer = dict(
         }),
     weight_decay=0.01
 )
+
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 
 lr_config = dict(
@@ -208,8 +212,7 @@ lr_config = dict(
     step=[22, 24],
     gamma=0.2
 )
-total_epochs = 24
-batch_size = 8
+
 
 # load pretrained weights
 load_from = 'pretrain/cascade_mask_rcnn_r50_fpn_coco-20e_20e_nuim_20201009_124951-40963960.pth'
