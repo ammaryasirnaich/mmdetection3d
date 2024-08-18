@@ -16,7 +16,8 @@ from configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
 from configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
 
 @DATASETS.register_module()
-class NuSceneOcc(NuScenesDataset):    
+class NuSceneOcc(NuScenesDataset):
+    print("NuSceneOcc is called")    
     def __init__(self, occ_gt_root, *args, **kwargs):
         super().__init__(filter_empty_gt=False, *args, **kwargs)
         self.occ_gt_root = occ_gt_root

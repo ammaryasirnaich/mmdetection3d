@@ -32,10 +32,10 @@ occ_class_names = [
 ]
 
 
-metainfo = dict(classes=det_class_names)
 dataset_type = 'NuSceneOcc'
-dataset_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
-occ_gt_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/occ3d'
+dataset_root = '/workspace/data/nusense/mini_dataset/'
+occ_gt_root = '/workspace/data/nusense/mini_dataset/occ3d'
+metainfo = dict(classes=det_class_names)
 backend_args = None
 
 data_prefix = dict(
@@ -68,6 +68,7 @@ _topk_training_ = [4000, 16000, 64000]
 _topk_testing_ = [2000, 8000, 32000]
 
 custom_imports = dict(imports=['projects.SPOC.models'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.SPOC.loaders'])
 
 
 model = dict(
