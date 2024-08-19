@@ -7,7 +7,7 @@ from mmdet.utils.memory import cast_tensor_type
 # from mmengine.runner import force_fp32, auto_fp16
 # from mmdet.models import DETECTORS
 from mmengine.registry import MODELS
-from mmdet3d.models import MVXTwoStageDetector
+from mmdet3d.models.detectors import MVXTwoStageDetector
 from .utils import pad_multiple, GpuPhotoMetricDistortion
 
 @MODELS.register_module()

@@ -32,10 +32,11 @@ occ_class_names = [
 ]
 
 
-dataset_type = 'NuSceneOcc'
+
+metainfo = dict(classes=det_class_names)
+dataset_type = 'NuScenesDataset'
 dataset_root = '/workspace/data/nusense/mini_dataset/'
 occ_gt_root = '/workspace/data/nusense/mini_dataset/occ3d'
-metainfo = dict(classes=det_class_names)
 backend_args = None
 
 data_prefix = dict(
@@ -47,7 +48,7 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-
+input_modality = dict(use_lidar=True, use_camera=False)
 
 
 input_modality = dict(
@@ -68,7 +69,7 @@ _topk_training_ = [4000, 16000, 64000]
 _topk_testing_ = [2000, 8000, 32000]
 
 custom_imports = dict(imports=['projects.SPOC.models'],allow_failed_imports=False)
-custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.SPOC.loaders.nuscenes_occ_dataset'],allow_failed_imports=False)
 
 
 model = dict(

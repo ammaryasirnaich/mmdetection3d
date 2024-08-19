@@ -4,6 +4,7 @@ import glob
 import torch
 import numpy as np
 from tqdm import tqdm
+
 from mmdet3d.registry import DATASETS
 from mmdet3d.datasets import NuScenesDataset
 from nuscenes.eval.common.utils import Quaternion
@@ -16,9 +17,9 @@ from .ego_pose_dataset import EgoPoseDataset
 
 from ..configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
 from ..configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
-import mmengine
 
-@DATASETS.register_module(name='NuSceneOcc')
+
+@DATASETS.register_module()
 class NuSceneOcc(NuScenesDataset):
     print("NuSceneOcc is called")    
     def __init__(self, occ_gt_root, *args, **kwargs):
