@@ -3,7 +3,6 @@ import torch
 import numpy as np
 from PIL import Image
 from numpy import random
-# from mmdet3d.registry import PIPELINES
 from mmdet3d.registry import TRANSFORMS
 from mmcv.transforms.base import BaseTransform
 

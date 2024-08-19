@@ -2,8 +2,8 @@ import os
 import mmcv
 import torch
 import numpy as np
-# from mmdet3d.registry import PIPELINES
 from mmdet3d.registry import TRANSFORMS
+
 from numpy.linalg import inv
 # from mmcv.runner import get_dist_info
 from mmengine.dist import get_dist_info
@@ -11,8 +11,48 @@ from mmengine.dist import get_dist_info
 from mmengine.structures import BaseDataElement as DC
 # from mmdet.datasets.TRANSFORMS import to_tensor
 # from mmengine.dataset.utils import to_tensor
-from mmdet.datasets.pipeline.formating import to_tensor
+# from mmdet.datasets.pipeline.formating import to_tensore
 from torchvision.transforms.functional import rotate
+from typing import List, Sequence, Union
+from numpy import dtype
+import mmengine
+
+
+
+
+def to_tensor(
+    data: Union[torch.Tensor, np.ndarray, Sequence, int,
+                float]) -> torch.Tensor:
+    """Convert objects of various python types to :obj:`torch.Tensor`.
+
+    Supported types are: :class:`numpy.ndarray`, :class:`torch.Tensor`,
+    :class:`Sequence`, :class:`int` and :class:`float`.
+
+    Args:
+        data (torch.Tensor | numpy.ndarray | Sequence | int | float): Data to
+            be converted.
+
+    Returns:
+        torch.Tensor: the converted data.
+    """
+
+    if isinstance(data, torch.Tensor):
+        return data
+    elif isinstance(data, np.ndarray):
+        if data.dtype is dtype('float64'):
+            data = data.astype(np.float32)
+        return torch.from_numpy(data)
+    elif isinstance(data, Sequence) and not mmengine.is_str(data):
+        return torch.tensor(data)
+    elif isinstance(data, int):
+        return torch.LongTensor([data])
+    elif isinstance(data, float):
+        return torch.FloatTensor([data])
+    else:
+        raise TypeError(f'type {type(data)} cannot be converted to tensor.')
+
+
+
 
 
 def compose_lidar2img(ego2global_translation_curr,

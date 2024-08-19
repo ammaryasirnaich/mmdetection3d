@@ -68,7 +68,7 @@ _topk_training_ = [4000, 16000, 64000]
 _topk_testing_ = [2000, 8000, 32000]
 
 custom_imports = dict(imports=['projects.SPOC.models'],allow_failed_imports=False)
-custom_imports = dict(imports=['projects.SPOC.loaders'])
+custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
 
 
 model = dict(
