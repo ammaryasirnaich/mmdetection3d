@@ -5,10 +5,10 @@ import argparse
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from loaders.ray_metrics import main_rayiou
-from loaders.ego_pose_dataset import EgoPoseDataset
-from configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
-from configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
+from .configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
+from .configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
+from .loaders.ray_metrics import main_rayiou
+from .loaders.ego_pose_dataset import EgoPoseDataset
 
 
 def main(args):

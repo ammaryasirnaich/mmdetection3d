@@ -1,26 +1,43 @@
+from mmdet3d.datasets import NuScenesDataset
+from mmdet3d.registry import DATASETS
 import os
 import mmcv
 import glob
 import torch
 import numpy as np
 from tqdm import tqdm
-
-from mmdet3d.registry import DATASETS
-from mmdet3d.datasets import NuScenesDataset
-from nuscenes.eval.common.utils import Quaternion
-from nuscenes.utils.geometry_utils import transform_matrix
 from torch.utils.data import DataLoader
 
-from .ray_metrics import main_rayiou, main_raypq
-from  ..models.utils import sparse2dense
-from .ego_pose_dataset import EgoPoseDataset
 
-from ..configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
-from ..configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
+
+from projects.SPOC.loaders.ray_metrics import main_rayiou, main_raypq
+from projects.SPOC.models.utils import sparse2dense
+from projects.SPOC.loaders.ego_pose_dataset import EgoPoseDataset
+
+from projects.SPOC.configs.r50_nuimg_704x256_8f import occ_class_names as occ3d_class_names
+from projects.SPOC.configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_class_names
+import glob
+from nuscenes.eval.common.utils import Quaternion
+from nuscenes.utils.geometry_utils import transform_matrix
+import numpy as np
+
+# For nuScenes we usually do 10-class detection
+det_class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+
+occ_class_names = [
+    'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
+    'motorcycle', 'pedestrian', 'traffic_cone', 'trailer', 'truck',
+    'driveable_surface', 'other_flat', 'sidewalk',
+    'terrain', 'manmade', 'vegetation', 'free'
+]
 
 
 @DATASETS.register_module()
-class Mycustome(NuScenesDataset): 
+class NuSceneOcc(NuScenesDataset):
+    print("NuSceneOcc is called")    
     def __init__(self, occ_gt_root, *args, **kwargs):
         super().__init__(filter_empty_gt=False, *args, **kwargs)
         self.occ_gt_root = occ_gt_root

@@ -1,7 +1,7 @@
 _base_ = ['./nusceneocc_dataset.py']
 
 
-custom_imports = dict(imports=['projects.SPOC.models'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.SPOC.models.sparseocc'],allow_failed_imports=False)
 
 
 point_cloud_range = [-40, -40, -1.0, 40, 40, 5.4]
@@ -47,14 +47,10 @@ model = dict(
         num_outs=4),
 )
 
-
-
-
 # runtime settings
 train_cfg = dict(by_epoch=True, max_epochs=24, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict()
-
 
 # Optimizer Configuration
 optim_wrapper = dict(
@@ -67,7 +63,6 @@ optim_wrapper = dict(
                 'img_backbone': dict(lr_mult=0.1),
                 'sampling_offset': dict(lr_mult=0.1),})),
     clip_grad=dict(max_norm=35,norm_type=2) )
-
 
 param_scheduler = [
     # Warmup Configuration
@@ -87,30 +82,6 @@ param_scheduler = [
         gamma=0.2  # Learning rate decay factor
     )
 ]
-
-
-# optimizer = dict(
-#     type='AdamW',
-#     lr=5e-4,
-#     paramwise_cfg=dict(
-#         custom_keys={
-#             'img_backbone': dict(lr_mult=0.1),
-#             'sampling_offset': dict(lr_mult=0.1),
-#         }),
-#     weight_decay=0.01
-# )
-# optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-
-# lr_config = dict(
-#     policy='step',
-#     warmup='linear',
-#     warmup_iters=500,
-#     warmup_ratio=1.0 / 3,
-#     by_epoch=True,
-#     step=[22, 24],
-#     gamma=0.2
-# )
-
 
 total_epochs = 24
 

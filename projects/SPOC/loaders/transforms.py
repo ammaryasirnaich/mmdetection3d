@@ -4,10 +4,9 @@ import numpy as np
 from PIL import Image
 from numpy import random
 from mmdet3d.registry import TRANSFORMS
-from mmcv.transforms.base import BaseTransform
 
 @TRANSFORMS.register_module()
-class PadMultiViewImage(BaseTransform):   #object
+class PadMultiViewImage(object):   #object
     """Pad the multi-view image.
     There are two padding modes: (1) pad to a fixed size and (2) pad to the
     minimum size that is divisible by some number.
@@ -66,7 +65,7 @@ class PadMultiViewImage(BaseTransform):   #object
 
 
 @TRANSFORMS.register_module()
-class NormalizeMultiviewImage(BaseTransform):
+class NormalizeMultiviewImage(object):
     """Normalize the image.
     Added key is "img_norm_cfg".
     Args:
@@ -114,7 +113,7 @@ class NormalizeMultiviewImage(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PhotoMetricDistortionMultiViewImage(BaseTransform):
+class PhotoMetricDistortionMultiViewImage(object):
     """Apply photometric distortion to image sequentially, every transformation
     is applied with a probability of 0.5. The position of random contrast is in
     second or second to last.
@@ -216,7 +215,7 @@ class PhotoMetricDistortionMultiViewImage(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class RandomTransformImage(BaseTransform):
+class RandomTransformImage(object):
     def __init__(self, ida_aug_conf=None, training=True):
         self.ida_aug_conf = ida_aug_conf
         self.training = training
@@ -342,7 +341,7 @@ class RandomTransformImage(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class GlobalRotScaleTransImage(BaseTransform):
+class GlobalRotScaleTransImage(object):
     def __init__(self,
                  rot_range=[-0.3925, 0.3925],
                  scale_ratio_range=[0.95, 1.05],

@@ -1,11 +1,9 @@
-
 _base_ = ['../../../configs/_base_/default_runtime.py']
-
 
 point_cloud_range = [-40, -40, -1.0, 40, 40, 5.4]
 occ_size = [200, 200, 16]
 
-
+# custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
 
 # For nuScenes we usually do 10-class detection
 det_class_names = [
@@ -20,9 +18,8 @@ occ_class_names = [
     'terrain', 'manmade', 'vegetation', 'free'
 ]
 
-
 metainfo = dict(classes=det_class_names)
-dataset_type = 'NuScenesDataset'
+dataset_type ='NuSceneOcc'    #'NuScenesDataset'
 data_root = '/workspace/data/nusense/mini_dataset/'
 occ_gt_root = '/workspace/data/nusense/mini_dataset/occ3d/'
 # Input modality for nuScenes dataset, this is consistent with the submission
@@ -44,11 +41,7 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 
-
 backend_args = None
-
-custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
-
 
 ida_aug_conf = {
     'resize_lim': (0.38, 0.55),
@@ -75,9 +68,11 @@ train_pipeline = [
     dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=True),
     dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
     dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=True),
-    dict(type='DefaultFormatBundle3D', class_names=det_class_names),
-    dict(type='Collect3D', keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],  # other keys: 'mask_camera'
-         meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar'))
+    dict(
+        type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
+        keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar')
+    )
 ]
 
 test_pipeline = [
@@ -86,9 +81,11 @@ test_pipeline = [
     dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=False),
     dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
     dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=False),
-    dict(type='DefaultFormatBundle3D', class_names=det_class_names),
-    dict(type='Collect3D', keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
-         meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar'))
+    dict(
+        type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
+        keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar')
+    )
 ]
 
 # construct a pipeline for data and gt loading in show function
@@ -117,6 +114,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
+        occ_gt_root=occ_gt_root,
         ann_file='nuscenes_infos_train_sweep.pkl',
         pipeline=train_pipeline,
         metainfo=metainfo,
@@ -138,6 +136,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
+        occ_gt_root=occ_gt_root,
         ann_file='nuscenes_infos_test_sweep.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
