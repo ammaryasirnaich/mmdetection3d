@@ -13,6 +13,8 @@ from mmengine.fileio import get
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
+from torchvision.transforms.functional import rotate
+
 
 import os
 from numpy.linalg import inv
