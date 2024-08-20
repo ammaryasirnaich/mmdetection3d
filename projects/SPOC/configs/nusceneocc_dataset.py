@@ -3,7 +3,7 @@ _base_ = ['../../../configs/_base_/default_runtime.py']
 point_cloud_range = [-40, -40, -1.0, 40, 40, 5.4]
 occ_size = [200, 200, 16]
 
-# custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
 
 # For nuScenes we usually do 10-class detection
 det_class_names = [
@@ -20,8 +20,8 @@ occ_class_names = [
 
 metainfo = dict(classes=det_class_names)
 dataset_type ='NuSceneOcc'    #'NuScenesDataset'
-data_root = '/workspace/data/nusense/mini_dataset/'
-occ_gt_root = '/workspace/data/nusense/mini_dataset/occ3d/'
+data_root ='/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+occ_gt_root ='/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/occ3d/'
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(

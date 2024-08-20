@@ -5,8 +5,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-from mmdet3d.registry import DATASETS
 from mmdet3d.datasets import NuScenesDataset
+from mmdet3d.registry import DATASETS
 from nuscenes.eval.common.utils import Quaternion
 from nuscenes.utils.geometry_utils import transform_matrix
 from torch.utils.data import DataLoader
@@ -20,7 +20,7 @@ from ..configs.r50_nuimg_704x256_8f_openocc import occ_class_names as openocc_cl
 
 
 @DATASETS.register_module()
-class Mycustome(NuScenesDataset): 
+class NuSceneOcc(NuScenesDataset): 
     def __init__(self, occ_gt_root, *args, **kwargs):
         super().__init__(filter_empty_gt=False, *args, **kwargs)
         self.occ_gt_root = occ_gt_root
