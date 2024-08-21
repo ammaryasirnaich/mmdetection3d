@@ -1,10 +1,6 @@
 # hff_config.py
 
-_base_ = './nuscenes_occ.py'
-
-
-custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
-
+_base_ = './sparseocc_dataset.py'
 
 model = dict(
     type='HFFModel',

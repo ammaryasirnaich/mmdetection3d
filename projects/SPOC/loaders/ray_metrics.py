@@ -11,7 +11,7 @@ from .ray_pq import Metric_RayPQ
 
 # /workspace/mmdetection3d/projects/SPOC/lib/dvr/dvr.cu
 
-dvr = load("dvr", sources=['/import/digitreasure/ammar_workspace/mmdetection3d/projects/SPOC/loaders/lib/dvr/dvr.cu', '/import/digitreasure/ammar_workspace/mmdetection3d/projects/SPOC/loaders/lib/dvr/dvr.cpp'], verbose=True, extra_cuda_cflags=['-allow-unsupported-compiler'])
+# dvr = load("dvr", sources=['/workspace/mmdetection3d/projects/HFF/lib/dvr/dvr.cu', '/workspace/mmdetection3d/projects/HFF/lib/dvr/dvr.cpp'], verbose=True, extra_cuda_cflags=['-allow-unsupported-compiler'])
 _pc_range = [-40, -40, -1.0, 40, 40, 5.4]
 _voxel_size = 0.4
 
@@ -78,6 +78,10 @@ def generate_lidar_rays():
 def process_one_sample(sem_pred, lidar_rays, output_origin, instance_pred=None, occ_class_names=None):
     # lidar origin in ego coordinate
     # lidar_origin = torch.tensor([[[0.9858, 0.0000, 1.8402]]])
+    
+    dvr = load("dvr", sources=['/workspace/mmdetection3d/projects/HFF/lib/dvr/dvr.cu', '/workspace/mmdetection3d/projects/HFF/lib/dvr/dvr.cpp'], verbose=True, extra_cuda_cflags=['-allow-unsupported-compiler'])
+    
+    
     T = output_origin.shape[1]
     pred_pcds_t = []
 
