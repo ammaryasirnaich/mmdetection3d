@@ -40,7 +40,13 @@ model = dict(
             max_num_points=32,
             point_cloud_range=point_cloud_range,
             voxel_size=voxel_size,
-            max_voxels=(16000, 40000),)),
+            max_voxels=(16000, 40000),),
+        
+        img_norm_cfg = dict(
+            mean=[123.675, 116.280, 103.530],
+            std=[58.395, 57.120, 57.375],
+            to_rgb=True ),
+        ),
     img_backbone=dict(
         type='mmdet.ResNet',
         depth=50,

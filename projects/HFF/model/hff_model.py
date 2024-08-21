@@ -39,9 +39,12 @@ class HFFModel(MVXTwoStageDetector):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-    def extract_feat(self, img, pts=None):
+    def extract_feat(self, img,img_metas, pts=None):
         """Extract features from images and LiDAR data."""
-        img_feats = self.extract_img_feat(img)
+        print(f'img features',img.shape)
+        
+        
+        img_feats = self.extract_img_feat(img,img_metas)
         pts_feats = self.extract_pts_feat(pts)
 
         # fused_feats = self.multi_resolution_fusion(img_feats, pts_feats) if self.fusion_module else None
@@ -50,12 +53,16 @@ class HFFModel(MVXTwoStageDetector):
 
     def forward_train(self, img_metas, img=None, pts=None, **kwargs):
         """Training forward function."""
-        fused_feats = self.extract_feat(img, pts)
-        decode_output = self.sparse_voxel_decoder(fused_feats, img_metas)
-        mask_output = self.mask_tnsform_head(decode_output, img_metas)
+        
+        print(img.shape)
+        
+        fused_feats = self.extract_feat(img,img_metas, pts)
+        # decode_output = self.sparse_voxel_decoder(fused_feats, img_metas)
+        # mask_output = self.mask_tnsform_head(decode_output, img_metas)
 
-        losses = self.compute_loss(decode_output, mask_output, **kwargs)
-        return losses
+        # losses = self.compute_loss(decode_output, mask_output, **kwargs)
+        # return losses
+        pass
 
     def forward_test(self, img_metas, img=None, pts=None, **kwargs):
         """Testing forward function."""

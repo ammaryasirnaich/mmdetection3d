@@ -25,7 +25,7 @@ occ_gt_root ='/import/digitreasure/openmm_processed_dataset/nusense_dataset/nusc
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 input_modality = dict(
-    use_lidar=False,
+    use_lidar=True,
     use_camera=True,
     use_radar=False,
     use_map=False,

@@ -24,7 +24,7 @@ def test_center_point():
         'hff/hff_base_config.py'  # noqa
     )
     model = MODELS.build(hff_net_cfg)
-    # assert hasattr(mmdet3d.models, 'HFFModel')
+    assert hasattr(mmdet3d.models, 'HFFModel')
     num_gt_instance = 50
     packed_inputs = create_detector_inputs(
         with_img=True, num_gt_instance=num_gt_instance, points_feat_dim=5)
