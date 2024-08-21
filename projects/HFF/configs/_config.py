@@ -107,7 +107,7 @@ model = dict(
     mask_head=dict(
         type='MaskTransformerHead',
         num_queries=100,
-        transformer=dict(
+        sparseocc_tranformer=dict(
             type='SparseOccTransformer',
             embed_dims=256,
             num_layers=6,
@@ -120,8 +120,8 @@ model = dict(
             pc_range=[-50, -50, -5.0, 50, 50, 3.0],
             occ_size=[200, 200, 16]
         ),
-        loss_mask=dict(type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
-        loss_dice=dict(type='DiceLoss', loss_weight=1.0)
+        # loss_mask=dict(type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+        # loss_dice=dict(type='DiceLoss', loss_weight=1.0)
     ),
     train_cfg=dict(
         assigner=dict(type='HungarianAssigner3D', cls_cost=dict(type='FocalLoss', weight=2.0)),

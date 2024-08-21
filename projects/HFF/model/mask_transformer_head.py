@@ -8,15 +8,16 @@ from mmcv.cnn.bricks.transformer import MultiheadAttention, FFN
 # from mmdet.models.utils.builder import TRANSFORMER
 from mmdet3d.registry import MODELS
 
+
 from .bbox.utils import decode_bbox
 from .utils import inverse_sigmoid, DUMP
 
 @MODELS.register_module()
 class MaskTransformerHead(BaseModule):
-    def __init__(self, num_queries, sparseoccc_transformer):
+    def __init__(self, num_queries, sparseocc_tranformer):
         super(MaskTransformerHead, self).__init__()
         self.num_queries = num_queries
-        self.transformer = MODELS.build(sparseoccc_transformer)  # Building the transformer from the config
+        # self.transformer = MODELS.build(sparseocc_tranformer)  # Building the transformer from the config
 
         # Layers for mask prediction
         # self.query_embed = nn.Embedding(num_queries, transformer['embed_dims'])

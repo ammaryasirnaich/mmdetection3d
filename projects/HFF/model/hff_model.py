@@ -35,6 +35,9 @@ class HFFModel(MVXTwoStageDetector):
     
         self.sparse_bev_transformer = MODELS.build(img_point_encoder) if img_point_encoder else None
         self.multi_resolution_fusion = MODELS.build(fusion_module) if fusion_module else None
+        
+        print(mask_head)
+        
         self.mask_tnsform_head = MODELS.build(mask_head) if mask_head else None
 
       
