@@ -35,14 +35,7 @@ class HFFModel(MVXTwoStageDetector):
     
         self.sparse_bev_transformer = MODELS.build(img_point_encoder) if img_point_encoder else None
         self.multi_resolution_fusion = MODELS.build(fusion_module) if fusion_module else None
-        
-        print(mask_head)
-        
         self.mask_tnsform_head = MODELS.build(mask_head) if mask_head else None
-
-      
-
-
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
@@ -51,7 +44,8 @@ class HFFModel(MVXTwoStageDetector):
         img_feats = self.extract_img_feat(img)
         pts_feats = self.extract_pts_feat(pts)
 
-        fused_feats = self.fusion_module(img_feats, pts_feats) if self.fusion_module else None
+        # fused_feats = self.multi_resolution_fusion(img_feats, pts_feats) if self.fusion_module else None
+        fused_feats =None
         return fused_feats
 
     def forward_train(self, img_metas, img=None, pts=None, **kwargs):
