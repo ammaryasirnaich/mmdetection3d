@@ -1,7 +1,7 @@
 import torch
 from .bbox.utils import decode_bbox
 from .utils import rotation_3d_in_axis, DUMP
-from .csrc.wrapper import msmv_sampling
+from ..csrc.wrapper import msmv_sampling
 
 
 def make_sample_points_from_bbox(query_bbox, offset, pc_range):

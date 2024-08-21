@@ -4,12 +4,12 @@ from mmengine.structures import InstanceData
 from mmdet3d.models.detectors.mvx_two_stage import MVXTwoStageDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures.ops import bbox3d2result
+
 @MODELS.register_module()
 class HFFModel(MVXTwoStageDetector):
     def __init__(self,
                  img_backbone: Optional[dict] = None,
                  img_neck: Optional[dict] = None,
-                 pts_voxel_layer: Optional[dict] = None,
                  pts_voxel_encoder: Optional[dict] = None,
                  pts_middle_encoder: Optional[dict] = None,
                  pts_backbone: Optional[dict] = None,
@@ -20,23 +20,27 @@ class HFFModel(MVXTwoStageDetector):
                  mask_head: Optional[dict] = None,
                  train_cfg: Optional[dict] = None,
                  test_cfg: Optional[dict] = None,
-                 pretrained: Optional[str] = None):
+                 data_preprocessor: Optional[dict] = None,
+                 ):
         super(HFFModel, self).__init__(
             img_backbone=img_backbone,
-            pts_voxel_layer=pts_voxel_layer,
             pts_voxel_encoder=pts_voxel_encoder,
             pts_middle_encoder=pts_middle_encoder,
             pts_backbone=pts_backbone,
             pts_neck=pts_neck,
             img_neck=img_neck,
-            pretrained=pretrained
+            data_preprocessor= data_preprocessor
         )
 
         # Build custom modules
-        self.voxel_encoder = MODELS.build(voxel_encoder) if voxel_encoder else None
+    
+        # self.voxel_encoder = MODELS.build(voxel_encoder) if voxel_encoder else None
         self.fusion_module = MODELS.build(fusion_module) if fusion_module else None
         self.decode_head = MODELS.build(decode_head) if decode_head else None
         self.mask_head = MODELS.build(mask_head) if mask_head else None
+
+      
+
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg

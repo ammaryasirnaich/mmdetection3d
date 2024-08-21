@@ -4,25 +4,19 @@ import numpy as np
 import torch.nn.functional as F
 from mmengine.model import BaseModule
 from mmengine.model import bias_init_with_prob
-from mmcv.cnn.bricks.transformer import MultiheadAttention, FFN
 # from mmdet.models.utils.builder import TRANSFORMER
 from mmdet3d.registry import MODELS
 
-
 @MODELS.register_module()
-class MaskTransformerHead(nn.Module):
-    def __init__(self, num_queries, transformer):
-        super(MaskTransformerHead, self).__init__()
-        self.num_queries = num_queries
-
-        # Build the transformer module from the configuration
-        self.transformer = MODELS.build(transformer)
-
-        # Query embedding for the transformer
-        # self.query_embed = nn.Embedding(num_queries, transformer['embed_dims'])
-
-        # # Layers for class prediction
-        # self.cls_embed = nn.Linear(transformer['embed_dims'], transformer['num_classes'])
+class MultiResolutionFusion(BaseModule):
+    def __init__(self, coarse_channels, intermediate_channels, fine_channels, adaptative_resolution=True, complexity_threshold=0.8):
+        super(MultiResolutionFusion, self).__init__()
+        self.coarse_conv = nn.Conv2d(coarse_channels, coarse_channels, kernel_size=1)
+        self.intermediate_conv = nn.Conv2d(intermediate_channels, intermediate_channels, kernel_size=1)
+        self.fine_conv = nn.Conv2d(fine_channels, fine_channels, kernel_size=1)
+        
+        self.adaptative_resolution = adaptative_resolution
+        self.complexity_threshold = complexity_threshold
 
     def forward(self, img_feats, pts_feats):
         # Coarse feature processing

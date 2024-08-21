@@ -1,11 +1,25 @@
 # hff_config.py
 
-_base_ = './sparseocc_dataset.py'
+_base_ = './nuscenes_occ.py'
+custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
+
+
+
+voxel_size=[0.2, 0.2, 8]
+point_cloud_range=[-50, -50, -5.0, 50, 50, 3.0]
 
 model = dict(
     type='HFFModel',
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=32,
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000),)),
     img_backbone=dict(
-        type='ResNet',
+        type='mmdet.ResNet',
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
@@ -16,31 +30,23 @@ model = dict(
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
     ),
     img_neck=dict(
-        type='FPN',
+        type='mmdet.FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         num_outs=5
     ),
-    pts_voxel_layer=dict(
-        max_num_points=32,
-        voxel_size=[0.2, 0.2, 8],
-        max_voxels=(16000, 40000),
-        point_cloud_range=[-50, -50, -5.0, 50, 50, 3.0]
-    ),
-    pts_voxel_encoder=dict(
-        type='HardSimpleVFE',
-        in_channels=4,
-        feat_channels=[64, 64, 128]
-    ),
+    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
     pts_middle_encoder=dict(
         type='SparseEncoder',
-        in_channels=128,
+        in_channels=4,
         sparse_shape=[41, 1600, 1408],
-        output_channels=256
+        order=('conv', 'norm', 'act')
     ),
     pts_backbone=dict(
         type='SECOND',
         in_channels=256,
+        layer_nums=[5, 5],
+        layer_strides=[1, 2],
         out_channels=[128, 256]
     ),
     pts_neck=dict(

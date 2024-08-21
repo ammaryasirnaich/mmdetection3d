@@ -8,6 +8,11 @@ from mmdet3d.testing import (create_detector_inputs, get_detector_cfg,
                              setup_seed)
 
 
+# Register the ResNet module in the configuration file
+from mmdet.models.backbones import ResNet
+MODELS.register_module(module=ResNet)
+
+
 def test_center_point():
     import mmdet3d.models
 

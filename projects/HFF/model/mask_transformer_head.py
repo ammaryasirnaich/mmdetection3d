@@ -13,23 +13,23 @@ from .utils import inverse_sigmoid, DUMP
 
 @MODELS.register_module()
 class MaskTransformerHead(BaseModule):
-    def __init__(self, num_queries, transformer):
+    def __init__(self, num_queries, sparseoccc_transformer):
         super(MaskTransformerHead, self).__init__()
         self.num_queries = num_queries
-        self.transformer = MODELS.build(transformer)  # Building the transformer from the config
+        self.transformer = MODELS.build(sparseoccc_transformer)  # Building the transformer from the config
 
         # Layers for mask prediction
-        self.query_embed = nn.Embedding(num_queries, transformer['embed_dims'])
-        self.cls_layer = nn.Linear(transformer['embed_dims'], transformer['num_classes'])
+        # self.query_embed = nn.Embedding(num_queries, transformer['embed_dims'])
+        # self.cls_layer = nn.Linear(transformer['embed_dims'], transformer['num_classes'])
 
     def forward(self, features, img_metas):
         # Apply the transformer on the features
-        transformer_output = self.transformer(features)
+        # transformer_output = self.transformer(features)
 
         # Mask prediction logic
-        mask_logits = self.cls_layer(transformer_output)
+        # mask_logits = self.cls_layer(transformer_output)
 
-        return mask_logits
+        pass
 
     def loss(self, mask_output, instance_class_ids):
         # Implement the loss calculation (cross-entropy, dice loss, etc.)
