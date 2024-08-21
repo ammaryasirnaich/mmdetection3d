@@ -14,9 +14,8 @@ class HFFModel(MVXTwoStageDetector):
                  pts_middle_encoder: Optional[dict] = None,
                  pts_backbone: Optional[dict] = None,
                  pts_neck: Optional[dict] = None,
-                 voxel_encoder: Optional[dict] = None,
+                 img_point_encoder: Optional[dict] = None,
                  fusion_module: Optional[dict] = None,
-                 decode_head: Optional[dict] = None,
                  mask_head: Optional[dict] = None,
                  train_cfg: Optional[dict] = None,
                  test_cfg: Optional[dict] = None,
@@ -34,10 +33,9 @@ class HFFModel(MVXTwoStageDetector):
 
         # Build custom modules
     
-        # self.voxel_encoder = MODELS.build(voxel_encoder) if voxel_encoder else None
-        self.fusion_module = MODELS.build(fusion_module) if fusion_module else None
-        self.decode_head = MODELS.build(decode_head) if decode_head else None
-        self.mask_head = MODELS.build(mask_head) if mask_head else None
+        self.sparse_bev_transformer = MODELS.build(img_point_encoder) if img_point_encoder else None
+        self.multi_resolution_fusion = MODELS.build(fusion_module) if fusion_module else None
+        self.mask_tnsform_head = MODELS.build(mask_head) if mask_head else None
 
       
 
@@ -56,8 +54,8 @@ class HFFModel(MVXTwoStageDetector):
     def forward_train(self, img_metas, img=None, pts=None, **kwargs):
         """Training forward function."""
         fused_feats = self.extract_feat(img, pts)
-        decode_output = self.decode_head(fused_feats, img_metas)
-        mask_output = self.mask_head(decode_output, img_metas)
+        decode_output = self.sparse_voxel_decoder(fused_feats, img_metas)
+        mask_output = self.mask_tnsform_head(decode_output, img_metas)
 
         losses = self.compute_loss(decode_output, mask_output, **kwargs)
         return losses
@@ -65,15 +63,17 @@ class HFFModel(MVXTwoStageDetector):
     def forward_test(self, img_metas, img=None, pts=None, **kwargs):
         """Testing forward function."""
         fused_feats = self.extract_feat(img, pts)
-        decode_output = self.decode_head(fused_feats, img_metas)
-        mask_output = self.mask_head(decode_output, img_metas)
+        decode_output = self.sparse_voxel_decoder(fused_feats, img_metas)
+        mask_output = self.mask_tnsform_head(decode_output, img_metas)
 
         return self.format_results(decode_output, mask_output)
 
     def compute_loss(self, decode_output, mask_output, **kwargs):
-        loss_decode = self.decode_head.loss(**kwargs, decode_output=decode_output)
-        loss_mask = self.mask_head.loss(mask_output, **kwargs)
-        return dict(loss_decode=loss_decode, loss_mask=loss_mask)
+        # loss_decode = self.sparse_voxel_decoder.loss(**kwargs, decode_output=decode_output)
+        # loss_mask = self.mask_hmask_tnsform_head.loss(mask_output, **kwargs)
+        # return dict(loss_decode=loss_decode, loss_mask=loss_mask)
+        pass
 
     def format_results(self, decode_output, mask_output):
-        return dict(decode_output=decode_output, mask_output=mask_output)
+        # return dict(decode_output=decode_output, mask_output=mask_output)
+        pass

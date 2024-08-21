@@ -1,12 +1,35 @@
 # hff_config.py
 
 _base_ = './nuscenes_occ.py'
+
+
+occ_class_names = [
+    'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
+    'motorcycle', 'pedestrian', 'traffic_cone', 'trailer', 'truck',
+    'driveable_surface', 'other_flat', 'sidewalk',
+    'terrain', 'manmade', 'vegetation', 'free'
+]
+
+
+
 custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
 
-
+occ_size = [200, 200, 16]
 voxel_size=[0.2, 0.2, 8]
 point_cloud_range=[-50, -50, -5.0, 50, 50, 3.0]
+
+
+_dim_ = 256
+_num_points_ = 4
+_num_groups_ = 4
+_num_layers_ = 2
+_num_frames_ = 8
+_num_queries_ = 100
+_topk_training_ = [4000, 16000, 64000]
+_topk_testing_ = [2000, 8000, 32000]
+
+
 
 model = dict(
     type='HFFModel',
@@ -57,29 +80,21 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         use_conv_for_no_stride=True
     ),
-    voxel_encoder=dict(
+    img_point_encoder=dict(
         type='SparseBEVTransformer',
-        in_channels=768,  # Combined features from all sensors (camera, LiDAR)
-        embed_dims=256,
-        num_layers=3,
-        num_frames=8,
-        num_points=2048,
-        num_groups=4,
+        # in_channels=768,  # Combined features from all sensors (camera, LiDAR)
+        embed_dims=_dim_,
+        num_layers=_num_layers_,
+        num_frames=_num_frames_,
+        num_points=_num_points_,
+        # num_groups=_num_groups_,
+        # num_queries=_num_queries_,
         num_levels=4,
-        num_classes=18,
-        pc_range=[-50, -50, -5.0, 50, 50, 3.0],
-        occ_size=[200, 200, 16],
-        topk_training=200,
-        topk_testing=100
-    ),
-    decode_head=dict(
-        type='SparseVoxelDecoder',
-        in_channels=256,
-        num_classes=18,
-        topk_training=200,
-        topk_testing=100,
-        norm_cfg=dict(type='BN', requires_grad=True),
-        pc_range=[-50, -50, -5.0, 50, 50, 3.0]
+        num_classes=len(occ_class_names),
+        pc_range=point_cloud_range,
+        # code_size=occ_size,
+        # topk_training=_topk_training_,
+        # topk_testing=_topk_testing_
     ),
     fusion_module=dict(
         type='MultiResolutionFusion',
