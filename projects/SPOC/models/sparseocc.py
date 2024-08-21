@@ -124,7 +124,7 @@ class SparseOcc(MVXTwoStageDetector):
         else:
             return self.forward_test(**kwargs)
 
-    # @force_fp32(apply_to=('img'))
+    
     def forward_train(self, img_metas=None, img=None, voxel_semantics=None, voxel_instances=None, instance_class_ids=None, mask_camera=None, **kwargs):
         img_feats = self.extract_feat(img=img, img_metas=img_metas)
         return self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)

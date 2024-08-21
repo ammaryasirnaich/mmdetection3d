@@ -1,13 +1,12 @@
-# BEVFusion: Multi-Task Multi-Sensor Fusion with Unified Bird's-Eye View Representation
+# HFF
 
-> [BEVFusion: Multi-Task Multi-Sensor Fusion with Unified Bird's-Eye View Representation](https://arxiv.org/abs/2205.13542)
+> [HFF](https://arxiv.org/abs/2205.13542)
 
 <!-- [ALGORITHM] -->
 
 ## Abstract
 
-Multi-sensor fusion is essential for an accurate and reliable autonomous driving system. Recent approaches are based on point-level fusion: augmenting the LiDAR point cloud with camera features. However, the camera-to-LiDAR projection throws away the semantic density of camera features, hindering the effectiveness of such methods, especially for semantic-oriented tasks (such as 3D scene segmentation). In this paper, we break this deeply-rooted convention with BEVFusion, an efficient and generic multi-task multi-sensor fusion framework. It unifies multi-modal features in the shared bird's-eye view (BEV) representation space, which nicely preserves both geometric and semantic information. To achieve this, we diagnose and lift key efficiency bottlenecks in the view transformation with optimized BEV pooling, reducing latency by more than 40x. BEVFusion is fundamentally task-agnostic and seamlessly supports different 3D perception tasks with almost no architectural changes. It establishes the new state of the art on nuScenes, achieving 1.3% higher mAP and NDS on 3D object detection and 13.6% higher mIoU on BEV map segmentation, with 1.9x lower computation cost. Code to reproduce our
-results is available at https://github.com/mit-han-lab/bevfusion.
+WORKING ON HFF  https://github.com/mit-han-lab/HFF.
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/34888372/215313913-4b43f8a1-e2e2-49ba-b631-992155351922.png" width="800"/>
@@ -15,7 +14,26 @@ results is available at https://github.com/mit-han-lab/bevfusion.
 
 ## Introduction
 
-We implement BEVFusion and support training and testing on NuScenes dataset.
+We implement HFF and support training and testing on NuScenes dataset.
+
+Suggested Steps for Incorporating SparseOcc into HFF
+Based on the details provided earlier, here's how you can strategically integrate SparseOcc's features into HFF:
+
+>Sparse Voxel Decoder:
+Integrate SparseOcc’s voxel sparsification methodology into HFF. Instead of processing dense 3D voxel grids at multiple resolutions, selectively focus only on non-empty voxels. This would help optimize the hierarchical multi-resolution fusion in HFF, particularly when dealing with large 3D grids.
+Mask Transformer and Sparse Sampling:
+
+>Utilize SparseOcc’s mask transformer and sparse sampling techniques for finer resolution segmentation and feature fusion. You can apply these methods within the fine-resolution layers of HFF to focus computational resources on critical areas, improving both accuracy and efficiency.
+Handling Temporal Information:
+
+>SparseOcc’s temporal modeling approach can be adapted for HFF if your application involves time-series data. You can apply sparse voxel decoders across consecutive frames and fuse the information using adaptive sampling.
+Ground Truth (occ_gt) and Sweep Files (.pkl):
+
+>If HFF involves occupancy estimation similar to SparseOcc, using occupancy ground truth (like occ_gt) is essential for training and evaluating your model. The sweep .pkl files containing temporal context (multiple frame sweeps) would also be beneficial if temporal fusion is required in HFF.
+
+>Adapting Loss Functions:
+Integrate SparseOcc’s combination of BCE, DICE, and focal loss functions into HFF. This would be particularly relevant for training the hierarchical fusion layers that need to balance multiple segmentation objectives.
+
 
 ## Usage
 
@@ -23,18 +41,18 @@ We implement BEVFusion and support training and testing on NuScenes dataset.
 
 ### Compiling operations on CUDA
 
-**Note** that the voxelization OP in the original implementation of `BEVFusion` is different from the implementation in MMCV. If you want to use the original pretrained model [here](https://github.com/mit-han-lab/bevfusion/blob/main/README.md), you need to use the original implementation of voxelization OP.
+**Note** that the voxelization OP in the original implementation of `HFF` is different from the implementation in MMCV. If you want to use the original pretrained model [here](https://github.com/mit-han-lab/HFF/blob/main/README.md), you need to use the original implementation of voxelization OP.
 
 ```python
-python projects/BEVFusion/setup.py develop
+python projects/HFF/setup.py develop
 ```
 
 ### Demo
 
-Run a demo on NuScenes data using [BEVFusion model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link):
+Run a demo on NuScenes data using [HFF model](https://drive.google.com/file/d/1QkvbYDk4G2d6SZoeJqish13qSyXA4lp3/view?usp=share_link):
 
 ```shell
-python projects/BEVFusion/demo/multi_modality_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402927647951.pcd.bin demo/data/nuscenes/ demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_FILE} --cam-type all --score-thr 0.2 --show
+python projects/HFF/demo/multi_modality_demo.py demo/data/nuscenes/n015-2018-07-24-11-22-45+0800__LIDAR_TOP__1532402927647951.pcd.bin demo/data/nuscenes/ demo/data/nuscenes/n015-2018-07-24-11-22-45+0800.pkl projects/HFF/configs/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_FILE} --cam-type all --score-thr 0.2 --show
 ```
 
 ### Training commands
@@ -42,13 +60,13 @@ python projects/BEVFusion/demo/multi_modality_demo.py demo/data/nuscenes/n015-20
 1. You should train the lidar-only detector first:
 
 ```bash
-bash tools/dist_train.py projects/BEVFusion/configs/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8
+bash tools/dist_train.py projects/HFF/configs/HFF_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8
 ```
 
-2. Download the [Swin pre-trained model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/swint-nuimages-pretrained.pth). Given the image pre-trained backbone and the lidar-only pre-trained detector, you could train the lidar-camera fusion model:
+2. Download the [Swin pre-trained model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/HFF/swint-nuimages-pretrained.pth). Given the image pre-trained backbone and the lidar-only pre-trained detector, you could train the lidar-camera fusion model:
 
 ```bash
-bash tools/dist_train.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8 --cfg-options load_from=${LIDAR_PRETRAINED_CHECKPOINT} model.img_backbone.init_cfg.checkpoint=${IMAGE_PRETRAINED_BACKBONE}
+bash tools/dist_train.sh projects/HFF/configs/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py 8 --cfg-options load_from=${LIDAR_PRETRAINED_CHECKPOINT} model.img_backbone.init_cfg.checkpoint=${IMAGE_PRETRAINED_BACKBONE}
 ```
 
 **Note** that if you want to reduce CUDA memory usage and computational overhead, you could directly add `--amp` on the tail of the above commands. The model under this setting will be trained in fp16 mode.
@@ -58,7 +76,7 @@ bash tools/dist_train.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel007
 In MMDetection3D's root directory, run the following command to test the model:
 
 ```bash
-bash tools/dist_test.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH} 8
+bash tools/dist_test.sh projects/HFF/configs/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py ${CHECKPOINT_PATH} 8
 ```
 
 ## Results and models
@@ -67,14 +85,14 @@ bash tools/dist_test.sh projects/BEVFusion/configs/bevfusion_lidar-cam_voxel0075
 
 |                                           Modality                                           | Voxel type (voxel size) | NMS | Mem (GB) | Inf time (fps) | NDS  | mAP  |                                                                                                                                                             Download                                                                                                                                                              |
 | :------------------------------------------------------------------------------------------: | :---------------------: | :-: | :------: | :------------: | :--: | :--: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-|     [lidar](./configs/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py)     |      voxel (0.075)      |  ×  |    -     |       -        | 69.6 | 64.9 |     [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-2628f933.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230322_053447.log)     |
-| [lidar-cam](./configs/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.4 | 68.6 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-5239b1af.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/bevfusion/bevfusion_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230524_001539.log) |
+|     [lidar](./configs/HFF_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py)     |      voxel (0.075)      |  ×  |    -     |       -        | 69.6 | 64.9 |     [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/HFF/HFF_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-2628f933.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/HFF/HFF_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230322_053447.log)     |
+| [lidar-cam](./configs/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py) |      voxel (0.075)      |  ×  |    -     |       -        | 71.4 | 68.6 | [model](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/HFF/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d-5239b1af.pth) [logs](https://download.openmmlab.com/mmdetection3d/v1.1.0_models/HFF/HFF_lidar-cam_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d_20230524_001539.log) |
 
 ## Citation
 
 ```latex
-@inproceedings{liu2022bevfusion,
-  title={BEVFusion: Multi-Task Multi-Sensor Fusion with Unified Bird's-Eye View Representation},
+@inproceedings{liu2022HFF,
+  title={HFF: Multi-Task Multi-Sensor Fusion with Unified Bird's-Eye View Representation},
   author={Liu, Zhijian and Tang, Haotian and Amini, Alexander and Yang, Xingyu and Mao, Huizi and Rus, Daniela and Han, Song},
   booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
   year={2023}
