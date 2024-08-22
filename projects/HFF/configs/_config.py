@@ -1,7 +1,6 @@
-# hff_config.py
-
+# _base_ = ['../../../configs/_base_/default_runtime.py']
 _base_ = './nuscenes_occ.py'
-
+# _base_ = ['/import/digitreasure/ammar_workspace/mmdetection3d/projects/HFF/configs/nuscenes_occ.py']
 
 occ_class_names = [
     'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
@@ -9,7 +8,6 @@ occ_class_names = [
     'driveable_surface', 'other_flat', 'sidewalk',
     'terrain', 'manmade', 'vegetation', 'free'
 ]
-
 
 custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
@@ -37,7 +35,8 @@ model = dict(
             max_num_points=32,
             point_cloud_range=point_cloud_range,
             voxel_size=voxel_size,
-            max_voxels=(16000, 40000),),
+            max_voxels=(16000, 40000),
+        ),
         mean=[123.675, 116.280, 103.530],
         std=[58.395, 57.120, 57.375],
         bgr_to_rgb=True
@@ -137,17 +136,49 @@ model = dict(
     )
 )
 
-# Training hyperparameters
-optimizer = dict(type='AdamW', lr=2e-4, weight_decay=0.01)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=1000,
-    warmup_ratio=1.0 / 3,
-    step=[8, 11]
+# Optimizer configuration
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(
+        type='AdamW',
+        lr=2e-4,
+        weight_decay=0.01
+    ),
+    paramwise_cfg=dict(
+        norm_decay_mult=0.0,  # No weight decay for normalization layers
+        bias_decay_mult=0.0,  # No weight decay for bias parameters
+    ),
+    clip_grad=dict(
+        max_norm=35,
+        norm_type=2
+    )
 )
-runner = dict(type='EpochBasedRunner', max_epochs=12)
+
+# Learning rate schedule configuration
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=1.0 / 3,
+        by_epoch=False,
+        begin=0,
+        end=1000,  # Equivalent to warmup_iters
+    ),
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=12,  # Number of total epochs
+        by_epoch=True,
+        milestones=[8, 11],  # When to decay the learning rate
+        gamma=0.1  # The factor by which the learning rate is reduced
+    )
+]
+
+# Training loop configuration
+train_cfg = dict( type='EpochBasedTrainLoop',max_epochs=12,  val_interval=1)
+val_cfg = dict()
+test_cfg = dict()
+
+
 
 log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
 
