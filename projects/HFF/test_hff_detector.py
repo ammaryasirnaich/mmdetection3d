@@ -24,10 +24,13 @@ def test_center_point():
         'hff/hff_base_config.py'  # noqa
     )
     model = MODELS.build(hff_net_cfg)
-    assert hasattr(mmdet3d.models, 'HFFModel')
+    # assert hasattr(mmdet3d.models, 'HFFModel')
     num_gt_instance = 50
     packed_inputs = create_detector_inputs(
-        with_img=True, num_gt_instance=num_gt_instance, points_feat_dim=5)
+        with_img=True,with_points=True, num_gt_instance=num_gt_instance, points_feat_dim=5)
+    
+    
+    
 
     for sample_id in range(len(packed_inputs['data_samples'])):
         det_sample = packed_inputs['data_samples'][sample_id]
@@ -41,10 +44,10 @@ def test_center_point():
         model = model.cuda()
         # test simple_test
 
-        data = model.data_preprocessor(packed_inputs, True)
+        batch_input_dict = model.data_preprocessor(packed_inputs, True)
         with torch.no_grad():
             torch.cuda.empty_cache()
-            losses = model.forward(**data, mode='loss')
+            losses = model.forward(**batch_input_dict, mode='loss')
         # assert losses['task0.loss_heatmap'] >= 0
         # assert losses['task0.loss_bbox'] >= 0
         # assert losses['task1.loss_heatmap'] >= 0

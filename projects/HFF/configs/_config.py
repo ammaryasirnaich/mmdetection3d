@@ -11,7 +11,6 @@ occ_class_names = [
 ]
 
 
-
 custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
 
@@ -29,8 +28,6 @@ _num_queries_ = 100
 _topk_training_ = [4000, 16000, 64000]
 _topk_testing_ = [2000, 8000, 32000]
 
-
-
 model = dict(
     type='HFFModel',
     data_preprocessor=dict(
@@ -41,12 +38,10 @@ model = dict(
             point_cloud_range=point_cloud_range,
             voxel_size=voxel_size,
             max_voxels=(16000, 40000),),
-        
-        img_norm_cfg = dict(
-            mean=[123.675, 116.280, 103.530],
-            std=[58.395, 57.120, 57.375],
-            to_rgb=True ),
-        ),
+        mean=[123.675, 116.280, 103.530],
+        std=[58.395, 57.120, 57.375],
+        bgr_to_rgb=True
+    ),
     img_backbone=dict(
         type='mmdet.ResNet',
         depth=50,
