@@ -70,9 +70,14 @@ train_pipeline = [
     dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=True),
     dict(
         type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
-        keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
-        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar')
-    )
+        keys=[ 'points', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_bboxes',
+            'gt_labels', 'img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar',
+                    'cam2img', 'ori_cam2img', 'lidar2cam', 'cam2lidar','ori_lidar2img', 'img_aug_matrix', 
+                    'box_type_3d', 'sample_idx', 'lidar_path', 'img_path', 'transformation_3d_flow', 'pcd_rotation',
+                    'pcd_scale_factor', 'pcd_trans', 'img_aug_matrix',
+                    'lidar_aug_matrix', 'num_pts_feats')
+            )
 ]
 
 test_pipeline = [
@@ -84,7 +89,10 @@ test_pipeline = [
     dict(
         type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
         keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
-        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar')
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar',
+                   'cam2img', 'ori_cam2img', 'lidar2cam', 'cam2lidar',
+                    'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
+                    'lidar_path', 'img_path', 'num_pts_feats')
     )
 ]
 
