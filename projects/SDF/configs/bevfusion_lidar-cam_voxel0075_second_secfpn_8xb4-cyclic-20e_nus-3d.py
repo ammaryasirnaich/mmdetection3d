@@ -13,37 +13,24 @@ model = dict(
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=False),
     img_backbone=dict(
-        type='mmdet.SwinTransformer',
-        embed_dims=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.2,
-        patch_norm=True,
-        out_indices=[1, 2, 3],
-        with_cp=False,
-        convert_weights=True,
-        init_cfg=dict(
-            type='Pretrained',
-            checkpoint=  # noqa: E251
-            'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa: E501
-        )),
+        type='mmdet.ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
+    ),
     img_neck=dict(
-        type='GeneralizedLSSFPN',
-        in_channels=[192, 384, 768],
+        type='mmdet.FPN',
+        in_channels=[256, 512, 1024, 2048],
         out_channels=256,
-        start_level=0,
-        num_outs=3,
-        norm_cfg=dict(type='BN2d', requires_grad=True),
-        act_cfg=dict(type='ReLU', inplace=True),
-        upsample_cfg=dict(mode='bilinear', align_corners=False)),
-    fusion_layer=dict(
-        type='ConvFuser', in_channels=[80, 256], out_channels=256))
+        num_outs=5
+    ),
+    
+    )
 
 train_pipeline = [
     dict(
