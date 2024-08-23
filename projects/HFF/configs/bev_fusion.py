@@ -1,9 +1,17 @@
-_base_ = [ './nusce_dataset.py']
+# _base_ = [ './nusce_dataset.py']
+_base_ = [ './nuscenes_occ.py']
+
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 input_modality = dict(use_lidar=True, use_camera=True)
 
 
 # custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
+
+det_class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+
 
 occ_class_names = [
     'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
@@ -128,120 +136,59 @@ model = dict(
     
     )
 
+backend_args = None
+
+ida_aug_conf = {
+    'resize_lim': (0.38, 0.55),
+    'final_dim': (256, 704),
+    'bot_pct_lim': (0.0, 0.0),
+    'rot_lim': (0.0, 0.0),
+    'H': 900, 'W': 1600,
+    'rand_flip': True,
+}
+
+bda_aug_conf = dict(
+    rot_lim=(-22.5, 22.5),
+    scale_lim=(1., 1.),
+    flip_dx_ratio=0.5,
+    flip_dy_ratio=0.5
+)
+
+
+_num_frames_ = 8
+
 train_pipeline = [
+    dict(type='LoadMultiViewImageFromFiles', to_float32=False, color_type='color'),
+    dict(type='LoadMultiViewImageFromMultiSweeps', sweeps_num=_num_frames_ - 1),
+    dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=True),
+    dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
+    dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=True),
     dict(
-        type='BEVLoadMultiViewImageFromFiles',
-        to_float32=True,
-        color_type='color',
-        backend_args=backend_args),
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        backend_args=backend_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=9,
-        load_dim=5,
-        use_dim=5,
-        pad_empty_sweeps=True,
-        remove_close=True,
-        backend_args=backend_args),
-    dict(
-        type='LoadAnnotations3D',
-        with_bbox_3d=True,
-        with_label_3d=True,
-        with_attr_label=False),
-    dict(
-        type='ImageAug3D',
-        final_dim=[256, 704],
-        resize_lim=[0.38, 0.55],
-        bot_pct_lim=[0.0, 0.0],
-        rot_lim=[-5.4, 5.4],
-        rand_flip=True,
-        is_train=True),
-    dict(
-        type='BEVFusionGlobalRotScaleTrans',
-        scale_ratio_range=[0.9, 1.1],
-        rot_range=[-0.78539816, 0.78539816],
-        translation_std=0.5),
-    dict(type='BEVFusionRandomFlip3D'),
-    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
-    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    dict(
-        type='ObjectNameFilter',
-        classes=[
-            'car', 'truck', 'construction_vehicle', 'bus', 'trailer',
-            'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
-        ]),
-    # Actually, 'GridMask' is not used here
-    dict(
-        type='GridMask',
-        use_h=True,
-        use_w=True,
-        max_epoch=6,
-        rotate=1,
-        offset=False,
-        ratio=0.5,
-        mode=1,
-        prob=0.0,
-        fixed_prob=True),
-    dict(type='PointShuffle'),
-    dict(
-        type='Pack3DDetInputs',
-        keys=[
-            'points', 'img', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_bboxes',
-            'gt_labels'
-        ],
-        meta_keys=[
-            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
-            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
-            'lidar_path', 'img_path', 'transformation_3d_flow', 'pcd_rotation',
-            'pcd_scale_factor', 'pcd_trans', 'img_aug_matrix',
-            'lidar_aug_matrix', 'num_pts_feats'
-        ])
+        type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
+        keys=[ 'points', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_bboxes',
+            'gt_labels', 'img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar',
+                    'cam2img', 'ori_cam2img', 'lidar2cam', 'cam2lidar','ori_lidar2img', 'img_aug_matrix', 
+                    'box_type_3d', 'sample_idx', 'lidar_path', 'img_path', 'transformation_3d_flow', 'pcd_rotation',
+                    'pcd_scale_factor', 'pcd_trans', 'img_aug_matrix',
+                    'lidar_aug_matrix', 'num_pts_feats')
+            )
 ]
 
 test_pipeline = [
+    dict(type='LoadMultiViewImageFromFiles', to_float32=False, color_type='color'),
+    dict(type='LoadMultiViewImageFromMultiSweeps', sweeps_num=_num_frames_ - 1, test_mode=True),
+    dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=False),
+    dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
+    dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=False),
     dict(
-        type='BEVLoadMultiViewImageFromFiles',
-        to_float32=True,
-        color_type='color',
-        backend_args=backend_args),
-    dict(
-        type='LoadPointsFromFile',
-        coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
-        backend_args=backend_args),
-    dict(
-        type='LoadPointsFromMultiSweeps',
-        sweeps_num=9,
-        load_dim=5,
-        use_dim=5,
-        pad_empty_sweeps=True,
-        remove_close=True,
-        backend_args=backend_args),
-    dict(
-        type='ImageAug3D',
-        final_dim=[256, 704],
-        resize_lim=[0.48, 0.48],
-        bot_pct_lim=[0.0, 0.0],
-        rot_lim=[0.0, 0.0],
-        rand_flip=False,
-        is_train=False),
-    dict(
-        type='PointsRangeFilter',
-        point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]),
-    dict(
-        type='Pack3DDetInputs',
-        keys=['img', 'points', 'gt_bboxes_3d', 'gt_labels_3d'],
-        meta_keys=[
-            'cam2img', 'ori_cam2img', 'lidar2cam', 'lidar2img', 'cam2lidar',
-            'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
-            'lidar_path', 'img_path', 'num_pts_feats'
-        ])
+        type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
+        keys=['img', 'voxel_semantics', 'voxel_instances', 'instance_class_ids'],
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'pad_shape', 'lidar2img', 'img_timestamp', 'ego2lidar',
+                   'cam2img', 'ori_cam2img', 'lidar2cam', 'cam2lidar',
+                    'ori_lidar2img', 'img_aug_matrix', 'box_type_3d', 'sample_idx',
+                    'lidar_path', 'img_path', 'num_pts_feats')
+    )
 ]
 
 train_dataloader = dict(

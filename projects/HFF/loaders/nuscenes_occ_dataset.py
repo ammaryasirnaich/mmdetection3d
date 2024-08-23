@@ -15,13 +15,13 @@ from .ray_metrics import main_rayiou, main_raypq
 from  ..utils.helpers import sparse2dense
 from .ego_pose_dataset import EgoPoseDataset
 
-from ..configs.nuscenes_occ import occ_class_names as occ3d_class_names
-from ..configs.nuscenes_occ import occ_class_names as openocc_class_names
+from ..configs.old_nuscenes_occ import occ_class_names as occ3d_class_names
+from ..configs.old_nuscenes_occ import occ_class_names as openocc_class_names
 
 
 @DATASETS.register_module()
 class NuSceneOcc(NuScenesDataset): 
-    def __init__(self, occ_gt_root, *args, **kwargs):
+    def __init__(self, occ_gt_root, *args, **kwargs):   
         super().__init__(filter_empty_gt=False, *args, **kwargs)
         self.occ_gt_root = occ_gt_root
         self.data_infos = self.load_annotations(self.ann_file)

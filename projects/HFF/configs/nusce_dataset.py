@@ -1,7 +1,7 @@
 
 
 _base_ = ['../../../configs/_base_/default_runtime.py']
-custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.HFF.model','projects.HFF.loaders'],allow_failed_imports=False)
 # 
 
 voxel_size = [0.075, 0.075, 0.2]

@@ -123,6 +123,8 @@ class Det3DDataset(BaseDataset):
 
             self.num_ins_per_cat = [0] * len(self.METAINFO['classes'])
 
+
+
         super().__init__(
             ann_file=ann_file,
             metainfo=metainfo,
