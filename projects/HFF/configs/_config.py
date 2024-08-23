@@ -1,8 +1,8 @@
-_base_ = ['./nuscenes_occ.py','../../../configs/_base_/default_runtime.py']
-# _base_ = './nuscenes_occ.py'
+# _base_ = ['./nuscenes_occ.py','../../../configs/_base_/default_runtime.py']
+_base_ = './multimodel_nusce_cfg.py'
 # _base_ = ['/import/digitreasure/ammar_workspace/mmdetection3d/projects/HFF/configs/nuscenes_occ.py']
 
-custom_imports = dict(imports=['projects.HFF.loaders', 'projects.HFF.model'],allow_failed_imports=False)
+custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
 occ_class_names = [
     'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
@@ -10,8 +10,6 @@ occ_class_names = [
     'driveable_surface', 'other_flat', 'sidewalk',
     'terrain', 'manmade', 'vegetation', 'free'
 ]
-
-
 
 occ_size = [200, 200, 16]
 voxel_size=[0.2, 0.2, 8]

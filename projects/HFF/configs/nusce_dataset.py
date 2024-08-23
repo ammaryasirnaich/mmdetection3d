@@ -1,9 +1,11 @@
-# Copyright (c) OpenMMLab. All rights reserved.
-_base_ = ['../../../configs/_base_/datasets/nus_3d.py']
 
+
+_base_ = ['../../../configs/_base_/default_runtime.py']
+custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
+# 
 
 voxel_size = [0.075, 0.075, 0.2]
-point_cloud_range = [-40, -40, -1.0, 40, 40, 5.4]
+point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
@@ -21,10 +23,10 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-input_modality = dict(use_lidar=True, use_camera=Tr)
+input_modality = dict(use_lidar=True, use_camera=False)
+
 
 backend_args = None
-
 
 db_sampler = dict(
     data_root=data_root,
@@ -61,6 +63,7 @@ db_sampler = dict(
         load_dim=5,
         use_dim=[0, 1, 2, 3, 4],
         backend_args=backend_args))
+
 
 train_pipeline = [
     dict(
@@ -191,3 +194,70 @@ test_evaluator = val_evaluator
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+# learning rate
+lr = 0.0001
+param_scheduler = [
+    # learning rate scheduler
+    # During the first 8 epochs, learning rate increases from 0 to lr * 10
+    # during the next 12 epochs, learning rate decreases from lr * 10 to
+    # lr * 1e-4
+    dict(
+        type='CosineAnnealingLR',
+        T_max=8,
+        eta_min=lr * 10,
+        begin=0,
+        end=8,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingLR',
+        T_max=12,
+        eta_min=lr * 1e-4,
+        begin=8,
+        end=20,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    # momentum scheduler
+    # During the first 8 epochs, momentum increases from 0 to 0.85 / 0.95
+    # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=8,
+        eta_min=0.85 / 0.95,
+        begin=0,
+        end=8,
+        by_epoch=True,
+        convert_to_iter_based=True),
+    dict(
+        type='CosineAnnealingMomentum',
+        T_max=12,
+        eta_min=1,
+        begin=8,
+        end=20,
+        by_epoch=True,
+        convert_to_iter_based=True)
+]
+
+# runtime settings
+train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
+val_cfg = dict()
+test_cfg = dict()
+
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
+    clip_grad=dict(max_norm=35, norm_type=2))
+
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
+auto_scale_lr = dict(enable=False, base_batch_size=32)
+log_processor = dict(window_size=50)
+
+default_hooks = dict(
+    logger=dict(type='LoggerHook', interval=50),
+    checkpoint=dict(type='CheckpointHook', interval=5))
+custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
+
