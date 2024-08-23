@@ -1,345 +1,207 @@
-import os
+import copy
+from typing import Optional
+
 import mmcv
-import torch
 import numpy as np
+from mmengine.fileio import get
 
-from numpy.linalg import inv
-from mmengine.dist import get_dist_info
-from mmengine.structures import BaseDataElement as DC
-
-from torchvision.transforms.functional import rotate
-from typing import List, Sequence, Union
-from numpy import dtype
-
+from mmdet3d.datasets.transforms import LoadMultiViewImageFromFiles
 from mmdet3d.registry import TRANSFORMS
-import mmengine
 
 
 @TRANSFORMS.register_module()
-class LoadMultiViewImageFromMultiSweeps(object):
-    def __init__(self,
-                 sweeps_num=5,
-                 color_type='color',
-                 test_mode=False):
-        self.sweeps_num = sweeps_num
-        self.color_type = color_type
-        self.test_mode = test_mode
+class BEVLoadMultiViewImageFromFiles(LoadMultiViewImageFromFiles):
+    """Load multi channel images from a list of separate channel files.
 
-        self.train_interval = [4, 8]
-        self.test_interval = 6
-
-        try:
-            mmcv.use_backend('turbojpeg')
-        except ImportError:
-            mmcv.use_backend('cv2')
-
-    def load_offline(self, results):
-        cam_types = [
-            'CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_FRONT_LEFT',
-            'CAM_BACK', 'CAM_BACK_LEFT', 'CAM_BACK_RIGHT'
-        ]
-
-        if len(results['sweeps']['prev']) == 0:
-            for _ in range(self.sweeps_num):
-                for j in range(len(cam_types)):
-                    results['img'].append(results['img'][j])
-                    results['img_timestamp'].append(results['img_timestamp'][j])
-                    results['filename'].append(results['filename'][j])
-                    results['lidar2img'].append(np.copy(results['lidar2img'][j]))
-                    if 'ego2lidar' in results:
-                        results['ego2lidar'].append(results['ego2lidar'][0])
-        else:
-            if self.test_mode:
-                interval = self.test_interval
-                choices = [(k + 1) * interval - 1 for k in range(self.sweeps_num)]
-            elif len(results['sweeps']['prev']) <= self.sweeps_num:
-                pad_len = self.sweeps_num - len(results['sweeps']['prev'])
-                choices = list(range(len(results['sweeps']['prev']))) + [len(results['sweeps']['prev']) - 1] * pad_len
-            else:
-                max_interval = len(results['sweeps']['prev']) // self.sweeps_num
-                max_interval = min(max_interval, self.train_interval[1])
-                min_interval = min(max_interval, self.train_interval[0])
-                interval = np.random.randint(min_interval, max_interval + 1)
-                choices = [(k + 1) * interval - 1 for k in range(self.sweeps_num)]
-
-            for idx in sorted(list(choices)):
-                sweep_idx = min(idx, len(results['sweeps']['prev']) - 1)
-                sweep = results['sweeps']['prev'][sweep_idx]
-
-                if len(sweep.keys()) < len(cam_types):
-                    sweep = results['sweeps']['prev'][sweep_idx - 1]
-
-                for sensor in cam_types:
-                    results['img'].append(mmcv.imread(sweep[sensor]['data_path'], self.color_type))
-                    results['img_timestamp'].append(sweep[sensor]['timestamp'] / 1e6)
-                    results['filename'].append(os.path.relpath(sweep[sensor]['data_path']))
-                    results['lidar2img'].append(compose_lidar2img(
-                        results['ego2global_translation'],
-                        results['ego2global_rotation'],
-                        results['lidar2ego_translation'],
-                        results['lidar2ego_rotation'],
-                        sweep[sensor]['sensor2global_translation'],
-                        sweep[sensor]['sensor2global_rotation'],
-                        sweep[sensor]['cam_intrinsic'],
-                    ))
-                    if 'ego2lidar' in results:
-                        results['ego2lidar'].append(results['ego2lidar'][0])
-
-        return results
-
-    def load_online(self, results):
-        # only used when measuring FPS
-        assert self.test_mode
-        assert self.test_interval % 6 == 0
-
-        cam_types = [
-            'CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_FRONT_LEFT',
-            'CAM_BACK', 'CAM_BACK_LEFT', 'CAM_BACK_RIGHT'
-        ]
-
-        if len(results['sweeps']['prev']) == 0:
-            for _ in range(self.sweeps_num):
-                for j in range(len(cam_types)):
-                    results['img_timestamp'].append(results['img_timestamp'][j])
-                    results['filename'].append(results['filename'][j])
-                    results['lidar2img'].append(np.copy(results['lidar2img'][j]))
-                    if 'ego2lidar' in results:
-                        results['ego2lidar'].append(results['ego2lidar'][0])
-        else:
-            interval = self.test_interval
-            choices = [(k + 1) * interval - 1 for k in range(self.sweeps_num)]
-
-            for idx in sorted(list(choices)):
-                sweep_idx = min(idx, len(results['sweeps']['prev']) - 1)
-                sweep = results['sweeps']['prev'][sweep_idx]
-
-                if len(sweep.keys()) < len(cam_types):
-                    sweep = results['sweeps']['prev'][sweep_idx - 1]
-
-                for sensor in cam_types:
-                    # skip loading history frames
-                    results['img_timestamp'].append(sweep[sensor]['timestamp'] / 1e6)
-                    results['filename'].append(os.path.relpath(sweep[sensor]['data_path']))
-                    results['lidar2img'].append(compose_lidar2img(
-                        results['ego2global_translation'],
-                        results['ego2global_rotation'],
-                        results['lidar2ego_translation'],
-                        results['lidar2ego_rotation'],
-                        sweep[sensor]['sensor2global_translation'],
-                        sweep[sensor]['sensor2global_rotation'],
-                        sweep[sensor]['cam_intrinsic'],
-                    ))
-                    if 'ego2lidar' in results:
-                        results['ego2lidar'].append(results['ego2lidar'][0])
-
-        return results
-
-    def __call__(self, results):
-        if self.sweeps_num == 0:
-            return results
-
-        world_size = get_dist_info()[1]
-        if world_size == 1 and self.test_mode:
-            return self.load_online(results)
-        else:
-            return self.load_offline(results)
-
-
-@TRANSFORMS.register_module()
-class LoadOccGTFromFile(object):
-    def __init__(self, num_classes=18, inst_class_ids=[]):
-        self.num_classes = num_classes
-        self.inst_class_ids = inst_class_ids
-    
-    def __call__(self, results):
-        occ_labels = np.load(results['occ_path'])
-        semantics = occ_labels['semantics']  # [200, 200, 16]
-        # mask_lidar = occ_labels['mask_lidar'].astype(np.bool_)  # [200, 200, 16]
-        # mask_camera = occ_labels['mask_camera'].astype(np.bool_)  # [200, 200, 16]
-
-        # results['mask_lidar'] = mask_lidar
-        # results['mask_camera'] = mask_camera
-  
-        # instance GT
-        if 'instances' in occ_labels.keys():
-            instances = occ_labels['instances']
-            instance_class_ids = [self.num_classes - 1]  # the 0-th class is always free class
-            for i in range(1, instances.max() + 1):
-                class_id = np.unique(semantics[instances == i])
-                assert class_id.shape[0] == 1, "each instance must belong to only one class"
-                instance_class_ids.append(class_id[0])
-            instance_class_ids = np.array(instance_class_ids)
-        else:
-            instances = None
-            instance_class_ids = None
-
-        instance_count = 0
-        final_instance_class_ids = []
-        final_instances = np.ones_like(semantics) * 255  # empty space has instance id "255"
-
-        for class_id in range(self.num_classes - 1):
-            if np.sum(semantics == class_id) == 0:
-                continue
-
-            if class_id in self.inst_class_ids:
-                assert instances is not None, 'instance annotation not found'
-                # treat as instances
-                for instance_id in range(len(instance_class_ids)):
-                    if instance_class_ids[instance_id] != class_id:
-                        continue
-                    final_instances[instances == instance_id] = instance_count
-                    instance_count += 1
-                    final_instance_class_ids.append(class_id)
-            else:
-                # treat as semantics
-                final_instances[semantics == class_id] = instance_count
-                instance_count += 1
-                final_instance_class_ids.append(class_id)
-
-        results['voxel_semantics'] = semantics
-        results['voxel_instances'] = final_instances
-        results['instance_class_ids'] = DC(to_tensor(final_instance_class_ids))
-
-        if results.get('rotate_bda', False):
-            semantics = torch.from_numpy(semantics).permute(2, 0, 1)  # [16, 200, 200]
-            semantics = rotate(semantics, results['rotate_bda'], fill=255).permute(1, 2, 0)  # [200, 200, 16]
-            results['voxel_semantics'] = semantics.numpy()
-
-            final_instances = torch.from_numpy(final_instances).permute(2, 0, 1)  # [16, 200, 200]
-            final_instances = rotate(final_instances, results['rotate_bda'], fill=255).permute(1, 2, 0)  # [200, 200, 16]
-            results['voxel_instances'] = final_instances.numpy()
-
-        if results.get('flip_dx', False):
-            results['voxel_semantics'] = results['voxel_semantics'][::-1, ...].copy()
-            results['voxel_instances'] = results['voxel_instances'][::-1, ...].copy()
-            
-        if results.get('flip_dy', False):
-            results['voxel_semantics'] = results['voxel_semantics'][:, ::-1, ...].copy()
-            results['voxel_instances'] = results['voxel_instances'][:, ::-1, ...].copy()
-
-        return results
-
-
-# https://github.com/HuangJunJie2017/BEVDet/blob/58c2587a8f89a1927926f0bdb6cde2917c91a9a5/mmdet3d/datasets/TRANSFORMS/loading.py#L1177
-@TRANSFORMS.register_module()
-class BEVAug(object):
-    def __init__(self, bda_aug_conf, classes, is_train=True):
-        self.bda_aug_conf = bda_aug_conf
-        self.is_train = is_train
-        self.classes = classes
-
-    def sample_bda_augmentation(self):
-        """Generate bda augmentation values based on bda_config."""
-        if self.is_train:
-            rotate_bda = np.random.uniform(*self.bda_aug_conf['rot_lim'])
-            scale_bda = np.random.uniform(*self.bda_aug_conf['scale_lim'])
-            flip_dx = np.random.uniform() < self.bda_aug_conf['flip_dx_ratio']
-            flip_dy = np.random.uniform() < self.bda_aug_conf['flip_dy_ratio']
-        else:
-            rotate_bda = 0
-            scale_bda = 1.0
-            flip_dx = False
-            flip_dy = False
-        return rotate_bda, scale_bda, flip_dx, flip_dy
-
-    def bev_transform(self, rotate_angle, scale_ratio, flip_dx, flip_dy):
-        """
-        Returns:
-            rot_mat: (3, 3)
-        """
-        rotate_angle = torch.tensor(rotate_angle / 180 * np.pi)
-        rot_sin = torch.sin(rotate_angle)
-        rot_cos = torch.cos(rotate_angle)
-        rot_mat = torch.Tensor([[rot_cos, -rot_sin, 0], [rot_sin, rot_cos, 0],
-                                [0, 0, 1]])
-        scale_mat = torch.Tensor([[scale_ratio, 0, 0], [0, scale_ratio, 0],
-                                  [0, 0, scale_ratio]])
-        flip_mat = torch.Tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-
-        if flip_dx:
-            flip_mat = flip_mat @ torch.Tensor([[-1, 0, 0], [0, 1, 0],
-                                                [0, 0, 1]])
-        if flip_dy:
-            flip_mat = flip_mat @ torch.Tensor([[1, 0, 0], [0, -1, 0],
-                                                [0, 0, 1]])
-        rot_mat = flip_mat @ (scale_mat @ rot_mat)
-        
-        return rot_mat
-
-    def __call__(self, results):
-        rotate_bda, scale_bda, flip_dx, flip_dy = self.sample_bda_augmentation()
-
-        bda_mat = torch.zeros(4, 4)
-        bda_mat[3, 3] = 1
-
-        # bda_rot: (3, 3)
-        bda_rot = self.bev_transform(rotate_bda, scale_bda, flip_dx, flip_dy)
-        bda_mat[:3, :3] = bda_rot
-
-        results['bda_mat'] = bda_mat
-        results['flip_dx'] = flip_dx
-        results['flip_dy'] = flip_dy
-        results['rotate_bda'] = rotate_bda
-        results['scale_bda'] = scale_bda
-
-        for i in range(len(results['ego2lidar'])):
-            results['ego2lidar'][i] = results['ego2lidar'][i] @ torch.inverse(bda_mat).numpy()  # [4, 4] @ [4, 4]
-
-        return results
-
-
-def to_tensor(
-    data: Union[torch.Tensor, np.ndarray, Sequence, int,
-                float]) -> torch.Tensor:
-    """Convert objects of various python types to :obj:`torch.Tensor`.
-
-    Supported types are: :class:`numpy.ndarray`, :class:`torch.Tensor`,
-    :class:`Sequence`, :class:`int` and :class:`float`.
+    ``BEVLoadMultiViewImageFromFiles`` adds the following keys for the
+    convenience of view transforms in the forward:
+        - 'cam2lidar'
+        - 'lidar2img'
 
     Args:
-        data (torch.Tensor | numpy.ndarray | Sequence | int | float): Data to
-            be converted.
-
-    Returns:
-        torch.Tensor: the converted data.
+        to_float32 (bool): Whether to convert the img to float32.
+            Defaults to False.
+        color_type (str): Color type of the file. Defaults to 'unchanged'.
+        backend_args (dict, optional): Arguments to instantiate the
+            corresponding backend. Defaults to None.
+        num_views (int): Number of view in a frame. Defaults to 5.
+        num_ref_frames (int): Number of frame in loading. Defaults to -1.
+        test_mode (bool): Whether is test mode in loading. Defaults to False.
+        set_default_scale (bool): Whether to set default scale.
+            Defaults to True.
     """
 
-    if isinstance(data, torch.Tensor):
-        return data
-    elif isinstance(data, np.ndarray):
-        if data.dtype is dtype('float64'):
-            data = data.astype(np.float32)
-        return torch.from_numpy(data)
-    elif isinstance(data, Sequence) and not mmengine.is_str(data):
-        return torch.tensor(data)
-    elif isinstance(data, int):
-        return torch.LongTensor([data])
-    elif isinstance(data, float):
-        return torch.FloatTensor([data])
-    else:
-        raise TypeError(f'type {type(data)} cannot be converted to tensor.')
+    def transform(self, results: dict) -> Optional[dict]:
+        """Call function to load multi-view image from files.
 
-def compose_lidar2img(ego2global_translation_curr,
-                      ego2global_rotation_curr,
-                      lidar2ego_translation_curr,
-                      lidar2ego_rotation_curr,
-                      sensor2global_translation_past,
-                      sensor2global_rotation_past,
-                      cam_intrinsic_past):
-    
-    R = sensor2global_rotation_past @ (inv(ego2global_rotation_curr).T @ inv(lidar2ego_rotation_curr).T)
-    T = sensor2global_translation_past @ (inv(ego2global_rotation_curr).T @ inv(lidar2ego_rotation_curr).T)
-    T -= ego2global_translation_curr @ (inv(ego2global_rotation_curr).T @ inv(lidar2ego_rotation_curr).T) + lidar2ego_translation_curr @ inv(lidar2ego_rotation_curr).T
+        Args:
+            results (dict): Result dict containing multi-view image filenames.
 
-    lidar2cam_r = inv(R.T)
-    lidar2cam_t = T @ lidar2cam_r.T
+        Returns:
+            dict: The result dict containing the multi-view image data.
+            Added keys and values are described below.
 
-    lidar2cam_rt = np.eye(4)
-    lidar2cam_rt[:3, :3] = lidar2cam_r.T
-    lidar2cam_rt[3, :3] = -lidar2cam_t
+                - filename (str): Multi-view image filenames.
+                - img (np.ndarray): Multi-view image arrays.
+                - img_shape (tuple[int]): Shape of multi-view image arrays.
+                - ori_shape (tuple[int]): Shape of original image arrays.
+                - pad_shape (tuple[int]): Shape of padded image arrays.
+                - scale_factor (float): Scale factor.
+                - img_norm_cfg (dict): Normalization configuration of images.
+        """
+        # TODO: consider split the multi-sweep part out of this pipeline
+        # Derive the mask and transform for loading of multi-sweep data
+        if self.num_ref_frames > 0:
+            # init choice with the current frame
+            init_choice = np.array([0], dtype=np.int64)
+            num_frames = len(results['img_filename']) // self.num_views - 1
+            if num_frames == 0:  # no previous frame, then copy cur frames
+                choices = np.random.choice(
+                    1, self.num_ref_frames, replace=True)
+            elif num_frames >= self.num_ref_frames:
+                # NOTE: suppose the info is saved following the order
+                # from latest to earlier frames
+                if self.test_mode:
+                    choices = np.arange(num_frames - self.num_ref_frames,
+                                        num_frames) + 1
+                # NOTE: +1 is for selecting previous frames
+                else:
+                    choices = np.random.choice(
+                        num_frames, self.num_ref_frames, replace=False) + 1
+            elif num_frames > 0 and num_frames < self.num_ref_frames:
+                if self.test_mode:
+                    base_choices = np.arange(num_frames) + 1
+                    random_choices = np.random.choice(
+                        num_frames,
+                        self.num_ref_frames - num_frames,
+                        replace=True) + 1
+                    choices = np.concatenate([base_choices, random_choices])
+                else:
+                    choices = np.random.choice(
+                        num_frames, self.num_ref_frames, replace=True) + 1
+            else:
+                raise NotImplementedError
+            choices = np.concatenate([init_choice, choices])
+            select_filename = []
+            for choice in choices:
+                select_filename += results['img_filename'][choice *
+                                                           self.num_views:
+                                                           (choice + 1) *
+                                                           self.num_views]
+            results['img_filename'] = select_filename
+            for key in ['cam2img', 'lidar2cam']:
+                if key in results:
+                    select_results = []
+                    for choice in choices:
+                        select_results += results[key][choice *
+                                                       self.num_views:(choice +
+                                                                       1) *
+                                                       self.num_views]
+                    results[key] = select_results
+            for key in ['ego2global']:
+                if key in results:
+                    select_results = []
+                    for choice in choices:
+                        select_results += [results[key][choice]]
+                    results[key] = select_results
+            # Transform lidar2cam to
+            # [cur_lidar]2[prev_img] and [cur_lidar]2[prev_cam]
+            for key in ['lidar2cam']:
+                if key in results:
+                    # only change matrices of previous frames
+                    for choice_idx in range(1, len(choices)):
+                        pad_prev_ego2global = np.eye(4)
+                        prev_ego2global = results['ego2global'][choice_idx]
+                        pad_prev_ego2global[:prev_ego2global.
+                                            shape[0], :prev_ego2global.
+                                            shape[1]] = prev_ego2global
+                        pad_cur_ego2global = np.eye(4)
+                        cur_ego2global = results['ego2global'][0]
+                        pad_cur_ego2global[:cur_ego2global.
+                                           shape[0], :cur_ego2global.
+                                           shape[1]] = cur_ego2global
+                        cur2prev = np.linalg.inv(pad_prev_ego2global).dot(
+                            pad_cur_ego2global)
+                        for result_idx in range(choice_idx * self.num_views,
+                                                (choice_idx + 1) *
+                                                self.num_views):
+                            results[key][result_idx] = \
+                                results[key][result_idx].dot(cur2prev)
+        # Support multi-view images with different shapes
+        # TODO: record the origin shape and padded shape
+        filename, cam2img, lidar2cam, cam2lidar, lidar2img = [], [], [], [], []
+        for _, cam_item in results['images'].items():
+            filename.append(cam_item['img_path'])
+            lidar2cam.append(cam_item['lidar2cam'])
 
-    viewpad = np.eye(4)
-    viewpad[:cam_intrinsic_past.shape[0], :cam_intrinsic_past.shape[1]] = cam_intrinsic_past
-    lidar2img = (viewpad @ lidar2cam_rt.T).astype(np.float32)
+            lidar2cam_array = np.array(cam_item['lidar2cam']).astype(
+                np.float32)
+            lidar2cam_rot = lidar2cam_array[:3, :3]
+            lidar2cam_trans = lidar2cam_array[:3, 3:4]
+            camera2lidar = np.eye(4)
+            camera2lidar[:3, :3] = lidar2cam_rot.T
+            camera2lidar[:3, 3:4] = -1 * np.matmul(
+                lidar2cam_rot.T, lidar2cam_trans.reshape(3, 1))
+            cam2lidar.append(camera2lidar)
 
-    return lidar2img
+            cam2img_array = np.eye(4).astype(np.float32)
+            cam2img_array[:3, :3] = np.array(cam_item['cam2img']).astype(
+                np.float32)
+            cam2img.append(cam2img_array)
+            lidar2img.append(cam2img_array @ lidar2cam_array)
+
+        results['img_path'] = filename
+        results['cam2img'] = np.stack(cam2img, axis=0)
+        results['lidar2cam'] = np.stack(lidar2cam, axis=0)
+        results['cam2lidar'] = np.stack(cam2lidar, axis=0)
+        results['lidar2img'] = np.stack(lidar2img, axis=0)
+
+        results['ori_cam2img'] = copy.deepcopy(results['cam2img'])
+
+        # img is of shape (h, w, c, num_views)
+        # h and w can be different for different views
+        img_bytes = [
+            get(name, backend_args=self.backend_args) for name in filename
+        ]
+        imgs = [
+            mmcv.imfrombytes(
+                img_byte,
+                flag=self.color_type,
+                backend='pillow',
+                channel_order='rgb') for img_byte in img_bytes
+        ]
+        # handle the image with different shape
+        img_shapes = np.stack([img.shape for img in imgs], axis=0)
+        img_shape_max = np.max(img_shapes, axis=0)
+        img_shape_min = np.min(img_shapes, axis=0)
+        assert img_shape_min[-1] == img_shape_max[-1]
+        if not np.all(img_shape_max == img_shape_min):
+            pad_shape = img_shape_max[:2]
+        else:
+            pad_shape = None
+        if pad_shape is not None:
+            imgs = [
+                mmcv.impad(img, shape=pad_shape, pad_val=0) for img in imgs
+            ]
+        img = np.stack(imgs, axis=-1)
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['filename'] = filename
+        # unravel to list, see `DefaultFormatBundle` in formating.py
+        # which will transpose each image separately and then stack into array
+        results['img'] = [img[..., i] for i in range(img.shape[-1])]
+        results['img_shape'] = img.shape[:2]
+        results['ori_shape'] = img.shape[:2]
+        # Set initial values for default meta_keys
+        results['pad_shape'] = img.shape[:2]
+        if self.set_default_scale:
+            results['scale_factor'] = 1.0
+        num_channels = 1 if len(img.shape) < 3 else img.shape[2]
+        results['img_norm_cfg'] = dict(
+            mean=np.zeros(num_channels, dtype=np.float32),
+            std=np.ones(num_channels, dtype=np.float32),
+            to_rgb=False)
+        results['num_views'] = self.num_views
+        results['num_ref_frames'] = self.num_ref_frames
+        return results

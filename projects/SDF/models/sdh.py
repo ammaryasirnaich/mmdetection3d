@@ -57,7 +57,7 @@ class SDH(Base3DDetector):
 
         self.bbox_head = MODELS.build(bbox_head)
 
-        self.init_weights()
+        # self.init_weights()
 
     def _forward(self,
                  batch_inputs: Tensor,
@@ -241,6 +241,7 @@ class SDH(Base3DDetector):
         **kwargs,
     ):
         imgs = batch_inputs_dict.get('imgs', None)
+        print(imgs.shape)
         points = batch_inputs_dict.get('points', None)
         features = []
         if imgs is not None:
