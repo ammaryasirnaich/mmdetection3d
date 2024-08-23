@@ -7,6 +7,17 @@ custom_imports = dict(
 # Usually voxel size is changed consistently with the point cloud range
 # If point cloud range is modified, do remember to change all related
 # keys in the config.
+
+_dim_ = 256
+_num_points_ = 4
+_num_groups_ = 4
+_num_layers_ = 2
+_num_frames_ = 8
+_num_queries_ = 100
+_topk_training_ = [4000, 16000, 64000]
+_topk_testing_ = [2000, 8000, 32000]
+
+
 voxel_size = [0.075, 0.075, 0.2]
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 class_names = [
@@ -43,42 +54,76 @@ backend_args = None
 
 model = dict(
     type='SDH',
+    # data_preprocessor=dict(
+    #     type='Det3DDataPreprocessor',
+    #     pad_size_divisor=32,
+    #     voxel=True,
+    #     voxel_layer=dict(
+    #         max_num_points=10,
+    #         point_cloud_range=[-50, -50, -5.0, 50, 50, 3.0],
+    #         voxel_size=[0.2, 0.2, 8],
+    #         max_voxels=[120000, 160000],
+    #         voxelize_reduce=True)),
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
-        pad_size_divisor=32,
-        voxelize_cfg=dict(
-            max_num_points=10,
-            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-            voxel_size=[0.075, 0.075, 0.2],
-            max_voxels=[120000, 160000],
-            voxelize_reduce=True)),
-    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=32,
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            max_voxels=(16000, 40000),
+        ),
+        mean=[123.675, 116.280, 103.530],
+        std=[58.395, 57.120, 57.375],
+        bgr_to_rgb=True
+    ), 
+    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
     pts_middle_encoder=dict(
-        type='BEVFusionSparseEncoder',
-        in_channels=5,
-        sparse_shape=[1440, 1440, 41],
-        order=('conv', 'norm', 'act'),
-        norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
-        encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
-                                                                      128)),
-        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
-        block_type='basicblock'),
+        type='SparseEncoder',
+        in_channels=4,
+        sparse_shape=[41, 1600, 1408],
+        order=('conv', 'norm', 'act')
+    ),
     pts_backbone=dict(
         type='SECOND',
         in_channels=256,
-        out_channels=[128, 256],
         layer_nums=[5, 5],
         layer_strides=[1, 2],
-        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
-        conv_cfg=dict(type='Conv2d', bias=False)),
+        out_channels=[128, 256]
+    ),
     pts_neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         out_channels=[256, 256],
         upsample_strides=[1, 2],
-        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
-        upsample_cfg=dict(type='deconv', bias=False),
-        use_conv_for_no_stride=True),
+        norm_cfg=dict(type='BN', requires_grad=True),
+        use_conv_for_no_stride=True
+    ),
+    
+    img_point_encoder=dict(
+        type='SparseBEVTransformer',
+        # in_channels=768,  # Combined features from all sensors (camera, LiDAR)
+        embed_dims=_dim_,
+        num_layers=_num_layers_,
+        num_frames=_num_frames_,
+        num_points=_num_points_,
+        # num_groups=_num_groups_,
+        # num_queries=_num_queries_,
+        num_levels=4,
+        num_classes=len(class_names),
+        pc_range=point_cloud_range,
+        # code_size=occ_size,
+        # topk_training=_topk_training_,
+        # topk_testing=_topk_testing_
+    ),
+    fusion_module=dict(
+        type='MultiResolutionFusion',
+        coarse_channels=256,
+        intermediate_channels=256,
+        fine_channels=256,
+        adaptative_resolution=True,
+        complexity_threshold=0.8
+    ),
     bbox_head=dict(
         type='TransFusionHead',
         num_proposals=200,
