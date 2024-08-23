@@ -1,9 +1,9 @@
-_base_ = ['../../../configs/_base_/default_runtime.py']
+# _base_ = ['../../../configs/_base_/default_runtime.py']
 
 point_cloud_range = [-40, -40, -1.0, 40, 40, 5.4]
 occ_size = [200, 200, 16]
 
-custom_imports = dict(imports=['projects.SPOC.loaders'],allow_failed_imports=False)
+# custom_imports = dict(imports=['projects.HFF.loaders'],allow_failed_imports=False)
 
 # For nuScenes we usually do 10-class detection
 det_class_names = [

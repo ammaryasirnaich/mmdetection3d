@@ -2,10 +2,7 @@
 
 _base_ = './nuscenes_occ.py'
 
-
-custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
-
-
+custom_imports = dict(imports=['projects.HFF.model',''],allow_failed_imports=False)
 
 model = dict(
     type='HFFModel',

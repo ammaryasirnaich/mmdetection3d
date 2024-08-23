@@ -1,6 +1,8 @@
-# _base_ = ['../../../configs/_base_/default_runtime.py']
-_base_ = './nuscenes_occ.py'
+_base_ = ['./nuscenes_occ.py','../../../configs/_base_/default_runtime.py']
+# _base_ = './nuscenes_occ.py'
 # _base_ = ['/import/digitreasure/ammar_workspace/mmdetection3d/projects/HFF/configs/nuscenes_occ.py']
+
+custom_imports = dict(imports=['projects.HFF.loaders', 'projects.HFF.model'],allow_failed_imports=False)
 
 occ_class_names = [
     'others', 'barrier', 'bicycle', 'bus', 'car', 'construction_vehicle',
@@ -9,7 +11,6 @@ occ_class_names = [
     'terrain', 'manmade', 'vegetation', 'free'
 ]
 
-custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
 
 occ_size = [200, 200, 16]
