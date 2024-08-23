@@ -13,7 +13,7 @@ from mmdet3d.models import Base3DDetector
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
-from .ops import Voxelization
+
 
 
 @MODELS.register_module()

@@ -1,6 +1,6 @@
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.BEVFusion.bevfusion'], allow_failed_imports=False)
+    imports=['projects.SDF.models'], allow_failed_imports=False)
 
 # model settings
 # Voxel size for voxel encoder
@@ -16,7 +16,7 @@ class_names = [
 
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+data_root = '/workspace/data/nusense/mini_dataset/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -42,7 +42,7 @@ input_modality = dict(use_lidar=True, use_camera=False)
 backend_args = None
 
 model = dict(
-    type='BEVFusion',
+    type='SDH',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         pad_size_divisor=32,
