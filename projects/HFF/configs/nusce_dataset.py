@@ -2,7 +2,7 @@
 
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(imports=['projects.HFF.model','projects.HFF.loaders'],allow_failed_imports=False)
-# 
+
 
 voxel_size = [0.075, 0.075, 0.2]
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
@@ -23,7 +23,7 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-input_modality = dict(use_lidar=True, use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=True)
 
 
 backend_args = None

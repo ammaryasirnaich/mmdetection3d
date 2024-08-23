@@ -1,5 +1,5 @@
-# _base_ = [ './nusce_dataset.py']
-_base_ = [ './nuscenes_occ.py']
+_base_ = [ './nusce_dataset.py']
+
 
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 input_modality = dict(use_lidar=True, use_camera=True)
@@ -7,6 +7,13 @@ input_modality = dict(use_lidar=True, use_camera=True)
 
 # custom_imports = dict(imports=['projects.HFF.model'],allow_failed_imports=False)
 
+class_names = [
+    'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
+    'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
+]
+
+
+# For nuScenes we usually do 10-class detection
 det_class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
     'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
@@ -19,6 +26,8 @@ occ_class_names = [
     'driveable_surface', 'other_flat', 'sidewalk',
     'terrain', 'manmade', 'vegetation', 'free'
 ]
+
+
 
 backend_args = None
 
@@ -161,7 +170,7 @@ train_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=False, color_type='color'),
     dict(type='LoadMultiViewImageFromMultiSweeps', sweeps_num=_num_frames_ - 1),
     dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=True),
-    dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
+    # dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
     dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=True),
     dict(
         type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
@@ -179,7 +188,7 @@ test_pipeline = [
     dict(type='LoadMultiViewImageFromFiles', to_float32=False, color_type='color'),
     dict(type='LoadMultiViewImageFromMultiSweeps', sweeps_num=_num_frames_ - 1, test_mode=True),
     dict(type='BEVAug', bda_aug_conf=bda_aug_conf, classes=det_class_names, is_train=False),
-    dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
+    # dict(type='LoadOccGTFromFile', num_classes=len(occ_class_names)),
     dict(type='RandomTransformImage', ida_aug_conf=ida_aug_conf, training=False),
     dict(
         type='Pack3DDetInputs',  # New formatting component replacing DefaultFormatBundle3D and Collect3D
