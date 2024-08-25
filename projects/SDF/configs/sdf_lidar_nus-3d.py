@@ -38,32 +38,11 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=False)
-# backend_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         'data/nuscenes/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         './data/nuscenes_mini/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/',
-#         'data/nuscenes_mini/':
-#         's3://openmmlab/datasets/detection3d/nuscenes/'
-#     }))
+
 backend_args = None
 
 model = dict(
     type='SDH',
-    # data_preprocessor=dict(
-    #     type='Det3DDataPreprocessor',
-    #     pad_size_divisor=32,
-    #     voxel=True,
-    #     voxel_layer=dict(
-    #         max_num_points=10,
-    #         point_cloud_range=[-50, -50, -5.0, 50, 50, 3.0],
-    #         voxel_size=[0.2, 0.2, 8],
-    #         max_voxels=[120000, 160000],
-    #         voxelize_reduce=True)),
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
