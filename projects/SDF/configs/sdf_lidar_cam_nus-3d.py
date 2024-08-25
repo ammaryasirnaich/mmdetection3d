@@ -29,7 +29,6 @@ model = dict(
         out_channels=256,
         num_outs=5
     ),
-    
     )
 
 train_pipeline = [

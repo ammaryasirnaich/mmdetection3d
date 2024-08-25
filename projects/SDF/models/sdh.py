@@ -164,6 +164,62 @@ class SDH(Base3DDetector):
         #         lidar_aug_matrix,
         #         img_metas,
         #     )
+        
+        '''
+        
+        B, N, C, H, W = img.size()
+        img = img.view(B * N, C, H, W)
+        img = img.float()
+
+        if self.data_aug is not None:
+            if 'img_color_aug' in self.data_aug and self.data_aug['img_color_aug'] and self.training:
+                img = self.color_aug(img)
+
+            if 'img_norm_cfg' in self.data_aug:
+                img_norm_cfg = self.data_aug['img_norm_cfg']
+
+                norm_mean = torch.tensor(img_norm_cfg['mean'], device=img.device)
+                norm_std = torch.tensor(img_norm_cfg['std'], device=img.device)
+
+                if img_norm_cfg['to_rgb']:
+                    img = img[:, [2, 1, 0], :, :]  # BGR to RGB
+
+                img = img - norm_mean.reshape(1, 3, 1, 1)
+                img = img / norm_std.reshape(1, 3, 1, 1)
+
+            for b in range(B):
+                img_shape = (img.shape[2], img.shape[3], img.shape[1])
+                img_metas[b]['img_shape'] = [img_shape for _ in range(N)]
+                img_metas[b]['ori_shape'] = [img_shape for _ in range(N)]
+
+            if 'img_pad_cfg' in self.data_aug:
+                img_pad_cfg = self.data_aug['img_pad_cfg']
+                img = pad_multiple(img, img_metas, size_divisor=img_pad_cfg['size_divisor'])
+                H, W = img.shape[-2:]
+
+        input_shape = img.shape[-2:]
+        # update real input shape of each single img
+        for img_meta in img_metas:
+            img_meta.update(input_shape=input_shape)
+
+        ####img_feats = self.extract_img_feat(img)
+
+        img_feats = self.img_backbone(img)
+
+        if isinstance(img_feats, dict):
+            img_feats = list(img_feats.values())
+
+        if self.with_img_neck:
+            img_feats = self.img_neck(img_feats)
+
+
+        img_feats_reshaped = []
+        for img_feat in img_feats:
+            BN, C, H, W = img_feat.size()
+            img_feats_reshaped.append(img_feat.view(B, int(BN / B), C, H, W))
+
+        return img_feats_reshaped
+        '''
         return x
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
@@ -181,35 +237,12 @@ class SDH(Base3DDetector):
                                 batch_size)
         x = self.pts_backbone(x)
         x = self.pts_neck(x)
+        
+        
+        # self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)
+        
         return x
 
-    @torch.no_grad()
-    def voxelize(self, points):
-        feats, coords, sizes = [], [], []
-        for k, res in enumerate(points):
-            ret = self.pts_voxel_layer(res)
-            if len(ret) == 3:
-                # hard voxelize
-                f, c, n = ret
-            else:
-                assert len(ret) == 2
-                f, c = ret
-                n = None
-            feats.append(f)
-            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
-            if n is not None:
-                sizes.append(n)
-
-        feats = torch.cat(feats, dim=0)
-        coords = torch.cat(coords, dim=0)
-        if len(sizes) > 0:
-            sizes = torch.cat(sizes, dim=0)
-            if self.voxelize_reduce:
-                feats = feats.sum(
-                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
-                feats = feats.contiguous()
-
-        return feats, coords, sizes
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
                 batch_data_samples: List[Det3DDataSample],
@@ -312,3 +345,16 @@ class SDH(Base3DDetector):
         losses.update(bbox_loss)
 
         return losses
+
+
+'''
+  def forward_pts_train(self, mlvl_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas):
+        """
+        voxel_semantics: [bs, 200, 200, 16], value in range [0, num_cls - 1]
+        voxel_instances: [bs, 200, 200, 16], value in range [0, num_obj - 1]
+        instance_class_ids: [[bs0_num_obj], [bs1_num_obj], ...], value in range [0, num_cls - 1]
+        """
+        outs = self.pts_bbox_head(mlvl_feats, img_metas)
+        loss_inputs = [voxel_semantics, voxel_instances, instance_class_ids, outs]
+        return self.pts_bbox_head.loss(*loss_inputs)
+'''
