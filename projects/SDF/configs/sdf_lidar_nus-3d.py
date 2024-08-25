@@ -73,9 +73,6 @@ model = dict(
             voxel_size=voxel_size,
             max_voxels=(16000, 40000),
         ),
-        mean=[123.675, 116.280, 103.530],
-        std=[58.395, 57.120, 57.375],
-        bgr_to_rgb=True
     ), 
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
     pts_middle_encoder=dict(

@@ -39,21 +39,27 @@ class SDH(Base3DDetector):
         super().__init__(
             data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
-        self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
-
         self.img_backbone = MODELS.build(
             img_backbone) if img_backbone is not None else None
         self.img_neck = MODELS.build(
             img_neck) if img_neck is not None else None
+        
+        
         self.view_transform = MODELS.build(
             view_transform) if view_transform is not None else None
+
+
+        ## point cloud module initialization
+        self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
-
-        self.fusion_layer = MODELS.build(
-            fusion_layer) if fusion_layer is not None else None
-
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
+        
+        
+        
+        self.fusion_layer = MODELS.build(
+            fusion_layer) if fusion_layer is not None else None
+        
 
         self.bbox_head = MODELS.build(bbox_head)
 
@@ -147,26 +153,34 @@ class SDH(Base3DDetector):
         BN, C, H, W = x.size()
         x = x.view(B, int(BN / B), C, H, W)
 
-        with torch.autocast(device_type='cuda', dtype=torch.float32):
-            x = self.view_transform(
-                x,
-                points,
-                lidar2image,
-                camera_intrinsics,
-                camera2lidar,
-                img_aug_matrix,
-                lidar_aug_matrix,
-                img_metas,
-            )
+        # with torch.autocast(device_type='cuda', dtype=torch.float32):
+        #     x = self.view_transform(
+        #         x,
+        #         points,
+        #         lidar2image,
+        #         camera_intrinsics,
+        #         camera2lidar,
+        #         img_aug_matrix,
+        #         lidar_aug_matrix,
+        #         img_metas,
+        #     )
         return x
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
         points = batch_inputs_dict['points']
-        with torch.autocast('cuda', enabled=False):
-            points = [point.float() for point in points]
-            feats, coords, sizes = self.voxelize(points)
-            batch_size = coords[-1, 0] + 1
-        x = self.pts_middle_encoder(feats, coords, batch_size)
+        # with torch.autocast('cuda', enabled=False):
+        #     points = [point.float() for point in points]
+        #     feats, coords, sizes = self.voxelize(points)
+        #     batch_size = coords[-1, 0] + 1
+        voxel_dict = batch_inputs_dict['voxels']
+        voxel_features = self.pts_voxel_encoder(voxel_dict['voxels'],
+                                            voxel_dict['num_points'],
+                                            voxel_dict['coors'])
+        batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
+                                batch_size)
+        x = self.pts_backbone(x)
+        x = self.pts_neck(x)
         return x
 
     @torch.no_grad()
@@ -261,12 +275,16 @@ class SDH(Base3DDetector):
             camera2lidar = imgs.new_tensor(np.asarray(camera2lidar))
             img_aug_matrix = imgs.new_tensor(np.asarray(img_aug_matrix))
             lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
+            
+            # Image feature extratir module
             img_feature = self.extract_img_feat(imgs, deepcopy(points),
                                                 lidar2image, camera_intrinsics,
                                                 camera2lidar, img_aug_matrix,
                                                 lidar_aug_matrix,
                                                 batch_input_metas)
             features.append(img_feature)
+        
+        # Point feature encoder model
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
         features.append(pts_feature)
 
