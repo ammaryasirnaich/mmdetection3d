@@ -9,7 +9,7 @@ from mmcv.cnn.bricks.transformer import MultiheadAttention, FFN
 from mmdet3d.registry import MODELS
 
 from .bbox.utils import decode_bbox
-from .utils import inverse_sigmoid, DUMP
+from .bboxs import inverse_sigmoid, DUMP
 # from .sparsebev_sampling import sampling_4d, make_sample_points_from_bbox
 
 

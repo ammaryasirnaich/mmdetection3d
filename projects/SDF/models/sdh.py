@@ -15,6 +15,12 @@ from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
 
+from .fusion import AdaptiveWeight, fuse_features
+from .refinement import FeatureRefinement
+from .complexity import ComplexityModule, adjust_resolution
+from .segmentation import SegmentationHead
+
+
 
 @MODELS.register_module()
 class SDH(Base3DDetector):
@@ -54,14 +60,17 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
-        
-        
-        
-        self.fusion_layer = MODELS.build(
-            fusion_layer) if fusion_layer is not None else None
+             
+        # self.fusion_layer = MODELS.build(
+        #     fusion_layer) if fusion_layer is not None else None
         
 
-        self.bbox_head = MODELS.build(bbox_head)
+        # self.bbox_head = MODELS.build(bbox_head)
+        self.adaptive_weight = AdaptiveWeight(sparse_dim=256, dense_dim=256)
+        self.refinement = FeatureRefinement(input_dim=256)
+        self.complexity_module = ComplexityModule(input_dim=256)
+        self.segmentation_head = SegmentationHead(input_dim=256, num_classes=10)
+
 
         # self.init_weights()
 
@@ -142,6 +151,7 @@ class SDH(Base3DDetector):
         img_metas,
     ) -> torch.Tensor:
         B, N, C, H, W = x.size()
+
         x = x.view(B * N, C, H, W).contiguous()
 
         x = self.img_backbone(x)
@@ -220,6 +230,7 @@ class SDH(Base3DDetector):
 
         return img_feats_reshaped
         '''
+        
         return x
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
@@ -320,15 +331,17 @@ class SDH(Base3DDetector):
         # Point feature encoder model
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
         features.append(pts_feature)
-
+        
+        
+    
         if self.fusion_layer is not None:
             x = self.fusion_layer(features)
-        else:
-            assert len(features) == 1, features
-            x = features[0]
+        # else:
+        #     assert len(features) == 1, features
+        #     x = features[0]
 
-        x = self.pts_backbone(x)
-        x = self.pts_neck(x)
+        # x = self.pts_backbone(x)
+        # x = self.pts_neck(x)
 
         return x
 

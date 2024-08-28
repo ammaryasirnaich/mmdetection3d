@@ -9,7 +9,7 @@ from mmcv.transforms import BaseTransform
 from mmdet3d.registry import MODELS
 from mmcv.cnn.bricks.transformer import FFN
 from .sparsebev_transformer import AdaptiveMixing
-from .utils import DUMP
+from .bboxs import DUMP
 from .sparsebev_sampling import sampling_4d, make_sample_points_from_mask
 from .sparse_voxel_decoder import SparseVoxelDecoder
 

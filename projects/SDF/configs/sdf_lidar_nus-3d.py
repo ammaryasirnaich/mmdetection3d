@@ -76,6 +76,15 @@ model = dict(
         use_conv_for_no_stride=True
     ),
     
+    # _dim_ = 256
+    # _num_points_ = 4
+    # _num_groups_ = 4
+    # _num_layers_ = 2
+    # _num_frames_ = 8
+    # _num_queries_ = 100
+    # _topk_training_ = [4000, 16000, 64000]
+    # _topk_testing_ = [2000, 8000, 32000]
+
     img_point_encoder=dict(
         type='SparseBEVTransformer',
         # in_channels=768,  # Combined features from all sensors (camera, LiDAR)

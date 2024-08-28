@@ -1,0 +1,32 @@
+import torch.nn as nn
+import torch.nn.functional as F
+
+from .fusion import AdaptiveWeight, fuse_features
+from .refinement import FeatureRefinement
+from .complexity import ComplexityModule, adjust_resolution
+
+
+
+class Refine_Resolution_Adjacement(nn.Module):
+    def __init__(self, sparse_dim, dense_dim):
+        super(Refine_Resolution_Adjacement, self).__init__(sparse_features, dense_pooled)
+        self.sparse_features =
+        self.dense_pooled = 
+
+
+
+
+
+
+        # Adaptive Fusion
+        sparse_weight, dense_weight = self.adaptive_weight(sparse_features, dense_pooled)
+        fused_feature = fuse_features(sparse_features, dense_pooled, sparse_weight, dense_weight)
+
+        # Refinement and Resolution Adjustment
+        refined_feature = self.refinement(fused_feature)
+        complexity_score = self.complexity_module(refined_feature)
+        adaptive_feature = adjust_resolution(refined_feature, refined_feature, refined_feature, complexity_score)
+
+        # Final segmentation
+        predictions = self.segmentation_head(adaptive_feature)
+        return predictions
