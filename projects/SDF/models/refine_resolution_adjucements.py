@@ -16,8 +16,6 @@ class Refine_Resolution_Adjacement(nn.Module):
         self.complexity_module = ComplexityModule(input_dim=256)
         
 
-    
-
     def forward(self,sparse_features,dense_feature):
                 
         # Global pooling for dense features to match sparse feature dimensions

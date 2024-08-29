@@ -63,10 +63,11 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
+        self.adaptive_feature = Refine_Resolution_Adjacement()
         
              
-        # self.fusion_layer = MODELS.build(
-        #     fusion_layer) if fusion_layer is not None else None
+        self.fusion_layer = MODELS.build(
+            fusion_layer) if fusion_layer is not None else None
         
 
         # self.bbox_head = MODELS.build(bbox_head)
@@ -324,28 +325,28 @@ class SDH(Base3DDetector):
                                                 camera2lidar, img_aug_matrix,
                                                 lidar_aug_matrix,
                                                 batch_input_metas)
-            features.append(img_feature)
+            # features.append(img_feature)
         
         # Point feature encoder model
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
-        features.append(pts_feature)
+        # features.append(pts_feature)
         
-        if self.fusion_layer is not None:
-            x = self.fusion_layer(features)
+        # if self.fusion_layer is not None:
+        #     x = self.fusion_layer(features)
         # else:
         #     assert len(features) == 1, features
         #     x = features[0]
 
         # x = self.pts_backbone(x)
         # x = self.pts_neck(x)
+  
+        self.adaptive_feature = self.adaptive_feature(pts_feature,img_feature)
         
-        self.adaptive_feature = Refine_Resolution_Adjacement(pts_feature,img_feature)
-        
-        
-        # Final segmentation
-        predictions = SegmentationHead(self.adaptive_feature)
+        # SegmentationHead(input_dim, 10)
+        # # Final segmentation
+        # predictions = SegmentationHead(self.adaptive_feature)
 
-        return x
+        return self.adaptive_feature
 
     def loss(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
              batch_data_samples: List[Det3DDataSample],

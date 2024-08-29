@@ -29,6 +29,34 @@ model = dict(
         out_channels=256,
         num_outs=5
     ),
+    train_cfg=dict(
+            dataset='nuScenes',
+            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
+            grid_size=[1440, 1440, 41],
+            voxel_size=[0.075, 0.075, 0.2],
+            out_size_factor=8,
+            gaussian_overlap=0.1,
+            min_radius=2,
+            pos_weight=-1,
+            code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+            # assigner=dict(
+            #     type='HungarianAssigner3D',
+            #     iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
+            #     cls_cost=dict(
+            #         type='mmdet.FocalLossCost',
+            #         gamma=2.0,
+            #         alpha=0.25,
+            #         weight=0.15),
+            #     reg_cost=dict(type='BBoxBEVL1Cost', weight=0.25),
+            #     iou_cost=dict(type='IoU3DCost', weight=0.25))
+            ),
+        test_cfg=dict(
+            dataset='nuScenes',
+            grid_size=[1440, 1440, 41],
+            out_size_factor=8,
+            voxel_size=[0.075, 0.075],
+            pc_range=[-54.0, -54.0],
+            nms_type=None),
     )
 
 train_pipeline = [

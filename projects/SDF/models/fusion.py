@@ -20,6 +20,7 @@ class AdaptiveWeight(nn.Module):
         normalized_weights = F.softmax(normalized_weights, dim=-1)
         return normalized_weights[:, 0], normalized_weights[:, 1]  # sparse and dense weights
 
+
 def fuse_features(sparse_feature, dense_feature, sparse_weight, dense_weight):
     fused_feature = sparse_weight * sparse_feature + dense_weight * dense_feature
     return fused_feature

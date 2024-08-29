@@ -10,7 +10,7 @@ from mmdet3d.registry import MODELS
 
 
 from .bbox.utils import decode_bbox
-from .bboxs import inverse_sigmoid, DUMP
+from ..bboxs import inverse_sigmoid, DUMP
 
 @MODELS.register_module()
 class MaskTransformerHead(BaseModule):
