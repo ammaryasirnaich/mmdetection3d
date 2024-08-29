@@ -15,9 +15,12 @@ from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
 
-from .fusion import AdaptiveWeight, fuse_features
-from .refinement import FeatureRefinement
-from .complexity import ComplexityModule, adjust_resolution
+from .refine_resolution_adjucements import Refine_Resolution_Adjacement
+
+# from .fusion import AdaptiveWeight, fuse_features
+# from .refinement import FeatureRefinement
+# from .complexity import ComplexityModule, adjust_resolution
+
 from .segmentation import SegmentationHead
 
 
@@ -60,17 +63,13 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
+        
              
         # self.fusion_layer = MODELS.build(
         #     fusion_layer) if fusion_layer is not None else None
         
 
         # self.bbox_head = MODELS.build(bbox_head)
-        self.adaptive_weight = AdaptiveWeight(sparse_dim=256, dense_dim=256)
-        self.refinement = FeatureRefinement(input_dim=256)
-        self.complexity_module = ComplexityModule(input_dim=256)
-        self.segmentation_head = SegmentationHead(input_dim=256, num_classes=10)
-
 
         # self.init_weights()
 
@@ -248,8 +247,7 @@ class SDH(Base3DDetector):
                                 batch_size)
         x = self.pts_backbone(x)
         x = self.pts_neck(x)
-        
-        
+           
         # self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)
         
         return x
@@ -332,8 +330,6 @@ class SDH(Base3DDetector):
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
         features.append(pts_feature)
         
-        
-    
         if self.fusion_layer is not None:
             x = self.fusion_layer(features)
         # else:
@@ -342,6 +338,12 @@ class SDH(Base3DDetector):
 
         # x = self.pts_backbone(x)
         # x = self.pts_neck(x)
+        
+        self.adaptive_feature = Refine_Resolution_Adjacement(pts_feature,img_feature)
+        
+        
+        # Final segmentation
+        predictions = SegmentationHead(self.adaptive_feature)
 
         return x
 
