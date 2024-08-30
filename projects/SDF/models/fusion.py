@@ -3,24 +3,50 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+
 class AdaptiveWeight(nn.Module):
-    def __init__(self, sparse_dim, dense_dim):
-        super(AdaptiveWeight, self).__init__()
-        self.U_s = nn.Linear(sparse_dim, 1)
-        self.V_s = nn.Linear(dense_dim, 1)
-        self.U_d = nn.Linear(dense_dim, 1)
-        self.V_d = nn.Linear(sparse_dim, 1)
+    def __init__(self, voxel_dim, image_dim,upscale_size=(200, 176)):
+        super().__init__()
+        self.image_upscaler = nn.Sequential(
+            nn.Upsample(size=upscale_size, mode='bilinear', align_corners=True),
+            nn.Conv2d(image_dim, voxel_dim, kernel_size=1)
+        )
+        self.voxel_fc = nn.Linear(voxel_dim, 1)
+        self.image_fc = nn.Linear(voxel_dim, 1)
         self.b_s = nn.Parameter(torch.zeros(1))
         self.b_d = nn.Parameter(torch.zeros(1))
+    
+    def forward(self, voxel_feature, image_feature):
+        # Upscale the image feature to match voxel feature dimensions
+        upscaled_image_feature = self.image_upscaler(image_feature)  # [4, 512, 200, 176]
 
-    def forward(self, sparse_feature, dense_feature):
-        sparse_weight = torch.sigmoid(self.U_s(sparse_feature) + self.V_s(dense_feature) + self.b_s)
-        dense_weight = torch.sigmoid(self.U_d(dense_feature) + self.V_d(sparse_feature) + self.b_d)
-        normalized_weights = torch.cat([sparse_weight, dense_weight], dim=-1)
-        normalized_weights = F.softmax(normalized_weights, dim=-1)
-        return normalized_weights[:, 0], normalized_weights[:, 1]  # sparse and dense weights
+        # Flatten the features for adaptive weight computation
+        voxel_flat = torch.mean(voxel_feature, dim=[2, 3])  # [4, 512]
+        image_flat = torch.mean(upscaled_image_feature, dim=[2, 3])  # [4, 512]
 
+        # Compute the adaptive weights
+        voxel_weight = torch.sigmoid(self.voxel_fc(voxel_flat) + self.image_fc(image_flat) + self.b_s)  # [4, 1]
+        image_weight = torch.sigmoid(self.image_fc(image_flat) + self.voxel_fc(voxel_flat) + self.b_d)  # [4, 1]
+        
+        # Normalize the weights
+        total_weight = voxel_weight + image_weight
+        voxel_weight = voxel_weight / total_weight
+        image_weight = image_weight / total_weight
+        
+        # Reshape weights for broadcasting
+        voxel_weight = voxel_weight.view(-1, 1, 1, 1)  # [4, 1, 1, 1]
+        image_weight = image_weight.view(-1, 1, 1, 1)  # [4, 1, 1, 1]
+
+        return voxel_weight, image_weight, upscaled_image_feature
 
 def fuse_features(sparse_feature, dense_feature, sparse_weight, dense_weight):
-    fused_feature = sparse_weight * sparse_feature + dense_weight * dense_feature
+        # Apply weights to the respective features
+    weighted_voxel_feature = sparse_weight * sparse_feature  # Weighted voxel feature
+    weighted_image_feature = dense_weight * dense_feature  # Weighted image feature
+
+    # Combine the weighted features to produce the fused feature map
+    fused_feature = weighted_voxel_feature + weighted_image_feature
+
+
     return fused_feature

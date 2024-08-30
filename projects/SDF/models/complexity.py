@@ -11,6 +11,7 @@ class ComplexityModule(nn.Module):
         complexity = torch.sigmoid(self.fc(x))
         return complexity
 
-def adjust_resolution(fused_feature, fine_feature, intermediate_feature, complexity_score, threshold=0.5):
-    adaptive_feature = torch.where(complexity_score > threshold, fine_feature, intermediate_feature)
+def adjust_resolution(fused_feature, complexity_score, low_res_feature, threshold=0.5):
+    # If complexity is high, keep the high-res feature; otherwise, use the low-res feature
+    adaptive_feature = torch.where(complexity_score > threshold, fused_feature, low_res_feature)
     return adaptive_feature

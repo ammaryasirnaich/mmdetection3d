@@ -15,11 +15,13 @@ from .bboxs import (BBoxBEVL1Cost, HeuristicAssigner3D, HungarianAssigner3D,
 from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
 
-# from .fusion import AdaptiveWeight, fuse_features
-# from .refinement import FeatureRefinement
-# from .complexity import ComplexityModule, adjust_resolution
+from .fusion import AdaptiveWeight, fuse_features
+from .refinement import FeatureRefinement
+from .complexity import ComplexityModule, adjust_resolution
 from .segmentation import SegmentationHead
 
+from .window_attention import WindowAttention
+from .multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 
 
 
@@ -31,7 +33,8 @@ __all__ = [
     'TransformerDecoderLayer', 'BEVFusionRandomFlip3D',
     'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
-    'Refine_Resolution_Adjacement'
+    'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
+    'fuse_features','adjust_resolution'
 ]
 
 

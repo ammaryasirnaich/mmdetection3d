@@ -17,6 +17,7 @@ from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
 from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
+
 # from .fusion import AdaptiveWeight, fuse_features
 # from .refinement import FeatureRefinement
 # from .complexity import ComplexityModule, adjust_resolution
@@ -63,11 +64,12 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
-        self.adaptive_feature = Refine_Resolution_Adjacement()
+        self.refine_resolution_adj = Refine_Resolution_Adjacement()
         
              
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
+        
         
 
         # self.bbox_head = MODELS.build(bbox_head)
@@ -248,6 +250,7 @@ class SDH(Base3DDetector):
                                 batch_size)
         x = self.pts_backbone(x)
         x = self.pts_neck(x)
+        
            
         # self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)
         
@@ -329,18 +332,8 @@ class SDH(Base3DDetector):
         
         # Point feature encoder model
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
-        # features.append(pts_feature)
-        
-        # if self.fusion_layer is not None:
-        #     x = self.fusion_layer(features)
-        # else:
-        #     assert len(features) == 1, features
-        #     x = features[0]
-
-        # x = self.pts_backbone(x)
-        # x = self.pts_neck(x)
-  
-        self.adaptive_feature = self.adaptive_feature(pts_feature,img_feature)
+         
+        self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
         
         # SegmentationHead(input_dim, 10)
         # # Final segmentation
