@@ -166,7 +166,7 @@ class SDH(Base3DDetector):
 
         BN, C, H, W = x.size()
         
-        d3_feaure = self.splitshoot(x,camera_intrinsics,)
+        x = self.splitshoot(x,camera_intrinsics,lidar2image)
         
         x = x.view(B, int(BN / B), C, H, W)
         
