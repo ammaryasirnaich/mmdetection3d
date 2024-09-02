@@ -14,16 +14,13 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
-
-from .refine_resolution_adjucements import Refine_Resolution_Adjacement
-
-
 # from .fusion import AdaptiveWeight, fuse_features
 # from .refinement import FeatureRefinement
 # from .complexity import ComplexityModule, adjust_resolution
 
-from .segmentation import SegmentationHead
+# from .segmentation import SegmentationHead
 from .splitshoot import LiftSplatShoot
+from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
 
 
@@ -71,8 +68,8 @@ class SDH(Base3DDetector):
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
         
-        self.splitshoot=LiftSplatShoot(100) # depth_bins, intrinsics, extrinsics
-        # depth_bins, intrinsics, extrinsics
+        self.splitshoot=LiftSplatShoot(100, 64, 176) # depth_bins(100 meters), H, W
+       
 
         # self.bbox_head = MODELS.build(bbox_head)
 
@@ -159,16 +156,20 @@ class SDH(Base3DDetector):
         x = x.view(B * N, C, H, W).contiguous()
 
         x = self.img_backbone(x)
+        print(f'shape from backbone',x[0].shape)
         x = self.img_neck(x)
 
         if not isinstance(x, torch.Tensor):
             x = x[0]
 
         BN, C, H, W = x.size()
-        
+        print(f'shape from neck',x.size())
         x = self.splitshoot(x,camera_intrinsics,lidar2image)
+        print(f'shape from projection',x.shape)
+        print(f'shape from projection',x.size)
+        return x
         
-        x = x.view(B, int(BN / B), C, H, W)
+        # x = x.view(B, int(BN / B), C, H, W)
         
         # with torch.autocast(device_type='cuda', dtype=torch.float32):
         #     x = self.view_transform(
@@ -238,7 +239,7 @@ class SDH(Base3DDetector):
         return img_feats_reshaped
         '''
         
-        return x
+        # return x
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
         points = batch_inputs_dict['points']
