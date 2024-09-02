@@ -23,6 +23,7 @@ from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 # from .complexity import ComplexityModule, adjust_resolution
 
 from .segmentation import SegmentationHead
+from .splitshoot import LiftSplatShoot
 
 
 
@@ -70,7 +71,8 @@ class SDH(Base3DDetector):
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
         
-        
+        self.splitshoot=LiftSplatShoot(100) # depth_bins, intrinsics, extrinsics
+        # depth_bins, intrinsics, extrinsics
 
         # self.bbox_head = MODELS.build(bbox_head)
 
@@ -163,8 +165,11 @@ class SDH(Base3DDetector):
             x = x[0]
 
         BN, C, H, W = x.size()
+        
+        d3_feaure = self.splitshoot(x,camera_intrinsics,)
+        
         x = x.view(B, int(BN / B), C, H, W)
-
+        
         # with torch.autocast(device_type='cuda', dtype=torch.float32):
         #     x = self.view_transform(
         #         x,
@@ -248,7 +253,8 @@ class SDH(Base3DDetector):
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
         x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
                                 batch_size)
-        x = self.pts_backbone(x)
+        
+        x = self.pts_backbone(x)    
         x = self.pts_neck(x)
         
            

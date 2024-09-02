@@ -22,6 +22,7 @@ from .segmentation import SegmentationHead
 
 from .window_attention import WindowAttention
 from .multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
+from .splitshoot import LiftSplatShoot
 
 
 
@@ -34,7 +35,7 @@ __all__ = [
     'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
-    'fuse_features','adjust_resolution'
+    'fuse_features','adjust_resolution','LiftSplatShoot'
 ]
 
 

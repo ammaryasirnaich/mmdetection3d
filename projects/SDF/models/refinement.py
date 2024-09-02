@@ -11,6 +11,7 @@ class FeatureRefinement(nn.Module):
         self.bn2 = nn.BatchNorm3d(input_dim)
 
     def forward(self, x):
+        print(x.shape)
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         return x

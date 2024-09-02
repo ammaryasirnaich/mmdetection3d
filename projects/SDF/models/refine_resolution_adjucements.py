@@ -35,20 +35,18 @@ class Refine_Resolution_Adjacement(nn.Module):
     def __init__(self):
         super().__init__()
         
+        self.multiview_adap_fusion_model = Multiview_AdaptiveWeightedFusion(num_views=6)
         self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=256,upscale_size=(200, 176))
         self.refinement = FeatureRefinement(input_dim=512)
-        self.complexity_module = ComplexityModule(input_dim=256)
+        self.complexity_module = ComplexityModule(input_dim=512)
         # self.multi_view_attn_agg = MultiViewAttentionAggregation(dense_dim=256)
         # self.winAttention = WindowAttention(embed_dim=256,num_heads=8,window_size =(8,8))
         # self.sparseMscaa =  SparseMSCAA(embed_dim=256, num_heads=8, sparsity_threshold=0.1)
-        self.multiview_adap_fusion_model = Multiview_AdaptiveWeightedFusion(num_views=6)
    
     def forward(self,sparse_features,dense_feature):
         # sparse_features : # [B, N, 256, H, W]
-        # dense_feature : #  [v, 256]
-        
-        print(f'shape of dense faetures,{dense_feature.shape}')
-                
+        # dense_feature   : #  [B, N, 256, H, W]
+                      
          # Apply multi-view attention aggregation
         # dense_pooled = self.multi_view_attn_agg(dense_feature)  # Outputs [B, 256, H, W]
         # dense_sparse_feature = self.winAttention(dense_feature)
@@ -62,7 +60,7 @@ class Refine_Resolution_Adjacement(nn.Module):
         fused_feature = fuse_features(sparse_features[0], upscaled_image_feature, sparse_weight, dense_weight)
 
         # Refinement 
-        refined_feature = self.refinement(fused_feature) # refinement outputs [B, 256, ...]
+        refined_feature = self.refinement(fused_feature) # refinement outputs [B, 512, ...]
         
         # Compute complexity score for adaptive resolution
         complexity_score = self.complexity_module(refined_feature)  
