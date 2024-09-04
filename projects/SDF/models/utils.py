@@ -5,6 +5,26 @@ from numpy import random
 from mmcv.cnn.bricks import ConvTranspose3d, Conv3d
 
 
+
+
+# Global level meshgrid precomputation
+def create_meshgrid(H, W):
+    """
+    Create a meshgrid for image coordinates.
+    :param H: Height of the image
+    :param W: Width of the image
+    :return: Tensor of shape (3, H*W)
+    """
+    y, x = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
+    xy1 = torch.stack((x.flatten(), y.flatten(), torch.ones_like(x).flatten()), dim=0).float()  # (3, H*W)
+    return xy1
+
+
+
+
+
+
+
 def conv3d_gn_relu(in_channels, out_channels, kernel_size=1, stride=1):
     return nn.Sequential(
         Conv3d(in_channels, out_channels, kernel_size, stride, bias=False),

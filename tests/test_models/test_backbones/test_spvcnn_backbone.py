@@ -28,7 +28,17 @@ def test_spvcnn_backbone():
     cfg = dict(type='SPVCNNBackbone')
     self = MODELS.build(cfg).cuda()
     self.init_weights()
-
+    
     y = self(features, coordinates)
     assert y.F.shape == torch.Size([200, 96])
     assert y.C.shape == torch.Size([200, 4])
+    
+    
+    
+    print(f'features',features.shape)
+    print(f'coordinates',coordinates.shape)
+
+
+if __name__=="__main__":
+    test_spvcnn_backbone()
+    

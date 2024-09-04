@@ -62,13 +62,16 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
+        
         self.refine_resolution_adj = Refine_Resolution_Adjacement()
         
+       
              
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
         
-        self.splitshoot=LiftSplatShoot(100, 64, 176) # depth_bins(100 meters), H, W
+        # Note update this part
+        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176) # depth_bins(100 meters), H, W
        
 
         # self.bbox_head = MODELS.build(bbox_head)
@@ -161,12 +164,11 @@ class SDH(Base3DDetector):
 
         if not isinstance(x, torch.Tensor):
             x = x[0]
-
-        BN, C, H, W = x.size()
-        print(f'shape from neck',x.size())
+            
+        
+        # BN, C, H, W = x.size()
         x = self.splitshoot(x,camera_intrinsics,lidar2image)
-        print(f'shape from projection',x.shape)
-        print(f'shape from projection',x.size)
+            
         return x
         
         # x = x.view(B, int(BN / B), C, H, W)
