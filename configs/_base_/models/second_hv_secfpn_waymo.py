@@ -10,6 +10,7 @@ model = dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
+            type='HardSimpleVFE',
             max_num_points=20,
             point_cloud_range=[-76.8, -51.2, -2, 76.8, 51.2, 4],
             voxel_size=voxel_size,

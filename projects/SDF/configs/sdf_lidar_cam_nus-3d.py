@@ -4,6 +4,8 @@ _base_ = [
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
+image_voxel_size = [0.05, 0.05, 0.1]
+
 
 model = dict(
     type='SDH',
@@ -12,6 +14,13 @@ model = dict(
         mean=[123.675, 116.28, 103.53],
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=False),
+    
+    img_voxelization=dict(
+        max_num_points=5,
+        point_cloud_range=[0, -40, -3, 70.4, 40, 1],
+        voxel_size=image_voxel_size,
+        max_voxels=(16000, 40000)
+    ),
     img_backbone=dict(
         type='mmdet.ResNet',
         depth=50,

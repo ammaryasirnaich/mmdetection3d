@@ -14,6 +14,7 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
+
 # from .fusion import AdaptiveWeight, fuse_features
 # from .refinement import FeatureRefinement
 # from .complexity import ComplexityModule, adjust_resolution
@@ -22,6 +23,8 @@ from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 from .splitshoot import LiftSplatShoot
 from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
+from mmdet3d.models.data_preprocessors.voxelize import VoxelizationByGridShape
+# .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
 
 
 @MODELS.register_module()
@@ -31,6 +34,7 @@ class SDH(Base3DDetector):
         self,
         data_preprocessor: OptConfigType = None,
         pts_voxel_encoder: Optional[dict] = None,
+        img_voxelization: Optional[dict] = None,
         pts_middle_encoder: Optional[dict] = None,
         fusion_layer: Optional[dict] = None,
         img_backbone: Optional[dict] = None,
@@ -63,17 +67,19 @@ class SDH(Base3DDetector):
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
         
-        self.refine_resolution_adj = Refine_Resolution_Adjacement()
-        
+        if img_voxelization:
+            self.img_voxel_layer = VoxelizationByGridShape(**img_voxelization)
        
-             
+        self.refine_resolution_adj = Refine_Resolution_Adjacement()
+       
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
         
         # Note update this part
-        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176) # depth_bins(100 meters), H, W
+        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176) # depth_bins(100 meters), H=64, W=176 from resnetfpn
        
 
+        
         # self.bbox_head = MODELS.build(bbox_head)
 
         # self.init_weights()
@@ -164,11 +170,9 @@ class SDH(Base3DDetector):
 
         if not isinstance(x, torch.Tensor):
             x = x[0]
-            
-        
+                
         # BN, C, H, W = x.size()
-        x = self.splitshoot(x,camera_intrinsics,lidar2image)
-            
+        x = self.splitshoot(x,camera_intrinsics,lidar2image) #[B, N, C(3), H, W, D(100)])    
         return x
         
         # x = x.view(B, int(BN / B), C, H, W)
@@ -242,6 +246,8 @@ class SDH(Base3DDetector):
         '''
         
         # return x
+        
+        
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
         points = batch_inputs_dict['points']
@@ -254,6 +260,7 @@ class SDH(Base3DDetector):
                                             voxel_dict['num_points'],
                                             voxel_dict['coors'])
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
+        
         x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
                                 batch_size)
         
@@ -340,7 +347,13 @@ class SDH(Base3DDetector):
             # features.append(img_feature)
         
         # Point feature encoder model
+        
+        # feats, coords, sizes = self.voxelize(img_feature)
+        
+        
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
+         
+               
          
         self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
         
@@ -349,6 +362,37 @@ class SDH(Base3DDetector):
         # predictions = SegmentationHead(self.adaptive_feature)
 
         return self.adaptive_feature
+    
+    
+    @torch.no_grad()
+    def voxelize(self, points):
+        feats, coords, sizes = [], [], []
+        for k, res in enumerate(points):
+            ret = self.img_voxel_layer(res)
+            if len(ret) == 3:
+                # hard voxelize
+                f, c, n = ret
+            else:
+                assert len(ret) == 2
+                f, c = ret
+                n = None
+            feats.append(f)
+            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
+            if n is not None:
+                sizes.append(n)
+
+        feats = torch.cat(feats, dim=0)
+        coords = torch.cat(coords, dim=0)
+        if len(sizes) > 0:
+            sizes = torch.cat(sizes, dim=0)
+            if True:   #self.voxelize_reduce = True
+                feats = feats.sum(
+                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
+                feats = feats.contiguous()
+
+        return feats, coords, sizes
+
+
 
     def loss(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
              batch_data_samples: List[Det3DDataSample],

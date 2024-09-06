@@ -7,6 +7,7 @@ from .refinement import FeatureRefinement
 from .complexity import ComplexityModule, adjust_resolution
 from .window_attention import WindowAttention
 from .multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
+from einops import rearrange
 
 
 
@@ -53,6 +54,8 @@ class Refine_Resolution_Adjacement(nn.Module):
         # dense_sparse_feature = self.sparseMscaa(dense_feature)
         image_agg_feature =self.multiview_adap_fusion_model(dense_feature)
         
+        dense_feature = rearrange(dense_feature,'b n c h w d f ->(b n h w d) (cf) ')
+        
 
         # Adaptive Fusion between lidar and image features
         sparse_weight, dense_weight, upscaled_image_feature = self.adaptive_weight(sparse_features[0], image_agg_feature)
@@ -89,7 +92,7 @@ if __name__=="__main__":
     bev_hight=200
     bev_width=176
     dense_image_feature = torch.rand(batch_size, num_views, channel, height, width)
-    sparse_feature = torch.rand(batch_size, voxel_channel, bev_hight, bev_width)
+    sparse_feature      = torch.rand(batch_size, voxel_channel, bev_hight, bev_width)
     
     
     model = Refine_Resolution_Adjacement()

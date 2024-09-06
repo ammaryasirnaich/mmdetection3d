@@ -20,11 +20,6 @@ def create_meshgrid(H, W):
     return xy1
 
 
-
-
-
-
-
 def conv3d_gn_relu(in_channels, out_channels, kernel_size=1, stride=1):
     return nn.Sequential(
         Conv3d(in_channels, out_channels, kernel_size, stride, bias=False),
