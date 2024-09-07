@@ -75,7 +75,14 @@ class LiftSplatShoot(nn.Module):
         # Step 2: Project 3D points to a 2D BEV grid
         # BEV_grid = self.splat(point_cloud)
         
-        return point_cloud
+       
+        # torch.Size([B, N, C, H, W, D]) 
+         # torch.Size([B*N, C, H, W])
+        # print(f'point cloud size {point_cloud.shape} and image feature {image_features.shape}')
+
+        # Update it to flattent he dimension to be use easy
+        
+        return point_cloud, image_features
 
 
 

@@ -73,7 +73,7 @@ class LiftSplatShoot(nn.Module):
         point_cloud = self.lift(image_features, intrinsics, extrinsics)
         
         # Step 2: Project 3D points to a 2D BEV grid
-        # BEV_grid = self.splat(point_cloud)
+        BEV_grid = self.splat(point_cloud)
         
         return point_cloud
 
