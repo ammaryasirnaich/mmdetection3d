@@ -24,7 +24,7 @@ from .splitshoot import LiftSplatShoot
 from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
 from mmdet3d.models.data_preprocessors.voxelize import VoxelizationByGridShape
-# .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
+from .camera_voxelization import voxelize_camera_features
 
 
 @MODELS.register_module()
@@ -67,9 +67,7 @@ class SDH(Base3DDetector):
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
         
-        if img_voxelization:
-            self.img_voxel_layer = VoxelizationByGridShape(**img_voxelization)
-       
+   
         self.refine_resolution_adj = Refine_Resolution_Adjacement()
        
         self.fusion_layer = MODELS.build(
@@ -152,7 +150,6 @@ class SDH(Base3DDetector):
     def extract_img_feat(
         self,
         x,
-        points,
         lidar2image,
         camera_intrinsics,
         camera2lidar,
@@ -165,15 +162,18 @@ class SDH(Base3DDetector):
         x = x.view(B * N, C, H, W).contiguous()
 
         x = self.img_backbone(x)
-        print(f'shape from backbone',x[0].shape)
         x = self.img_neck(x)
 
         if not isinstance(x, torch.Tensor):
             x = x[0]
                 
         # BN, C, H, W = x.size()
-        x = self.splitshoot(x,camera_intrinsics,lidar2image) #[B, N, C(3), H, W, D(100)])    
-        return x
+        print(x.size())
+        
+        x,image_feature = self.splitshoot(x,camera_intrinsics,lidar2image) #[B, N, C(3), H, W, D(100)])    
+        
+        
+        return x,image_feature
         
         # x = x.view(B, int(BN / B), C, H, W)
         
@@ -261,16 +261,13 @@ class SDH(Base3DDetector):
                                             voxel_dict['coors'])
         batch_size = voxel_dict['coors'][-1, 0].item() + 1
         
-        x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
-                                batch_size)
+        # x = self.pts_middle_encoder(voxel_features, voxel_dict['coors'],
+        #                         batch_size)
         
-        x = self.pts_backbone(x)    
-        x = self.pts_neck(x)
+        # x = self.pts_backbone(x)    
+        # x = self.pts_neck(x)
         
-           
-        # self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)
-        
-        return x
+        return voxel_features
 
 
     def predict(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
@@ -339,23 +336,31 @@ class SDH(Base3DDetector):
             lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
             
             # Image feature extratir module
-            img_feature = self.extract_img_feat(imgs, deepcopy(points),
-                                                lidar2image, camera_intrinsics,
+            img_3D_feature, image_2D_feature = self.extract_img_feat(imgs,lidar2image, camera_intrinsics,
                                                 camera2lidar, img_aug_matrix,
                                                 lidar_aug_matrix,
                                                 batch_input_metas)
-            # features.append(img_feature)
+            
+            
+            B, N, C, H, W, D = img_3D_feature.shape
+            img_3D_feature = img_3D_feature.unsqueeze(-1) # torch.Size([4, 6, 3, 64, 176, 100, 1])
+            
+        # features.append(img_feature)
         
-        # Point feature encoder model
+        # voxelize the image features
+         #[B, N, H, W, Depth, C, F], #[B, M, 3] 
         
-        # feats, coords, sizes = self.voxelize(img_feature)
+        
+        # 4, 6, 3, 64, 176, 100
+        #
         
         
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
+      
+        img_3D_feature = voxelize_camera_features(img_3D_feature,deepcopy(pts_feature.view(B,-1,4)))
          
                
-         
-        self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
+        # self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
         
         # SegmentationHead(input_dim, 10)
         # # Final segmentation
@@ -363,35 +368,6 @@ class SDH(Base3DDetector):
 
         return self.adaptive_feature
     
-    
-    @torch.no_grad()
-    def voxelize(self, points):
-        feats, coords, sizes = [], [], []
-        for k, res in enumerate(points):
-            ret = self.img_voxel_layer(res)
-            if len(ret) == 3:
-                # hard voxelize
-                f, c, n = ret
-            else:
-                assert len(ret) == 2
-                f, c = ret
-                n = None
-            feats.append(f)
-            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
-            if n is not None:
-                sizes.append(n)
-
-        feats = torch.cat(feats, dim=0)
-        coords = torch.cat(coords, dim=0)
-        if len(sizes) > 0:
-            sizes = torch.cat(sizes, dim=0)
-            if True:   #self.voxelize_reduce = True
-                feats = feats.sum(
-                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
-                feats = feats.contiguous()
-
-        return feats, coords, sizes
-
 
 
     def loss(self, batch_inputs_dict: Dict[str, Optional[Tensor]],

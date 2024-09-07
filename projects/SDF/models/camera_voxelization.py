@@ -14,9 +14,10 @@ def voxelize_camera_features(camera_features, voxel_grid):
     Returns:
     - voxelized_features (torch.Tensor): Tensor of shape [B, M, F], where F is the feature dimension.
     """
+    
     B, N, H, W, Depth, C, F = camera_features.shape
     M = voxel_grid.shape[1]  # Number of voxels
-
+    
     # Step 1: Flatten the camera features and world coordinates
     # Combine B, N, H, W, Depth into a single dimension [B*N, H*W*Depth]
     camera_feats_flat = rearrange(camera_features, 'B N H W D C F -> (B N) (H W D) (C F)')
@@ -68,14 +69,28 @@ def voxelize_camera_features(camera_features, voxel_grid):
 # Example usage
 if __name__ == "__main__":
     # Define test input dimensions
-    B = 2  # Batch size
-    N = 3  # Number of camera views
+    # B = 2  # Batch size
+    # N = 3  # Number of camera views
+    # H = 64  # Height of image
+    # W = 64  # Width of image
+    # Depth = 32  # Depth dimension
+    # C = 3  # Number of coordinate dimensions (x, y, z)
+    # F = 4  # Number of feature dimensions (e.g., intensity, color)
+    # M = 100  # Number of voxels
+    
+    B = 4  # Batch size
+    N = 6  # Number of camera views
     H = 64  # Height of image
-    W = 64  # Width of image
-    Depth = 32  # Depth dimension
+    W = 176  # Width of image
+    Depth = 100  # Depth dimension
     C = 3  # Number of coordinate dimensions (x, y, z)
-    F = 4  # Number of feature dimensions (e.g., intensity, color)
-    M = 100  # Number of voxels
+    F = 1  # Number of feature dimensions (e.g., intensity, color)
+    M = 16000  # Number of voxels
+    
+    
+    
+    # shape of image feature torch.Size([4, 6, 3, 64, 176, 100, 1])
+    # shape of pnt cloud torch.Size([4, 16000, 4])
 
     # Generate random camera features [B, N, H, W, Depth, C, F]
     camera_features = torch.randn(B, N, H, W, Depth, C, F)
