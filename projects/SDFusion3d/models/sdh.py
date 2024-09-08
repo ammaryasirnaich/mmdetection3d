@@ -165,7 +165,6 @@ class SDH(Base3DDetector):
         x = x.view(B * N, C, H, W).contiguous()
 
         x = self.img_backbone(x)
-        print(f'shape from backbone',x[0].shape)
         x = self.img_neck(x)
 
         if not isinstance(x, torch.Tensor):

@@ -59,13 +59,33 @@ class LiftSplatShoot(nn.Module):
 
     def splat(self, point_cloud):
         """
-        Projects 3D point cloud to a BEV grid, considering only spatial (coordinate) information.
-        :param point_cloud: Tensor of shape (B, N, 3, H, W, self.depth_bins)
-        :return: BEV grid
+        Project 3D point cloud into 2D BEV grid.
+        :param point_cloud: Tensor of shape (B, N, 3, H, W, D)
+        :return: BEV grid of shape (B, bev_channels, H, W)
         """
-        # Simplified "splatting" process (e.g., projecting the 3D points onto a 2D grid)
-        BEV_grid = torch.max(point_cloud, dim=-1)[0]  # Max pooling along depth for BEV projection
-        BEV_grid = BEV_grid.mean(dim=1)  # Average over camera views (N)
+        B, N, _, H, W, D = point_cloud.shape
+        self.bev_channels=64
+
+        # Initialize BEV grid with feature channels (64 in this case)
+        BEV_grid = torch.zeros((B, self.bev_channels, H, W)).to(point_cloud.device)
+
+        # Simplified feature aggregation (mean pooling across depth and views for BEV projection)
+        # Instead of just reducing to 3 channels, we aggregate information across depth and views.
+        bev_features = point_cloud.mean(dim=[1, -1])  # Mean over N (views) and D (depth)
+
+        # Process features with learnable convolution layers
+        self.bev_conv = nn.Sequential(
+            nn.Conv2d(3, self.bev_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(self.bev_channels),
+            nn.ReLU(),
+            nn.Conv2d(self.bev_channels, self.bev_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(self.bev_channels),
+            nn.ReLU(),
+        )
+
+        # Apply the convolution to produce the final BEV output with feature channels
+        BEV_grid = self.bev_conv(bev_features).permute(0,2,3,1 )  #[B,H,W,C]
+
         return BEV_grid
 
     def forward(self, image_features, intrinsics, extrinsics):
@@ -75,7 +95,7 @@ class LiftSplatShoot(nn.Module):
         # Step 2: Project 3D points to a 2D BEV grid
         BEV_grid = self.splat(point_cloud)
         
-        return point_cloud
+        return point_cloud , BEV_grid
 
 
 
@@ -111,6 +131,7 @@ if __name__=="__main__":
     model = LiftSplatShoot(depth_bins, H, W)
 
     # Run the forward pass
-    point_cloud = model(image_features, intrinsics, extrinsics)
+    point_cloud, BEV_grid  = model(image_features, intrinsics, extrinsics)
 
-    print(point_cloud.shape)  # Output BEV grid
+    print(f'point cloud shape:{point_cloud.shape}')  # Output BEV grid
+    print(f'BEV shape {BEV_grid.shape}')  # Output BEV grid
