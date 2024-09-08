@@ -1,4 +1,4 @@
-from .sdh import SDH
+from .sdhfusion import SDHFusion
 # from .bevfusion_necks import GeneralizedLSSFPN
 # from .depth_lss import DepthLSSTransform, LSSTransform
 from .loading import BEVLoadMultiViewImageFromFiles
@@ -26,7 +26,7 @@ from .refine_resolution_adjucements import Refine_Resolution_Adjacement
 
 
 __all__ = [
-    'SDH', 'TransFusionHead', 'ConvFuser', 'ImageAug3D', 'GridMask',
+    'SDHFusion', 'TransFusionHead', 'ConvFuser', 'ImageAug3D', 'GridMask',
      'HungarianAssigner3D', 'BBoxBEVL1Cost', 'IoU3DCost',
     'HeuristicAssigner3D', 'BEVLoadMultiViewImageFromFiles', 
     'TransformerDecoderLayer', 'BEVFusionRandomFlip3D',

@@ -1,6 +1,6 @@
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.SDF.models'], allow_failed_imports=False)
+    imports=['projects.SDFusion3d.models'], allow_failed_imports=False)
 
 # model settings
 # Voxel size for voxel encoder
@@ -42,7 +42,7 @@ input_modality = dict(use_lidar=True, use_camera=False)
 backend_args = None
 
 model = dict(
-    type='SDH',
+    type='SDHFusion',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,

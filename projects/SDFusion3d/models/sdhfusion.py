@@ -28,7 +28,7 @@ from mmdet3d.models.data_preprocessors.voxelize import VoxelizationByGridShape
 
 
 @MODELS.register_module()
-class SDH(Base3DDetector):
+class SDHFusion(Base3DDetector):
 
     def __init__(
         self,
@@ -66,9 +66,7 @@ class SDH(Base3DDetector):
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
-        
-        if img_voxelization:
-            self.img_voxel_layer = VoxelizationByGridShape(**img_voxelization)
+ 
        
         self.refine_resolution_adj = Refine_Resolution_Adjacement()
        
@@ -76,7 +74,7 @@ class SDH(Base3DDetector):
             fusion_layer) if fusion_layer is not None else None
         
         # Note update this part
-        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176) # depth_bins(100 meters), H=64, W=176 from resnetfpn
+        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176,N=6, bev_channels=64) # depth_bins(100 meters), H=64, W=176 from resnetfpn
        
 
         
@@ -178,7 +176,7 @@ class SDH(Base3DDetector):
         if not isinstance(x, torch.Tensor):
             x = x[0]
                 
-        # BN, C, H, W = x.size()
+        # BN, C, H, W = x.size()  ([24, 256, 64, 176])
         x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)   
         return x
         

@@ -8,7 +8,7 @@ image_voxel_size = [0.05, 0.05, 0.1]
 
 
 model = dict(
-    type='SDH',
+    type='SDHFusion',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         mean=[123.675, 116.28, 103.53],
