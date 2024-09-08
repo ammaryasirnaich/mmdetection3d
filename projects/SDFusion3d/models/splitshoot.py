@@ -36,7 +36,7 @@ class LiftSplatShoot(nn.Module):
         N = intrinsics.shape[1]
 
         # Flatten batch and view dimensions (combine B and N into a single dimension)
-        image_features_flat = image_features.view(B * N, C, H, W)
+        image_features_flat = image_features
         intrinsics_flat = intrinsics.view(B * N, 4, 4)
         extrinsics_flat = extrinsics.view(B * N, 4, 4)
 
@@ -87,7 +87,7 @@ class LiftSplatShoot(nn.Module):
             nn.Conv2d(self.bev_channels, self.bev_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(self.bev_channels),
             nn.ReLU(),
-        )
+        ).cuda()
 
         # Apply the convolution to produce the final BEV output with feature channels
         BEV_grid = self.bev_conv(bev_features)

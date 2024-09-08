@@ -68,13 +68,13 @@ class SDHFusion(Base3DDetector):
         self.pts_neck = MODELS.build(pts_neck)
  
        
-        self.refine_resolution_adj = Refine_Resolution_Adjacement()
+        self.refine_resolution_adj = Refine_Resolution_Adjacement().cuda()
        
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
         
         # Note update this part
-        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176,N=6, bev_channels=64) # depth_bins(100 meters), H=64, W=176 from resnetfpn
+        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176,N=6, bev_channels=64).cuda() # depth_bins(100 meters), H=64, W=176 from resnetfpn
        
 
         
@@ -178,7 +178,7 @@ class SDHFusion(Base3DDetector):
                 
         # BN, C, H, W = x.size()  ([24, 256, 64, 176])
         x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)   
-        return x
+        return x, bev_feature 
         
         # x = x.view(B, int(BN / B), C, H, W)
         
@@ -344,7 +344,7 @@ class SDHFusion(Base3DDetector):
             lidar_aug_matrix = imgs.new_tensor(np.asarray(lidar_aug_matrix))
             
             # Image feature extratir module
-            img_feature = self.extract_img_feat(imgs, deepcopy(points),
+            img_feature,img_bev_feature = self.extract_img_feat(imgs, deepcopy(points),
                                                 lidar2image, camera_intrinsics,
                                                 camera2lidar, img_aug_matrix,
                                                 lidar_aug_matrix,
@@ -352,10 +352,10 @@ class SDHFusion(Base3DDetector):
             # features.append(img_feature)
         
         # Point feature encoder model
-        
+        print(img_bev_feature.shape)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
          
-        self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
+        self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_bev_feature)
         
         # SegmentationHead(input_dim, 10)
         # # Final segmentation

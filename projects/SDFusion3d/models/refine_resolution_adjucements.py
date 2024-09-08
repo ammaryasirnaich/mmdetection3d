@@ -37,7 +37,7 @@ class Refine_Resolution_Adjacement(nn.Module):
         super().__init__()
         
         self.multiview_adap_fusion_model = Multiview_AdaptiveWeightedFusion(num_views=6)
-        self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=256,upscale_size=(200, 176))
+        self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=256,upscale_size=(200, 176)).cuda()
         self.refinement = FeatureRefinement(input_dim=512)
         self.complexity_module = ComplexityModule(input_dim=512)
         # self.multi_view_attn_agg = MultiViewAttentionAggregation(dense_dim=256)
@@ -46,19 +46,20 @@ class Refine_Resolution_Adjacement(nn.Module):
    
     def forward(self,sparse_features,dense_feature):
         # sparse_features : # [B, N, 256, H, W]
-        # dense_feature   : #  [B, N, 256, H, W]
+        # dense_feature   : #  [B, C, H, W]
                       
          # Apply multi-view attention aggregation
         # dense_pooled = self.multi_view_attn_agg(dense_feature)  # Outputs [B, 256, H, W]
         # dense_sparse_feature = self.winAttention(dense_feature)
         # dense_sparse_feature = self.sparseMscaa(dense_feature)
-        image_agg_feature =self.multiview_adap_fusion_model(dense_feature)
+        # image_agg_feature =self.multiview_adap_fusion_model(dense_feature)  # fusing the multi-view
+        # dense_feature = rearrange(dense_feature,'b n c h w d f ->(b n h w d) (cf) ')
         
-        dense_feature = rearrange(dense_feature,'b n c h w d f ->(b n h w d) (cf) ')
         
+        # dense_feature = rearrange(dense_feature,'b c h w ->(b n h w d) (cf) ')
 
         # Adaptive Fusion between lidar and image features
-        sparse_weight, dense_weight, upscaled_image_feature = self.adaptive_weight(sparse_features[0], image_agg_feature)
+        sparse_weight, dense_weight, upscaled_image_feature = self.adaptive_weight(sparse_features[0], dense_feature)
         
         fused_feature = fuse_features(sparse_features[0], upscaled_image_feature, sparse_weight, dense_weight)
 

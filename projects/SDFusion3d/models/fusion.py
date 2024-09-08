@@ -19,6 +19,13 @@ class AdaptiveWeight(nn.Module):
     
     def forward(self, voxel_feature, image_feature):
         # Upscale the image feature to match voxel feature dimensions
+        
+        print(f'Voxel_feature shape:{voxel_feature.shape}')
+        print(f'Voxel_feature shape:{image_feature.shape}')
+        # Voxel_feature shape:torch.Size([4, 512, 200, 176])
+        # Voxel_feature shape:torch.Size([4, 64, 64, 176])
+        
+        
         upscaled_image_feature = self.image_upscaler(image_feature)  # [4, 512, 200, 176]
 
         # Flatten the features for adaptive weight computation
