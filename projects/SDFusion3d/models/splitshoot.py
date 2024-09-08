@@ -3,18 +3,21 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class LiftSplatShoot(nn.Module):
-    def __init__(self, depth_bins, H, W):
+    def __init__(self, depth_bins, H, W, bev_channels):
         super(LiftSplatShoot, self).__init__()
         self.depth_bins = depth_bins  # Number of depth layers (D)
 
         # Precompute the depth bins (independent of input)
         self.depths = torch.linspace(0.1, 1.0, depth_bins)
+        self.bev_channels = bev_channels
 
         # Precompute the meshgrid (independent of input)
         y, x = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
         self.xy1 = torch.stack((x.flatten(), y.flatten(), torch.ones_like(x).flatten()), dim=0).float()  # (3, H*W)
         self.H = H
         self.W = W
+        
+        BEV_grid = torch.zeros((B, self.bev_channels, H, W)).to(point_cloud.device)
 
     def lift(self, image_features, intrinsics, extrinsics):
         """
@@ -57,14 +60,14 @@ class LiftSplatShoot(nn.Module):
 
         return point_cloud_coords
 
-    def splat(self, point_cloud):
+    def splat(self, point_cloud,bev_channels=64):
         """
         Project 3D point cloud into 2D BEV grid.
         :param point_cloud: Tensor of shape (B, N, 3, H, W, D)
         :return: BEV grid of shape (B, bev_channels, H, W)
         """
         B, N, _, H, W, D = point_cloud.shape
-        self.bev_channels=64
+        self.bev_channels=bev_channels
 
         # Initialize BEV grid with feature channels (64 in this case)
         BEV_grid = torch.zeros((B, self.bev_channels, H, W)).to(point_cloud.device)

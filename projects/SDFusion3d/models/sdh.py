@@ -149,21 +149,29 @@ class SDH(Base3DDetector):
         """
         return hasattr(self, 'seg_head') and self.seg_head is not None
 
-    def extract_img_feat(
-        self,
-        x,
-        points,
-        lidar2image,
-        camera_intrinsics,
-        camera2lidar,
-        img_aug_matrix,
-        lidar_aug_matrix,
-        img_metas,
-    ) -> torch.Tensor:
+    def extract_img_feat( self, x, points, lidar2image, camera_intrinsics,
+        camera2lidar, img_aug_matrix, lidar_aug_matrix, img_metas, ) -> torch.Tensor:
+        """_summary_
+
+        Args:
+            x (_type_): _description_
+            points (_type_): _description_
+            lidar2image (_type_): _description_
+            camera_intrinsics (_type_): _description_
+            camera2lidar (_type_): _description_
+            img_aug_matrix (_type_): _description_
+            lidar_aug_matrix (_type_): _description_
+            img_metas (_type_): _description_
+
+        Returns:
+            x : 2D-to-3D projected point clouds [B, N, C(3), H, W, D(100)]) 
+            bev_feature : 3D point cloud projection on BEV plan [B, N, H, W, C]
+            
+        """
+        
         B, N, C, H, W = x.size()
 
         x = x.view(B * N, C, H, W).contiguous()
-
         x = self.img_backbone(x)
         x = self.img_neck(x)
 
@@ -171,7 +179,7 @@ class SDH(Base3DDetector):
             x = x[0]
                 
         # BN, C, H, W = x.size()
-        x = self.splitshoot(x,camera_intrinsics,lidar2image) #[B, N, C(3), H, W, D(100)])    
+        x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)   
         return x
         
         # x = x.view(B, int(BN / B), C, H, W)
@@ -347,12 +355,7 @@ class SDH(Base3DDetector):
         
         # Point feature encoder model
         
-        # feats, coords, sizes = self.voxelize(img_feature)
-        
-        
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
-         
-               
          
         self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_feature)
         
