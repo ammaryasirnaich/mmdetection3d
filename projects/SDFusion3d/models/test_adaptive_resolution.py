@@ -47,26 +47,23 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
     def forward(self, x, complexity_map, threshold=0.5):
         B, C, H, W = x.shape
         
-        # Initialize output tensor
-        output = torch.zeros_like(x)
-        
-        for b in range(B):
-            for h in range(H):
-                for w in range(W):
-                    if complexity_map[b, 0, h, w] > threshold:
-                        # Fine-level processing for high complexity regions
-                        out_fine = F.relu(x[b, :, h, w] + self.dilated_conv1(x[b, :, h, w]))
-                        out_fine = F.relu(out_fine + self.dilated_conv2(out_fine))
-                        output[b, :, h, w] = out_fine
-                    else:
-                        # Intermediate-level processing for low complexity regions
-                        out_intermediate = F.relu(self.depthwise_conv(x[b, :, h, w]))
-                        out_intermediate = F.relu(self.pointwise_conv(out_intermediate))
-                        output[b, :, h, w] = out_intermediate
-                        
+        # Compute the mask for complexity (broadcasted across channels)
+        mask_fine = complexity_map > threshold  # Shape: [B, 1, H, W]
+        mask_fine = mask_fine.expand(-1, C, -1, -1)  # Broadcast across the channels, shape: [B, C, H, W]
+        mask_intermediate = ~mask_fine  # Inverse of mask_fine, shape: [B, C, H, W]
+
+        # Fine-level processing for high complexity regions
+        out_fine = F.relu(x + self.dilated_conv1(x))
+        out_fine = F.relu(out_fine + self.dilated_conv2(out_fine))
+
+        # Intermediate-level processing for low complexity regions
+        out_intermediate = F.relu(self.depthwise_conv(x))
+        out_intermediate = F.relu(self.pointwise_conv(out_intermediate))
+
+        # Apply the mask to select between fine and intermediate outputs
+        output = torch.where(mask_fine, out_fine, out_intermediate)
+                
         return output
-
-
 
 
 class AdaptiveResolutionScalingNetwork(nn.Module):
@@ -75,8 +72,7 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
-        
-        
+          
         # Deformable attention block
         self.deformable_attention = DeformableAttention(in_channels, n_ref_points)
         
@@ -96,11 +92,17 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         # Step 2: Deformable attention
         x_att = self.deformable_attention(x_multi_scale)
         
+        print(f'x_att : {x_att.shape}')
+        
         # Step 3: Complexity score map
         complexity_map = self.complexity_map(x_att)
         
+        print(f'complexity_map : {complexity_map.shape}')
+        
         # Step 4: Adaptive feature refinement
         output = self.arfr(x_att, complexity_map)
+        
+        print(f'output : {output.shape}')
         
         return output, complexity_map
 
