@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from deformable_attention import DeformableAttention
+from .deformable_attention import DeformableAttention
+from mmdet3d.registry import MODELS
 
+
+@MODELS.register_module()
 class MultiScaleConvolution(nn.Module):
     def __init__(self, in_channels):
-        super(MultiScaleConvolution, self).__init__()
+        super().__init__()
         self.conv1x1 = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         self.conv3x3 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1)
         self.conv5x5 = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2)
@@ -20,7 +23,7 @@ class MultiScaleConvolution(nn.Module):
 
 class ComplexityScoreMap(nn.Module):
     def __init__(self):
-        super(ComplexityScoreMap, self).__init__()
+        super().__init__()
 
     def forward(self, x):
         # Compute the mean across the channel dimension
@@ -28,9 +31,10 @@ class ComplexityScoreMap(nn.Module):
         return complexity_map
 
 
+@MODELS.register_module()
 class AdaptiveResidualFeatureRefinement(nn.Module):
     def __init__(self, in_channels):
-        super(AdaptiveResidualFeatureRefinement, self).__init__()
+        super().__init__()
         
         # Fine network (dilated residual blocks)
         self.dilated_conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=2, dilation=2)
@@ -61,10 +65,10 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
                 
         return output
 
-
+@MODELS.register_module()
 class AdaptiveResolutionScalingNetwork(nn.Module):
     def __init__(self, in_channels=512, n_ref_points=4):
-        super(self).__init__()
+        super().__init__()
         
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
@@ -88,7 +92,7 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         # Step 2: Deformable attention
         x_att = self.deformable_attention(x_multi_scale)
         
-        print(f'x_att : {x_att.shape}')
+        print(f'Deformable attention feature shape : {x_att.shape}')
         
         # Step 3: Complexity score map
         complexity_map = self.complexity_map(x_att)

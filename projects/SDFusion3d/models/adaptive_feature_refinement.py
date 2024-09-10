@@ -4,17 +4,28 @@ import torch
 
 from .fusion import AdaptiveWeight
 # from .refinement import FeatureRefinement
-from .complexity import ComplexityModule, adjust_resolution
-from .window_attention import WindowAttention
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from einops import rearrange
+from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
+from mmdet3d.registry import MODELS
+
+
+@MODELS.register_module()
 class Refine_Resolution_Adjacement(nn.Module):
-    def __init__(self):
+    def __init__(self,  
+                 adaptive_weight_cfg: OptConfigType = None,
+                 adaptive_scale_net_cfg: OptConfigType = None,):
+        
         super().__init__()
          
-        self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=64,upscale_size=(200, 176)).cuda()
-        self.adaptive_resol_scale_model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4)
+        # self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=64,upscale_size=(200, 176)).cuda()
+        # self.adaptive_resol_scale_model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4)
+        
+        self.adaptive_weight = MODELS.build(adaptive_weight_cfg)
+        self.adaptive_resol_scale_model = MODELS.build(adaptive_scale_net_cfg)
+        
+        
     
     def forward(self,bev_lidar_features,dense_camera_feature):
         # sparse_features : # [B, N, 256, H, W]

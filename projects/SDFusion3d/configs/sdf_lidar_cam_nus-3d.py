@@ -38,6 +38,18 @@ model = dict(
         out_channels=256,
         num_outs=5
     ),
+    refine_adj_cfg=dict(
+        type='Refine_Resolution_Adjacement',
+        adaptive_weight_cfg =dict(
+             type = 'AdaptiveWeight',
+             voxel_dim=512, 
+             image_dim=64, 
+             upscale_size=(200, 176)),
+         adaptive_scale_net_cfg =dict(
+              type = 'AdaptiveResolutionScalingNetwork',
+             in_channels=512, 
+             n_ref_points=4 ),  
+    ), 
     train_cfg=dict(
             dataset='nuScenes',
             point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],

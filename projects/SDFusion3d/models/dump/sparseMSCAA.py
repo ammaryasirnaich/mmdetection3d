@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from ..window_attention import WindowAttention
+from .window_attention import WindowAttention
 
 class SparseMSCAA(nn.Module):
     def __init__(self, embed_dim=256, num_heads=8, sparsity_threshold=0.1):

@@ -14,18 +14,9 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures import Det3DDataSample
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
-
-# from .fusion import AdaptiveWeight, fuse_features
-# from .refinement import FeatureRefinement
-# from .complexity import ComplexityModule, adjust_resolution
-
 # from .segmentation import SegmentationHead
 from .splitshoot import LiftSplatShoot
 from .adaptive_feature_refinement import Refine_Resolution_Adjacement
-
-from mmdet3d.models.data_preprocessors.voxelize import VoxelizationByGridShape
-# .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
-
 
 @MODELS.register_module()
 class SDHFusion(Base3DDetector):
@@ -39,9 +30,9 @@ class SDHFusion(Base3DDetector):
         fusion_layer: Optional[dict] = None,
         img_backbone: Optional[dict] = None,
         pts_backbone: Optional[dict] = None,
-        view_transform: Optional[dict] = None,
         img_neck: Optional[dict] = None,
         pts_neck: Optional[dict] = None,
+        refine_adj_cfg : Optional[dict] = None,
         bbox_head: Optional[dict] = None,
         init_cfg: OptMultiConfig = None,
         seg_head: Optional[dict] = None,
@@ -57,10 +48,6 @@ class SDHFusion(Base3DDetector):
             img_neck) if img_neck is not None else None
         
         
-        self.view_transform = MODELS.build(
-            view_transform) if view_transform is not None else None
-
-
         ## point cloud module initialization
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
@@ -68,7 +55,8 @@ class SDHFusion(Base3DDetector):
         self.pts_neck = MODELS.build(pts_neck)
  
        
-        self.refine_resolution_adj = Refine_Resolution_Adjacement().cuda()
+        # self.refine_resolution_adj = Refine_Resolution_Adjacement().cuda()
+        self.refine_resolution_adj = MODELS.build(refine_adj_cfg)
        
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
@@ -355,8 +343,9 @@ class SDHFusion(Base3DDetector):
         print(img_bev_feature.shape)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
          
-        self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_bev_feature)
-        print(f'adaptive feature shape: {self.adaptive_feature.shape}')
+        fused_feature, complexity_score = self.refine_resolution_adj(pts_feature,img_bev_feature)
+        print(f'adaptive feature shape: {fused_feature.shape}')
+        print(f'complexity_score shape: {complexity_score.shape}')
         
         # SegmentationHead(input_dim, 10)
         # # Final segmentation

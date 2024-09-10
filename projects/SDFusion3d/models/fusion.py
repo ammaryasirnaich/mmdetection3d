@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmdet3d.registry import MODELS
 
+@MODELS.register_module()
 class AdaptiveWeight(nn.Module):
     def __init__(self, voxel_dim=512, image_dim=64, upscale_size=(200, 176)):
         super().__init__()
@@ -21,12 +23,12 @@ class AdaptiveWeight(nn.Module):
 
     def forward(self, voxel_feature, image_feature):
         # Print the shapes for debugging
-        print(f'Voxel_feature shape: {voxel_feature.shape}')  # Expecting [4, 512, 200, 176]
-        print(f'Image_feature shape before upscaling: {image_feature.shape}')  # Expecting [4, 64, 64, 176]
+        # print(f'Voxel_feature shape: {voxel_feature.shape}')  # Expecting [4, 512, 200, 176]
+        # print(f'Image_feature shape before upscaling: {image_feature.shape}')  # Expecting [4, 64, 64, 176]
 
         # Upscale the image feature's height to match the voxel feature dimensions
         image_feature_upscaled = self.image_upscaler(image_feature)
-        print(f'Image_feature shape after upscaling: {image_feature_upscaled.shape}')  # Expecting [4, 512, 200, 176]
+        # print(f'Image_feature shape after upscaling: {image_feature_upscaled.shape}')  # Expecting [4, 512, 200, 176]
 
         # Flatten the spatial dimensions for voxel and image features
         voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1)  # [B, 512, 200 * 176]

@@ -14,7 +14,6 @@ from .bboxs import (BBoxBEVL1Cost, HeuristicAssigner3D, HungarianAssigner3D,
 
 from .fusion import AdaptiveWeight
 # from .refinement import FeatureRefinement
-from .complexity import ComplexityModule, adjust_resolution
 from .segmentation import SegmentationHead
 
 from .window_attention import WindowAttention
