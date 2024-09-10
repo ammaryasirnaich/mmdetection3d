@@ -28,7 +28,7 @@ class DeformableAttention(nn.Module):
         offsets = offsets.view(B, self.n_ref_points, 2, H, W)  # Reshape to [B, n_ref_points, 2 (x, y), H, W]
 
         # Generate meshgrid of the original positions (h, w)
-        grid_w, grid_h = torch.meshgrid(torch.arange(W), torch.arange(H))
+        grid_h, grid_w = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
         grid_w = grid_w.to(x.device)
         grid_h = grid_h.to(x.device)
 
@@ -44,27 +44,38 @@ class DeformableAttention(nn.Module):
         ref_w = ref_w.long().view(B, self.n_ref_points, -1)  # Shape: [B, n_ref_points, H*W]
         ref_h = ref_h.long().view(B, self.n_ref_points, -1)  # Shape: [B, n_ref_points, H*W]
 
+        # Compute 1D indices for the reference points from 2D indices
+        ref_indices = ref_h * W + ref_w  # Convert 2D indices to 1D, shape: [B, n_ref_points, H*W]
+
+        # Reshape ref_indices to [B, n_ref_points * H * W] for broadcasting
+        ref_indices = ref_indices.view(B, -1)  # Shape: [B, n_ref_points * H * W]
+
         # Flatten K and V for gathering
         K_flat = K.view(B, C, -1)  # Shape: [B, C, H*W]
         V_flat = V.view(B, C, -1)  # Shape: [B, C, H*W]
 
+        # Expand ref_indices to match the shape of K_flat along batch and channel dimensions
+        ref_indices = ref_indices.unsqueeze(1).expand(B, C, ref_indices.size(1))  # [B, C, n_ref_points * H * W]
+
         # Gather the keys and values at the reference points
-        ref_indices = ref_h * W + ref_w  # Convert 2D indices to 1D
-        ref_indices = ref_indices.unsqueeze(1).expand(B, C, self.n_ref_points, H*W)  # Shape: [B, C, n_ref_points, H*W]
+        K_gathered = torch.gather(K_flat, 2, ref_indices)  # [B, C, n_ref_points * H * W]
+        V_gathered = torch.gather(V_flat, 2, ref_indices)  # [B, C, n_ref_points * H * W]
 
-        K_gathered = torch.gather(K_flat.unsqueeze(2), 3, ref_indices)  # [B, C, n_ref_points, H*W]
-        V_gathered = torch.gather(V_flat.unsqueeze(2), 3, ref_indices)  # [B, C, n_ref_points, H*W]
+        # Reshape Q_flat and K_gathered for the einsum operation
+        Q_flat = Q.view(B, C, -1)  # Shape: [B, C, H*W]
+        K_gathered = K_gathered.view(B, C, self.n_ref_points, -1)  # Shape: [B, C, n_ref_points, H*W]
+        V_gathered = V_gathered.view(B, C, self.n_ref_points, -1)  # Shape: [B, C, n_ref_points, H*W]
 
-        # Compute attention scores between queries and gathered keys
-        Q_flat = Q.view(B, C, -1).unsqueeze(2)  # Shape: [B, C, 1, H*W]
-        attention_weights = torch.einsum('bchw,bcnhw->bnhw', Q_flat, K_gathered) / torch.sqrt(torch.tensor(C, dtype=torch.float32))
-        attention_weights = torch.sigmoid(attention_weights)  # Shape: [B, n_ref_points, H, W]
+        # Compute the attention weights using einsum (correct equation)
+        attention_weights = torch.einsum('bch,bcnh->bnh', Q_flat, K_gathered)  # [B, n_ref_points, H*W]
 
-        # Compute the final output by applying attention to the values
-        output = torch.einsum('bnhw,bcnhw->bchw', attention_weights, V_gathered)  # Shape: [B, C, H, W]
+        # Apply the attention weights to the gathered values using einsum
+        output = torch.einsum('bnh,bcnh->bch', attention_weights, V_gathered)  # [B, C, H*W]
+        
+        # Reshape output back to [B, C, H, W]
+        output = output.view(B, C, H, W)
 
         return output
-
 
 
 
