@@ -1,11 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from deformable_attention import DeformableAttention
-
-
-
 
 class MultiScaleConvolution(nn.Module):
     def __init__(self, in_channels):
@@ -68,7 +64,7 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
 
 class AdaptiveResolutionScalingNetwork(nn.Module):
     def __init__(self, in_channels=512, n_ref_points=4):
-        super(AdaptiveResolutionScalingNetwork, self).__init__()
+        super(self).__init__()
         
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)

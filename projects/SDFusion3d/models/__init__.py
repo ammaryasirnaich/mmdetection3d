@@ -20,7 +20,7 @@ from .segmentation import SegmentationHead
 from .window_attention import WindowAttention
 from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
-from .adaptive_feature_refinement import Refine_Resolution_Adjacement
+from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from .deformable_attention import DeformableAttention
 
 
@@ -33,7 +33,7 @@ __all__ = [
     'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
-    'adjust_resolution','LiftSplatShoot' ,'DeformableAttention'
+    'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork'
 ]
 
 
