@@ -10,7 +10,7 @@ class LiftSplatShoot(nn.Module):
         self.N = N  # Number of views
 
         # Precompute the depth bins (independent of input)
-        self.depths = torch.linspace(0.1, 1.0, depth_bins)
+        self.depths = torch.linspace(1.0, 100.0, depth_bins)
 
         # Precompute the meshgrid (independent of input)
         y, x = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')

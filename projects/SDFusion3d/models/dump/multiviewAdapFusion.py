@@ -15,19 +15,6 @@ class ImportanceScoreNet(nn.Module):
         x = torch.sigmoid(self.fc(x))  # Importance score (0 to 1)
         return x
 
-# Define the task-specific prediction network (e.g., segmentation)
-# class PredictionHead(nn.Module):
-#     def __init__(self, in_channels=256, num_classes=10):
-#         super(PredictionHead, self).__init__()
-#         self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-#         self.bn1 = nn.BatchNorm2d(in_channels)
-#         self.conv2 = nn.Conv2d(in_channels, num_classes, kernel_size=1, stride=1)
-    
-#     def forward(self, x):
-#         x = F.relu(self.bn1(self.conv1(x)))
-#         x = self.conv2(x)  # Output logits for each class
-#         return x
-
 # Define the main model for Adaptive Weighted Feature Fusion
 class Multiview_AdaptiveWeightedFusion(nn.Module):
     def __init__(self, num_views=4, num_classes=10):

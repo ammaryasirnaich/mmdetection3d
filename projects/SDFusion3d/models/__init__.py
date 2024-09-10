@@ -12,16 +12,16 @@ from .bboxs import (BBoxBEVL1Cost, HeuristicAssigner3D, HungarianAssigner3D,
                     IoU3DCost)
 
 
-from .fusion import AdaptiveWeight, fuse_features
-from .refinement import FeatureRefinement
+from .fusion import AdaptiveWeight
+# from .refinement import FeatureRefinement
 from .complexity import ComplexityModule, adjust_resolution
 from .segmentation import SegmentationHead
 
 from .window_attention import WindowAttention
-from .multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
+from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
-from .refine_resolution_adjucements import Refine_Resolution_Adjacement
-
+from .adaptive_feature_refinement import Refine_Resolution_Adjacement
+from .deformable_attention import DeformableAttention
 
 
 
@@ -33,7 +33,7 @@ __all__ = [
     'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
-    'fuse_features','adjust_resolution','LiftSplatShoot'
+    'adjust_resolution','LiftSplatShoot' ,'DeformableAttention'
 ]
 
 

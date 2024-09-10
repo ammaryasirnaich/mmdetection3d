@@ -21,7 +21,7 @@ from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
 # from .segmentation import SegmentationHead
 from .splitshoot import LiftSplatShoot
-from .refine_resolution_adjucements import Refine_Resolution_Adjacement
+from .adaptive_feature_refinement import Refine_Resolution_Adjacement
 
 from mmdet3d.models.data_preprocessors.voxelize import VoxelizationByGridShape
 # .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
@@ -356,6 +356,7 @@ class SDHFusion(Base3DDetector):
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
          
         self.adaptive_feature = self.refine_resolution_adj(pts_feature,img_bev_feature)
+        print(f'adaptive feature shape: {self.adaptive_feature.shape}')
         
         # SegmentationHead(input_dim, 10)
         # # Final segmentation
