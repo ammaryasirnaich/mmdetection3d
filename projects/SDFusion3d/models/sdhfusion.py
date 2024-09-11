@@ -46,29 +46,22 @@ class SDHFusion(Base3DDetector):
             img_backbone) if img_backbone is not None else None
         self.img_neck = MODELS.build(
             img_neck) if img_neck is not None else None
-        
-        
+               
         ## point cloud module initialization
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
         self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
         self.pts_backbone = MODELS.build(pts_backbone)
         self.pts_neck = MODELS.build(pts_neck)
  
-       
         # self.refine_resolution_adj = Refine_Resolution_Adjacement().cuda()
         self.refine_resolution_adj = MODELS.build(refine_adj_cfg)
-       
-        self.fusion_layer = MODELS.build(
-            fusion_layer) if fusion_layer is not None else None
-        
+             
         # Note update this part
         self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176,N=6, bev_channels=64).cuda() # depth_bins(100 meters), H=64, W=176 from resnetfpn
        
+        self.bbox_head = MODELS.build(bbox_head)
 
-        
-        # self.bbox_head = MODELS.build(bbox_head)
-
-        # self.init_weights()
+        self.init_weights()
 
     def _forward(self,
                  batch_inputs: Tensor,
@@ -347,11 +340,14 @@ class SDHFusion(Base3DDetector):
         print(f'adaptive feature shape: {fused_feature.shape}')
         print(f'complexity_score shape: {complexity_score.shape}')
         
+        # adaptive feature shape: torch.Size([4, 512, 200, 176])
+        # complexity_score shape: torch.Size([4, 1, 200, 176])
+        
         # SegmentationHead(input_dim, 10)
         # # Final segmentation
         # predictions = SegmentationHead(self.adaptive_feature)
 
-        return self.adaptive_feature
+        return fused_feature
     
     
     @torch.no_grad()

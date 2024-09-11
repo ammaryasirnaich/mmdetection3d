@@ -61,7 +61,7 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
         out_intermediate = F.relu(self.pointwise_conv(out_intermediate))
 
         # Apply the mask to select between fine and intermediate outputs
-        output = torch.where(mask_fine, out_fine, out_intermediate)
+        output = torch.where(mask_fine, out_fine, out_intermediate).contiguous()
                 
         return output
 

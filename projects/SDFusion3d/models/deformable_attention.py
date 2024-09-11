@@ -70,7 +70,7 @@ class DeformableAttention(nn.Module):
         attention_weights = torch.einsum('bch,bcnh->bnh', Q_flat, K_gathered)  # [B, n_ref_points, H*W]
 
         # Apply the attention weights to the gathered values using einsum
-        output = torch.einsum('bnh,bcnh->bch', attention_weights, V_gathered)  # [B, C, H*W]
+        output = torch.einsum('bnh,bcnh->bch', attention_weights, V_gathered).contiguous()  # [B, C, H*W]
         
         # Reshape output back to [B, C, H, W]
         output = output.view(B, C, H, W)

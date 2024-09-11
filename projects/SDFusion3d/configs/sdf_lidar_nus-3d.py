@@ -28,6 +28,7 @@ class_names = [
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
 data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+# data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/mini/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -50,8 +51,7 @@ model = dict(
             max_num_points=32,
             point_cloud_range=point_cloud_range,
             voxel_size=voxel_size,
-            max_voxels=(16000, 40000),
-        ),
+            max_voxels=(16000, 40000),),
     ), 
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
     pts_middle_encoder=dict(

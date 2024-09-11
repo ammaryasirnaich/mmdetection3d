@@ -16,7 +16,7 @@ from .fusion import AdaptiveWeight
 # from .refinement import FeatureRefinement
 from .segmentation import SegmentationHead
 
-from .window_attention import WindowAttention
+from .dump.window_attention import WindowAttention
 from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
