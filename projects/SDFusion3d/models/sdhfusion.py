@@ -303,7 +303,7 @@ class SDHFusion(Base3DDetector):
         **kwargs,
     ):
         imgs = batch_inputs_dict.get('imgs', None)
-        print(imgs.shape)
+        # print(imgs.shape)
         points = batch_inputs_dict.get('points', None)
         features = []
         if imgs is not None:
@@ -333,12 +333,12 @@ class SDHFusion(Base3DDetector):
             # features.append(img_feature)
         
         # Point feature encoder model
-        print(img_bev_feature.shape)
+        # print(img_bev_feature.shape)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
          
         fused_feature, complexity_score = self.refine_resolution_adj(pts_feature,img_bev_feature)
-        print(f'adaptive feature shape: {fused_feature.shape}')
-        print(f'complexity_score shape: {complexity_score.shape}')
+        # print(f'adaptive feature shape: {fused_feature.shape}')
+        # print(f'complexity_score shape: {complexity_score.shape}')
         
         # adaptive feature shape: torch.Size([4, 512, 200, 176])
         # complexity_score shape: torch.Size([4, 1, 200, 176])

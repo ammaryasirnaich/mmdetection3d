@@ -152,12 +152,7 @@ class TransFusionHead(nn.Module):
         self._init_assigner_sampler()
 
         # Note! changing it from BEVfusion as we have different bev after using it
-        # Position Embedding for Cross-Attention, which is re-used during training # noqa: E501
-        print(self.test_cfg['grid_size'][0])
-        print(self.test_cfg['grid_size'][1])
-        print(self.test_cfg['out_size_factor'])
-        
-        
+        # Position Embedding for Cross-Attention, which is re-used during training # noqa: E501        
         x_size = self.test_cfg['grid_size'][0] // self.test_cfg[
             'out_size_factor']
         y_size = self.test_cfg['grid_size'][1] // self.test_cfg[
