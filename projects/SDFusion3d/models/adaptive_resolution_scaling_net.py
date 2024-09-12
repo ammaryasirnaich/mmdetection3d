@@ -86,23 +86,23 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         # Step 1: Multi-scale feature extraction
         x_multi_scale = self.multi_scale_conv(x)
         
-        print(f'x_multi_scale : {x_multi_scale.shape}')
+        # print(f'x_multi_scale : {x_multi_scale.shape}')
         
         
         # Step 2: Deformable attention
         x_att = self.deformable_attention(x_multi_scale)
         
-        print(f'Deformable attention feature shape : {x_att.shape}')
+        # print(f'Deformable attention feature shape : {x_att.shape}')
         
         # Step 3: Complexity score map
         complexity_map = self.complexity_map(x_att)
         
-        print(f'complexity_map : {complexity_map.shape}')
+        # print(f'complexity_map : {complexity_map.shape}')
         
         # Step 4: Adaptive feature refinement
         output = self.arfr(x_att, complexity_map)
         
-        print(f'output : {output.shape}')
+        # print(f'output : {output.shape}')
         
         return output, complexity_map
 
