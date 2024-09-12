@@ -30,7 +30,7 @@ class LiftSplatShoot(nn.Module):
         :param extrinsics: Tensor of shape (B, N, 4, 4)
         :return: 3D point cloud with only coordinate information
         """
-        print(f'Feature input to lift function:{image_features.shape}')
+        # print(f'Feature input to lift function:{image_features.shape}')
         BN, C, H, W = image_features.shape
         B = BN // intrinsics.shape[1]  # Calculate B from BN and N
         N = intrinsics.shape[1]
