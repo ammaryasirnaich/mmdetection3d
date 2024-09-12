@@ -76,39 +76,6 @@ model = dict(
         use_conv_for_no_stride=True
     ),
     
-    # _dim_ = 256
-    # _num_points_ = 4
-    # _num_groups_ = 4
-    # _num_layers_ = 2
-    # _num_frames_ = 8
-    # _num_queries_ = 100
-    # _topk_training_ = [4000, 16000, 64000]
-    # _topk_testing_ = [2000, 8000, 32000]
-
-    img_point_encoder=dict(
-        type='SparseBEVTransformer',
-        # in_channels=768,  # Combined features from all sensors (camera, LiDAR)
-        embed_dims=_dim_,
-        num_layers=_num_layers_,
-        num_frames=_num_frames_,
-        num_points=_num_points_,
-        # num_groups=_num_groups_,
-        # num_queries=_num_queries_,
-        num_levels=4,
-        num_classes=len(class_names),
-        pc_range=point_cloud_range,
-        # code_size=occ_size,
-        # topk_training=_topk_training_,
-        # topk_testing=_topk_testing_
-    ),
-    fusion_module=dict(
-        type='MultiResolutionFusion',
-        coarse_channels=256,
-        intermediate_channels=256,
-        fine_channels=256,
-        adaptative_resolution=True,
-        complexity_threshold=0.8
-    ),
     bbox_head=dict(
         type='TransFusionHead',
         num_proposals=200,
@@ -135,7 +102,8 @@ model = dict(
         train_cfg=dict(
             dataset='nuScenes',
             point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-            grid_size=[1440, 1440, 41],
+            # grid_size=[1440, 1440, 41],
+            grid_size=[1408,1600, 41],
             voxel_size=[0.075, 0.075, 0.2],
             out_size_factor=8,
             gaussian_overlap=0.1,
@@ -154,7 +122,7 @@ model = dict(
                 iou_cost=dict(type='IoU3DCost', weight=0.25))),
         test_cfg=dict(
             dataset='nuScenes',
-            grid_size=[1440, 1440, 41],
+            grid_size=[1408,1600, 41],
             out_size_factor=8,
             voxel_size=[0.075, 0.075],
             pc_range=[-54.0, -54.0],
