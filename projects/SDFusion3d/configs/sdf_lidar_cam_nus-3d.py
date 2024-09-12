@@ -49,37 +49,9 @@ model = dict(
          adaptive_scale_net_cfg =dict(
               type = 'AdaptiveResolutionScalingNetwork',
              in_channels=512, 
-             n_ref_points=4 ),  
-    ), 
-    # train_cfg=dict(
-    #         dataset='nuScenes',
-    #         point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-    #         grid_size=[1440, 1440, 41],
-    #         voxel_size=[0.075, 0.075, 0.2],
-    #         out_size_factor=8,
-    #         gaussian_overlap=0.1,
-    #         min_radius=2,
-    #         pos_weight=-1,
-    #         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
-    #         # assigner=dict(
-    #         #     type='HungarianAssigner3D',
-    #         #     iou_calculator=dict(type='BboxOverlaps3D', coordinate='lidar'),
-    #         #     cls_cost=dict(
-    #         #         type='mmdet.FocalLossCost',
-    #         #         gamma=2.0,
-    #         #         alpha=0.25,
-    #         #         weight=0.15),
-    #         #     reg_cost=dict(type='BBoxBEVL1Cost', weight=0.25),
-    #         #     iou_cost=dict(type='IoU3DCost', weight=0.25))
-    #         ),
-    #     test_cfg=dict(
-    #         dataset='nuScenes',
-    #         grid_size=[1440, 1440, 41],
-    #         out_size_factor=8,
-    #         voxel_size=[0.075, 0.075],
-    #         pc_range=[-54.0, -54.0],
-    #         nms_type=None),
-    )
+             n_ref_points=4 )
+    ,), 
+)
 
 train_pipeline = [
     dict(
@@ -256,5 +228,10 @@ auto_scale_lr = dict(enable=False, base_batch_size=32)
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=1))
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
+    )
+custom_hooks = [dict(type='EpochLossValuesLogging')]
+
 del _base_.custom_hooks
