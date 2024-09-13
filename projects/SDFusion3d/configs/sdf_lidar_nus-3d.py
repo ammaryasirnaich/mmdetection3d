@@ -385,3 +385,6 @@ default_hooks = dict(
 
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
                 dict(type='EpochLossValuesLogging')]
+
+
+find_unused_parameters = True

@@ -110,9 +110,6 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         return output
 
 
-
-
-
 if __name__=="__main__":
     
     # Set device
