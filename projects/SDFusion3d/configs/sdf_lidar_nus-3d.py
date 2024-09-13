@@ -378,5 +378,10 @@ log_processor = dict(window_size=50)
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=5))
-custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
+    )
+
+custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
+                dict(type='EpochLossValuesLogging')]
