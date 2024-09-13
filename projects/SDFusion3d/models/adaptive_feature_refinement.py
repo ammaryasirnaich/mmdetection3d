@@ -26,18 +26,14 @@ class Refine_Resolution_Adjacement(nn.Module):
         self.adaptive_resol_scale_model = MODELS.build(adaptive_scale_net_cfg)
         
         
-    
     def forward(self,bev_lidar_features,dense_camera_feature):
         # sparse_features : # [B, N, 256, H, W]
         # dense_feature   : #  [B, C, H, W]
                       
         # Adaptive Fusion between lidar and image features
         fused_feature = self.adaptive_weight(bev_lidar_features[0], dense_camera_feature) #  [B, C, H, W] , [B, N, 256, H, W]
-    
-        output, complexity_map = self.adaptive_resol_scale_model(fused_feature) #  output [B, C, H, W] , comp_map 
-        
-        
-        return output, complexity_map
+        output = self.adaptive_resol_scale_model(fused_feature) #  output [B, C, H, W] , comp_map 
+        return output
         
 
 

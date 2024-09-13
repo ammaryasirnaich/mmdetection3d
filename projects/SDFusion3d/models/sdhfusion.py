@@ -252,10 +252,6 @@ class SDHFusion(Base3DDetector):
         
         x = self.pts_backbone(x)    
         x = self.pts_neck(x)
-        
-           
-        # self.forward_pts_train(img_feats, voxel_semantics, voxel_instances, instance_class_ids, mask_camera, img_metas)
-        
         return x
 
 
@@ -336,7 +332,7 @@ class SDHFusion(Base3DDetector):
         # print(img_bev_feature.shape)
         pts_feature = self.extract_pts_feat(batch_inputs_dict)
          
-        fused_feature, complexity_score = self.refine_resolution_adj(pts_feature,img_bev_feature)
+        fused_feature = self.refine_resolution_adj(pts_feature,img_bev_feature)
         # print(f'adaptive feature shape: {fused_feature.shape}')
         # print(f'complexity_score shape: {complexity_score.shape}')
         

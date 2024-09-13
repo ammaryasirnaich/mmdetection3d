@@ -107,7 +107,7 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         
         # print(f'output : {output.shape}')
         
-        return output, complexity_map
+        return output
 
 
 
