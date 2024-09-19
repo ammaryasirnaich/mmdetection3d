@@ -3,20 +3,6 @@ custom_imports = dict(
     imports=['projects.SDFusion3d.models'], allow_failed_imports=False)
 
 # model settings
-# Voxel size for voxel encoder
-# Usually voxel size is changed consistently with the point cloud range
-# If point cloud range is modified, do remember to change all related
-# keys in the config.
-
-# _dim_ = 256
-# _num_points_ = 4
-# _num_groups_ = 4
-# _num_layers_ = 2
-# _num_frames_ = 8
-# _num_queries_ = 100
-# _topk_training_ = [4000, 16000, 64000]
-# _topk_testing_ = [2000, 8000, 32000]
-
 
 voxel_size = [0.075, 0.075, 0.2]
 # sparse_voxel_grid = [1440, 1440, 41] [41, 1600, 1408]
@@ -419,3 +405,18 @@ custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
 
 
 find_unused_parameters = True
+
+
+# env_cfg = dict(
+#     cudnn_benchmark=False,
+#     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+#     dist_cfg=dict(backend='nccl'),
+# )
+
+
+log_level = 'INFO'
+work_dir = './work_dirs/SHFusion'
+load_from = None
+resume = True
+resume_from = './work_dirs/SHFusion'
+workflow = [('train', 1)]  
