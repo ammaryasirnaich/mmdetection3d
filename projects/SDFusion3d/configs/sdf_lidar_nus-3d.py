@@ -49,10 +49,11 @@ model = dict(
         type='Det3DDataPreprocessor',
         voxel=True,
         voxel_layer=dict(
-            max_num_points=32,
+            max_num_points=10,
             point_cloud_range=point_cloud_range,
             voxel_size=voxel_size,
-            max_voxels=(16000, 40000),),
+            max_voxels=[120000, 160000],
+            voxelize_reduce=True,),
     ), 
     pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
     # pts_middle_encoder=dict(
