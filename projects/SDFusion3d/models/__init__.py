@@ -34,7 +34,7 @@ __all__ = [
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
     'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',
-    'BEVFusionSparseEncoder'
+    'BEVFusionSparseEncoder','DeformableAttention'
 ]
 
 

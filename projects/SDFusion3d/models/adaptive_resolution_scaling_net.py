@@ -116,7 +116,7 @@ if __name__=="__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     # Define the input feature map with size (B=4, C=512, H=200, W=176)
-    input_feature = torch.randn(4, 512, 200, 176).to(device)
+    input_feature = torch.randn(4, 512, 180, 180).to(device)
 
     # Initialize the model
     model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4).to(device)
