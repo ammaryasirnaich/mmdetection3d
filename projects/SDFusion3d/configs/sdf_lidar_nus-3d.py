@@ -19,6 +19,7 @@ _topk_testing_ = [2000, 8000, 32000]
 
 
 voxel_size = [0.075, 0.075, 0.2]
+sparse_voxel_grid = [1440, 1440, 41]
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 class_names = [
     'car', 'truck', 'construction_vehicle', 'bus', 'trailer', 'barrier',
@@ -53,28 +54,54 @@ model = dict(
             voxel_size=voxel_size,
             max_voxels=(16000, 40000),),
     ), 
-    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=4),
+    pts_voxel_encoder=dict(type='HardSimpleVFE', num_features=5),
+    # pts_middle_encoder=dict(
+    #     type='SparseEncoder',
+    #     in_channels=4,
+    #     sparse_shape=[41, 1600, 1408],
+    #     order=('conv', 'norm', 'act')
+    # ),
+    # pts_backbone=dict(
+    #     type='SECOND',
+    #     in_channels=256,
+    #     layer_nums=[5, 5],
+    #     layer_strides=[1, 2],
+    #     out_channels=[128, 256]
+    # ),
+    # pts_neck=dict(
+    #     type='SECONDFPN',
+    #     in_channels=[128, 256],
+    #     out_channels=[256, 256],
+    #     upsample_strides=[1, 2],
+    #     norm_cfg=dict(type='BN', requires_grad=True),
+    #     use_conv_for_no_stride=True
+    # ),
     pts_middle_encoder=dict(
-        type='SparseEncoder',
-        in_channels=4,
-        sparse_shape=[41, 1600, 1408],
-        order=('conv', 'norm', 'act')
-    ),
+        type='BEVFusionSparseEncoder',
+        in_channels=5,
+        sparse_shape=sparse_voxel_grid,
+        order=('conv', 'norm', 'act'),
+        norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
+        encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
+                                                                      128)),
+        encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
+        block_type='basicblock'),
     pts_backbone=dict(
         type='SECOND',
         in_channels=256,
+        out_channels=[128, 256],
         layer_nums=[5, 5],
         layer_strides=[1, 2],
-        out_channels=[128, 256]
-    ),
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
+        conv_cfg=dict(type='Conv2d', bias=False)),
     pts_neck=dict(
         type='SECONDFPN',
         in_channels=[128, 256],
         out_channels=[256, 256],
         upsample_strides=[1, 2],
-        norm_cfg=dict(type='BN', requires_grad=True),
-        use_conv_for_no_stride=True
-    ),
+        norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
+        upsample_cfg=dict(type='deconv', bias=False),
+        use_conv_for_no_stride=True),
     
     bbox_head=dict(
         type='TransFusionHead',
@@ -101,10 +128,10 @@ model = dict(
             pos_encoding_cfg=dict(input_channel=2, num_pos_feats=128)),
         train_cfg=dict(
             dataset='nuScenes',
-            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
-            # grid_size=[1440, 1440, 41],
-            grid_size=[1408,1600, 41],
-            voxel_size=[0.075, 0.075, 0.2],
+            point_cloud_range=point_cloud_range,
+            grid_size=sparse_voxel_grid,
+            # grid_size=[1408,1600, 41],
+            voxel_size=voxel_size,
             out_size_factor=8,
             gaussian_overlap=0.1,
             min_radius=2,
@@ -122,7 +149,8 @@ model = dict(
                 iou_cost=dict(type='IoU3DCost', weight=0.25))),
         test_cfg=dict(
             dataset='nuScenes',
-            grid_size=[1408,1600, 41],
+            # grid_size=[1408,1600, 41],
+            grid_size=sparse_voxel_grid,
             out_size_factor=8,
             voxel_size=[0.075, 0.075],
             pc_range=[-54.0, -54.0],
@@ -265,8 +293,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
+    batch_size=2,
+    num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(

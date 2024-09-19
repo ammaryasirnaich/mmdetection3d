@@ -7,9 +7,9 @@ from mmdet3d.registry import MODELS
 class AdaptiveWeight(nn.Module):
     def __init__(self, voxel_dim=512, image_dim=64, upscale_size=(200, 176)):
         super().__init__()
-        # Upsample image feature's height (64 -> 200) while keeping the width (176) unchanged
+        # Upsample image feature's height and width based on upscale_size
         self.image_upscaler = nn.Sequential(
-            nn.Upsample(size=upscale_size, mode='bilinear', align_corners=True),  # Upscale height from 64 to 200
+            nn.Upsample(size=upscale_size, mode='bilinear', align_corners=True),  # Upscale height and width
             nn.Conv2d(image_dim, voxel_dim, kernel_size=1)  # Adjust image channels from 64 to 512
         )
 
@@ -22,41 +22,39 @@ class AdaptiveWeight(nn.Module):
         self.b_d = nn.Parameter(torch.zeros(1))
 
     def forward(self, voxel_feature, image_feature):
-        # Print the shapes for debugging
-        # print(f'Voxel_feature shape: {voxel_feature.shape}')  # Expecting [4, 512, 200, 176]
-        # print(f'Image_feature shape before upscaling: {image_feature.shape}')  # Expecting [4, 64, 64, 176]
-
-        # Upscale the image feature's height to match the voxel feature dimensions
+        # Upscale the image feature's height and width to match the voxel feature dimensions
         image_feature_upscaled = self.image_upscaler(image_feature)
-        # print(f'Image_feature shape after upscaling: {image_feature_upscaled.shape}')  # Expecting [4, 512, 200, 176]
 
         # Flatten the spatial dimensions for voxel and image features
-        voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1)  # [B, 512, 200 * 176]
-        image_flat = image_feature_upscaled.view(image_feature_upscaled.size(0), image_feature_upscaled.size(1), -1)  # [B, 512, 200 * 176]
+        voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1)  # [B, 512, H * W]
+        image_flat = image_feature_upscaled.view(image_feature_upscaled.size(0), image_feature_upscaled.size(1), -1)  # [B, 512, H * W]
 
         # Calculate voxel and image weights
         voxel_weight = torch.sigmoid(self.voxel_fc(voxel_flat.mean(-1)))  # [B, 1]
         image_weight = torch.sigmoid(self.image_fc(image_flat.mean(-1)))  # [B, 1]
 
-        # Reshape weights to match the dimensions of voxel and image features
-        voxel_weight = voxel_weight.view(voxel_weight.size(0), 1, 1, 1)  # Reshape to [B, 1, 1, 1]
-        image_weight = image_weight.view(image_weight.size(0), 1, 1, 1)  # Reshape to [B, 1, 1, 1]
+        # Reshape weights for broadcasting: [B, 1, 1] -> [B, 1, H * W]
+        voxel_weight = voxel_weight.unsqueeze(-1)  # [B, 1, 1] -> [B, 1, 1] -> [B, 1, H * W]
+        image_weight = image_weight.unsqueeze(-1)  # Same for image_weight
 
-        # Combine voxel and image features using learned weights
-        fused_feature = voxel_weight * voxel_feature + image_weight * image_feature_upscaled
-
+        # Fusion
+        fused_feature = (voxel_weight * voxel_flat + image_weight * image_flat).view_as(voxel_feature)
+        
         return fused_feature
+    
+    
 
 if __name__=="__main__":
     # Create random tensor inputs for voxel features and image features
     # Voxel feature shape: [batch_size, 512, 200, 176]
-    voxel_feature = torch.randn(4, 512, 200, 176)
+    # voxel_feature = torch.randn(4, 512, 200, 176)
+    voxel_feature = torch.randn(4, 512, 180, 180)
     
     # Image feature shape: [batch_size, 64, 64, 176]
     image_feature = torch.randn(4, 64, 64, 176)
 
     # Instantiate the AdaptiveWeight class
-    model = AdaptiveWeight(voxel_dim=512, image_dim=64, upscale_size=(200, 176))
+    model = AdaptiveWeight(voxel_dim=512, image_dim=64, upscale_size=(180, 180))
     
     # Run the forward method
     fused_feature = model(voxel_feature, image_feature)
@@ -65,7 +63,8 @@ if __name__=="__main__":
     print(f"Fused feature shape: {fused_feature.shape}")  # Expected: [4, 512, 200, 176]
 
     # Check for correctness: Assert that the output shape matches the expected shape
-    assert fused_feature.shape == (4, 512, 200, 176), f"Output shape mismatch: {fused_feature.shape}"
+    # assert fused_feature.shape == (4, 512, 200, 176), f"Output shape mismatch: {fused_feature.shape}"
+    assert fused_feature.shape == (4, 512, 180, 180), f"Output shape mismatch: {fused_feature.shape}"
     
     # Check if the tensor contains valid numbers (not NaN or Inf)
     assert not torch.isnan(fused_feature).any(), "Fused feature contains NaN values"

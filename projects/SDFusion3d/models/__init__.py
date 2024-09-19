@@ -21,7 +21,8 @@ from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from .deformable_attention import DeformableAttention
-
+from .utils import check_tensor_shape
+from .sparse_encoder import BEVFusionSparseEncoder
 
 
 __all__ = [
@@ -32,7 +33,8 @@ __all__ = [
     'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
-    'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork'
+    'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',
+    'BEVFusionSparseEncoder'
 ]
 
 

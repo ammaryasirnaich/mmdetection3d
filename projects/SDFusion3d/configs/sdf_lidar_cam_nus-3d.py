@@ -45,7 +45,8 @@ model = dict(
              type = 'AdaptiveWeight',
              voxel_dim=512, 
              image_dim=64, 
-             upscale_size=(200, 176)),
+            #  upscale_size=(200, 176)
+            upscale_size=(180, 180)  ),
          adaptive_scale_net_cfg =dict(
               type = 'AdaptiveResolutionScalingNetwork',
              in_channels=512, 
@@ -101,17 +102,17 @@ train_pipeline = [
             'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
         ]),
     # Actually, 'GridMask' is not used here
-    dict(
-        type='GridMask',
-        use_h=True,
-        use_w=True,
-        max_epoch=6,
-        rotate=1,
-        offset=False,
-        ratio=0.5,
-        mode=1,
-        prob=0.0,
-        fixed_prob=True),
+    # dict(
+    #     type='GridMask',
+    #     use_h=True,
+    #     use_w=True,
+    #     max_epoch=6,
+    #     rotate=1,
+    #     offset=False,
+    #     ratio=0.5,
+    #     mode=1,
+    #     prob=0.0,
+    #     fixed_prob=True),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',

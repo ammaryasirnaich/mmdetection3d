@@ -6,6 +6,13 @@ from mmcv.cnn.bricks import ConvTranspose3d, Conv3d
 
 
 
+def check_tensor_shape(tensor, expected_shape, tensor_name="Tensor"):
+    actual_shape = tensor.shape
+    if actual_shape != torch.Size(expected_shape):
+        raise ValueError(f"Shape mismatch for {tensor_name}: expected {expected_shape}, but got {actual_shape}")
+
+
+
 
 # Global level meshgrid precomputation
 def create_meshgrid(H, W):
@@ -366,3 +373,7 @@ class DumpConfig:
 
 
 DUMP = DumpConfig()
+
+
+
+

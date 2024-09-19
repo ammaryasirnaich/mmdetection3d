@@ -58,8 +58,8 @@ if __name__=="__main__":
     height, width = 64, 176
     channel = 256
     voxel_channel=512
-    bev_hight=200
-    bev_width=176
+    bev_hight=180  #200
+    bev_width=180  # 176
     dense_image_feature = torch.rand(batch_size, num_views, channel, height, width)
     sparse_feature      = torch.rand(batch_size, voxel_channel, bev_hight, bev_width)
     

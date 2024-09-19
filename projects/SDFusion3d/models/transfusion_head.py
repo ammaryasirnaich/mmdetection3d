@@ -18,7 +18,7 @@ from mmdet3d.models.dense_heads.centerpoint_head import SeparateHead
 from mmdet3d.models.layers import nms_bev
 from mmdet3d.registry import MODELS
 from mmdet3d.structures import xywhr2xyxyr
-
+from .utils import check_tensor_shape
 
 def clip_sigmoid(x, eps=1e-4):
     y = torch.clamp(x.sigmoid_(), min=eps, max=1 - eps)
@@ -214,7 +214,14 @@ class TransFusionHead(nn.Module):
         """
         batch_size = inputs.shape[0]
         fusion_feat = self.shared_conv(inputs)
-
+        
+        # if (batch_size!=8):
+        #     print(f'batch size different then 4 {batch_size}')
+             
+            
+        # check_tensor_shape(self.bev_pos,[1, 35200, 2],"BEV initialized Pos Shape")
+        # check_tensor_shape(fusion_feat,[8, 128, 200, 176],"fusion_feat Shape")
+    
         #################################
         # image to BEV
         #################################
@@ -222,7 +229,9 @@ class TransFusionHead(nn.Module):
                                                fusion_feat.shape[1],
                                                -1)  # [BS, C, H*W]
         bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(fusion_feat.device)
-
+        
+        # check_tensor_shape(bev_pos,[8, 35200, 2],'bev_pos after repeat')
+        # check_tensor_shape(fusion_feat_flatten,[8, 128, 35200],'bev_pos after repeat')
         #################################
         # query initialization
         #################################
