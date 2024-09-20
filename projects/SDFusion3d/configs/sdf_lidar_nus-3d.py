@@ -282,8 +282,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=16,
-    num_workers=16,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -377,9 +377,25 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
+train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=40)
 val_cfg = dict()
 test_cfg = dict()
+
+
+
+# training schedule for 1x
+
+# val_cfg = dict(type='ValLoop')
+# test_cfg = dict(type='TestLoop')
+
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
+
+
 
 optim_wrapper = dict(
     type='OptimWrapper',
@@ -407,11 +423,11 @@ custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
 find_unused_parameters = True
 
 
-# env_cfg = dict(
-#     cudnn_benchmark=False,
-#     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
-#     dist_cfg=dict(backend='nccl'),
-# )
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
 
 
 log_level = 'INFO'
