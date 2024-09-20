@@ -55,15 +55,15 @@ model = dict(
 )
 
 train_pipeline = [
-    # dict(
-    #     type='BEVLoadMultiViewImageFromFiles',
-    #     to_float32=True,
-    #     color_type='color',
-    #     backend_args=backend_args),
-    dict(type='LoadMultiViewImageFromFiles',
-         to_float32=True,
-         num_views=6,
-         backend_args=backend_args),
+    dict(
+        type='BEVLoadMultiViewImageFromFiles',
+        to_float32=True,
+        color_type='color',
+        backend_args=backend_args),
+    # dict(type='LoadMultiViewImageFromFiles',
+    #      to_float32=True,
+    #      num_views=6,
+    #      backend_args=backend_args),
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -134,15 +134,15 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    # dict(
-    #     type='BEVLoadMultiViewImageFromFiles',
-    #     to_float32=True,
-    #     color_type='color',
-    #     backend_args=backend_args),
-    dict(type='LoadMultiViewImageFromFiles',
-         to_float32=True,
-         num_views=6,
-         backend_args=backend_args),
+    dict(
+        type='BEVLoadMultiViewImageFromFiles',
+        to_float32=True,
+        color_type='color',
+        backend_args=backend_args),
+    # dict(type='LoadMultiViewImageFromFiles',
+    #      to_float32=True,
+    #      num_views=6,
+    #      backend_args=backend_args),
     
     dict(
         type='LoadPointsFromFile',
