@@ -65,33 +65,6 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         use_conv_for_no_stride=True
     ),
-    # pts_middle_encoder=dict(
-    #     type='BEVFusionSparseEncoder',
-    #     in_channels=5,
-    #     sparse_shape=sparse_voxel_grid,
-    #     order=('conv', 'norm', 'act'),
-    #     norm_cfg=dict(type='BN1d', eps=0.001, momentum=0.01),
-    #     encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128,
-    #                                                                   128)),
-    #     encoder_paddings=((0, 0, 1), (0, 0, 1), (0, 0, (1, 1, 0)), (0, 0)),
-    #     block_type='basicblock'),
-    # pts_backbone=dict(
-    #     type='SECOND',
-    #     in_channels=256,
-    #     out_channels=[128, 256],
-    #     layer_nums=[5, 5],
-    #     layer_strides=[1, 2],
-    #     norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
-    #     conv_cfg=dict(type='Conv2d', bias=False)),
-    # pts_neck=dict(
-    #     type='SECONDFPN',
-    #     in_channels=[128, 256],
-    #     out_channels=[256, 256],
-    #     upsample_strides=[1, 2],
-    #     norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
-    #     upsample_cfg=dict(type='deconv', bias=False),
-    #     use_conv_for_no_stride=True),
-    
     bbox_head=dict(
         type='TransFusionHead',
         num_proposals=200,
@@ -282,8 +255,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=8,
-    num_workers=8,
+    batch_size=4,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -388,15 +361,6 @@ test_cfg = dict()
 # val_cfg = dict(type='ValLoop')
 # test_cfg = dict(type='TestLoop')
 
-
-env_cfg = dict(
-    cudnn_benchmark=False,
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
-    dist_cfg=dict(backend='nccl'),
-)
-
-
-
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
@@ -419,15 +383,14 @@ default_hooks = dict(
 custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
                 dict(type='EpochLossValuesLogging')]
 
-
 find_unused_parameters = True
 
 
-env_cfg = dict(
-    cudnn_benchmark=False,
-    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
-    dist_cfg=dict(backend='nccl'),
-)
+# env_cfg = dict(
+#     cudnn_benchmark=False,
+#     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+#     dist_cfg=dict(backend='nccl'),
+# )
 
 
 log_level = 'INFO'

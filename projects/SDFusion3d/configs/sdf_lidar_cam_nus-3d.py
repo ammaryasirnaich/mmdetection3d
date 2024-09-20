@@ -51,15 +51,19 @@ model = dict(
               type = 'AdaptiveResolutionScalingNetwork',
              in_channels=512, 
              n_ref_points=4 )
-    ,), 
+    )
 )
 
 train_pipeline = [
-    dict(
-        type='BEVLoadMultiViewImageFromFiles',
-        to_float32=True,
-        color_type='color',
-        backend_args=backend_args),
+    # dict(
+    #     type='BEVLoadMultiViewImageFromFiles',
+    #     to_float32=True,
+    #     color_type='color',
+    #     backend_args=backend_args),
+    dict(type='LoadMultiViewImageFromFiles',
+         to_float32=True,
+         num_views=6,
+         backend_args=backend_args),
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -102,17 +106,17 @@ train_pipeline = [
             'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
         ]),
     # Actually, 'GridMask' is not used here
-    # dict(
-    #     type='GridMask',
-    #     use_h=True,
-    #     use_w=True,
-    #     max_epoch=6,
-    #     rotate=1,
-    #     offset=False,
-    #     ratio=0.5,
-    #     mode=1,
-    #     prob=0.0,
-    #     fixed_prob=True),
+    dict(
+        type='GridMask',
+        use_h=True,
+        use_w=True,
+        max_epoch=6,
+        rotate=1,
+        offset=False,
+        ratio=0.5,
+        mode=1,
+        prob=0.0,
+        fixed_prob=True),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -130,11 +134,16 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(
-        type='BEVLoadMultiViewImageFromFiles',
-        to_float32=True,
-        color_type='color',
-        backend_args=backend_args),
+    # dict(
+    #     type='BEVLoadMultiViewImageFromFiles',
+    #     to_float32=True,
+    #     color_type='color',
+    #     backend_args=backend_args),
+    dict(type='LoadMultiViewImageFromFiles',
+         to_float32=True,
+         num_views=6,
+         backend_args=backend_args),
+    
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -226,6 +235,7 @@ optim_wrapper = dict(
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=32)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
