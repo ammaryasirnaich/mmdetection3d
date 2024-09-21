@@ -23,6 +23,8 @@ class DeformableAttention(nn.Module):
         # Ensure the gradient layout consistency with DDP
         torch.backends.cudnn.benchmark = True
         
+        self.cached_batch_size = None   # tracking batch size
+        
         
     def forward(self, x):
         """
@@ -47,13 +49,16 @@ class DeformableAttention(nn.Module):
 
         # Generate meshgrid if not cached or if input size has changed
         if (self.grid_h is None or self.grid_w is None or
-            self.grid_h.shape[-2:] != (H, W)):
+            self.grid_h.shape[-2:] != (H, W) or self.cached_batch_size != B):
             grid_h, grid_w = torch.meshgrid(
                 torch.arange(H, device=x.device),
                 torch.arange(W, device=x.device),
                 indexing='ij'
             )  # Each of shape [H, W]
 
+            # Update batch size cache
+            self.cached_batch_size = B
+            
             # Expand to [B, n_ref_points, H, W]
             grid_h = grid_h.unsqueeze(0).unsqueeze(1).expand(B, self.n_ref_points, H, W)
             grid_w = grid_w.unsqueeze(0).unsqueeze(1).expand(B, self.n_ref_points, H, W)
