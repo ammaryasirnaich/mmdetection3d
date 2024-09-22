@@ -3,4 +3,9 @@ CONFIG_FILE="/import/digitreasure/ammar_workspace/open_mmlab/mmdetection3d/proje
 GPU_NUM=2
 
 # CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0,1 PORT=29501 ../../tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM}
-NCCL_TIMEOUT=1000 CUDA_VISIBLE_DEVICES=0 python ../../tools/train.py ${CONFIG_FILE}
+
+# TORCH_NCCL_BLOCKING_WAIT=1 CUDA_VISIBLE_DEVICES=0 NCCL_TIMEOUT_MS=300000 PORT=29501 ../../tools/dist_train_update.sh ${CONFIG_FILE} 2
+
+NCCL_TIMEOUT=1000  TORCH_NCCL_BLOCKING_WAIT=1 CUDA_VISIBLE_DEVICES=0 python ../../tools/train.py ${CONFIG_FILE} 
+
+
