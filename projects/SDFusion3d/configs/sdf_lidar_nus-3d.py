@@ -305,49 +305,49 @@ vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
-# learning rate
-lr = 0.0001
-param_scheduler = [
-    # learning rate scheduler
-    # During the first 8 epochs, learning rate increases from 0 to lr * 10
-    # during the next 12 epochs, learning rate decreases from lr * 10 to
-    # lr * 1e-4
-    dict(
-        type='CosineAnnealingLR',
-        T_max=8,
-        eta_min=lr * 10,
-        begin=0,
-        end=8,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingLR',
-        T_max=12,
-        eta_min=lr * 1e-4,
-        begin=8,
-        end=20,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    # momentum scheduler
-    # During the first 8 epochs, momentum increases from 0 to 0.85 / 0.95
-    # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=8,
-        eta_min=0.85 / 0.95,
-        begin=0,
-        end=8,
-        by_epoch=True,
-        convert_to_iter_based=True),
-    dict(
-        type='CosineAnnealingMomentum',
-        T_max=12,
-        eta_min=1,
-        begin=8,
-        end=20,
-        by_epoch=True,
-        convert_to_iter_based=True)
-]
+# # learning rate
+# lr = 0.0001
+# param_scheduler = [
+#     # learning rate scheduler
+#     # During the first 8 epochs, learning rate increases from 0 to lr * 10
+#     # during the next 12 epochs, learning rate decreases from lr * 10 to
+#     # lr * 1e-4
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=8,
+#         eta_min=lr * 10,
+#         begin=0,
+#         end=8,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingLR',
+#         T_max=12,
+#         eta_min=lr * 1e-4,
+#         begin=8,
+#         end=20,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     # momentum scheduler
+#     # During the first 8 epochs, momentum increases from 0 to 0.85 / 0.95
+#     # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=8,
+#         eta_min=0.85 / 0.95,
+#         begin=0,
+#         end=8,
+#         by_epoch=True,
+#         convert_to_iter_based=True),
+#     dict(
+#         type='CosineAnnealingMomentum',
+#         T_max=12,
+#         eta_min=1,
+#         begin=8,
+#         end=20,
+#         by_epoch=True,
+#         convert_to_iter_based=True)
+# ]
 
 # runtime settings
 # train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=40)
@@ -393,8 +393,8 @@ custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion'
+work_dir = './work_dirs/SHFusion_hyper_change'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion'
+resume_from = './work_dirs/SHFusion_hyper_change'
 workflow = [('train', 1)]  

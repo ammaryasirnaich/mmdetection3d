@@ -192,17 +192,17 @@ lr = 0.0001
 param_scheduler = [
     dict(
         type='LinearLR',
-        start_factor=0.33333333,
+        start_factor=0.1,
         by_epoch=False,
         begin=0,
-        end=500),
+        end=100),
     dict(
         type='CosineAnnealingLR',
         begin=0,
-        T_max=6,
-        end=6,
+        T_max=8,
+        end=20,
         by_epoch=True,
-        eta_min_ratio=1e-4,
+        eta_min_ratio=1e-6,
         convert_to_iter_based=True),
     # momentum scheduler
     # During the first 8 epochs, momentum increases from 1 to 0.85 / 0.95
@@ -230,15 +230,14 @@ test_cfg = dict()
 
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=0.0002, weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2))
+    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
+    clip_grad=dict(max_norm=10, norm_type=2))
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=32)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 log_processor = dict(window_size=50)
 
 default_hooks = dict(
@@ -251,5 +250,12 @@ default_hooks = dict(
 custom_hooks = [dict(type='EpochLossValuesLogging')]
 
 find_unused_parameters = True
+
+log_level = 'INFO'
+work_dir = './work_dirs/SHFusion_hyper_change'
+load_from = None
+resume = True
+resume_from = './work_dirs/SHFusion_hyper_change'
+workflow = [('train', 1)]  
 
 del _base_.custom_hooks
