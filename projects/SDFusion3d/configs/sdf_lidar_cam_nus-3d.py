@@ -186,6 +186,9 @@ val_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, modality=input_modality))
 test_dataloader = val_dataloader
 
+# learning rate
+lr = 0.0001
+
 param_scheduler = [
     dict(
         type='LinearLR',
@@ -221,7 +224,7 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=50, val_interval=1)
+train_cfg = dict(by_epoch=True, max_epochs=50, val_interval=50)
 val_cfg = dict()
 test_cfg = dict()
 
@@ -236,6 +239,7 @@ optim_wrapper = dict(
 #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=32)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+log_processor = dict(window_size=50)
 
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
@@ -243,6 +247,9 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
     )
+
 custom_hooks = [dict(type='EpochLossValuesLogging')]
+
+find_unused_parameters = True
 
 del _base_.custom_hooks

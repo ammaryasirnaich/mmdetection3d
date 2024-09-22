@@ -2,5 +2,5 @@ CONFIG_FILE="/import/digitreasure/ammar_workspace/open_mmlab/mmdetection3d/proje
 # CONFIG_FILE="/import/digitreasure/ammar_workspace/mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_sbn-all_16xb2-2x_waymoD5-3d-3class.py"
 GPU_NUM=2
 
-CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0,1 PORT=29501 ../../tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM}
-# CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py ${CONFIG_FILE}
+# CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0,1 PORT=29501 ../../tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM}
+NCCL_TIMEOUT=1000 CUDA_VISIBLE_DEVICES=0 python ../../tools/train.py ${CONFIG_FILE}

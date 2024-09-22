@@ -350,9 +350,9 @@ param_scheduler = [
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=40)
-val_cfg = dict()
-test_cfg = dict()
+# train_cfg = dict(by_epoch=True, max_epochs=40, val_interval=40)
+# val_cfg = dict()
+# test_cfg = dict()
 
 
 
@@ -361,29 +361,28 @@ test_cfg = dict()
 # val_cfg = dict(type='ValLoop')
 # test_cfg = dict(type='TestLoop')
 
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2))
+# optim_wrapper = dict(
+#     type='OptimWrapper',
+#     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
+#     clip_grad=dict(max_norm=35, norm_type=2))
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (4 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=32)
-log_processor = dict(window_size=50)
+# auto_scale_lr = dict(enable=False, base_batch_size=32)
+# log_processor = dict(window_size=50)
 
-default_hooks = dict(
-    logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=1),
-    sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
-    )
+# default_hooks = dict(
+#     logger=dict(type='LoggerHook', interval=50),
+#     checkpoint=dict(type='CheckpointHook', interval=1),
+#     sampler_seed=dict(type='DistSamplerSeedHook'),
+#     visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
+#     )
 
-custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15),
-                dict(type='EpochLossValuesLogging')]
+custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
 
-find_unused_parameters = True
+# find_unused_parameters = True
 
 
 # env_cfg = dict(
