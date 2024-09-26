@@ -22,23 +22,56 @@ model = dict(
         voxel_size=image_voxel_size,
         max_voxels=(16000, 40000)
     ),
-    img_backbone=dict(
-        type='mmdet.ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
-    ),
+    
+        img_backbone=dict(
+        type='mmdet.SwinTransformer',
+        embed_dims=96,
+        depths=[2, 2, 6, 2],
+        num_heads=[3, 6, 12, 24],
+        window_size=7,
+        mlp_ratio=4,
+        qkv_bias=True,
+        qk_scale=None,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.2,
+        patch_norm=True,
+        out_indices=[1, 2, 3],
+        with_cp=False,
+        convert_weights=True,
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint=  # noqa: E251
+            '/import/digitreasure/ammar_workspace/pretrain/swint-nuimages-pretrained.pth'  # noqa: E501
+        )),
     img_neck=dict(
-        type='mmdet.FPN',
-        in_channels=[256, 512, 1024, 2048],
+        type='GeneralizedLSSFPN',
+        in_channels=[192, 384, 768],
         out_channels=256,
-        num_outs=5
-    ),
+        start_level=0,
+        num_outs=3,
+        norm_cfg=dict(type='BN2d', requires_grad=True),
+        act_cfg=dict(type='ReLU', inplace=True),
+        upsample_cfg=dict(mode='bilinear', align_corners=False)),
+
+    # img_backbone=dict(
+    #     type='mmdet.ResNet',
+    #     depth=50,
+    #     num_stages=4,
+    #     out_indices=(0, 1, 2, 3),
+    #     frozen_stages=1, 
+    #     norm_cfg=dict(type='BN', requires_grad=True),
+    #     norm_eval=True,
+    #     style='pytorch',
+    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
+    # ),
+    # img_neck=dict(
+    #     type='mmdet.FPN',
+    #     in_channels=[256, 512, 1024, 2048],
+    #     out_channels=256,
+    #     num_outs=5
+    # ),
+
     refine_adj_cfg=dict(
         type='Refine_Resolution_Adjacement',
         adaptive_weight_cfg =dict(

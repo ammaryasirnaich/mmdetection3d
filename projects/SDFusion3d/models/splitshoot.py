@@ -89,16 +89,6 @@ class LiftSplatShoot(nn.Module):
         # Aggregate over views and depth
         bev_features = weighted_point_cloud.sum(dim=[1, -1])  # Sum over N (views) and D (depth)
 
-        # # Process features with learnable convolution layers
-        # self.bev_conv = nn.Sequential(
-        #     nn.Conv2d(3, self.bev_channels, kernel_size=3, padding=1),
-        #     nn.BatchNorm2d(self.bev_channels),
-        #     nn.ReLU(),
-        #     nn.Conv2d(self.bev_channels, self.bev_channels, kernel_size=3, padding=1),
-        #     nn.BatchNorm2d(self.bev_channels),
-        #     nn.ReLU(),
-        # ).cuda()
-
         # Apply the convolution to produce the final BEV output with feature channels
         BEV_grid = self.bev_conv(bev_features)
 
@@ -113,17 +103,6 @@ class LiftSplatShoot(nn.Module):
         
         return point_cloud, BEV_grid
 
-# Global level meshgrid precomputation
-def create_meshgrid(H, W):
-    """
-    Create a meshgrid for image coordinates.
-    :param H: Height of the image
-    :param W: Width of the image
-    :return: Tensor of shape (3, H*W)
-    """
-    y, x = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
-    xy1 = torch.stack((x.flatten(), y.flatten(), torch.ones_like(x).flatten()), dim=0).float()  # (3, H*W)
-    return xy1
 
 if __name__ == "__main__":
     # Example usage
