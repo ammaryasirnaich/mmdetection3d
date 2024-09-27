@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class LiftSplatShoot(nn.Module):
-    def __init__(self, depth_bins, H, W, bev_channels=64, N=6):
+    def __init__(self, depth_bins, H, W, N=6, bev_channels=64):
         super(LiftSplatShoot, self).__init__()
         self.depth_bins = depth_bins  # Number of depth layers (D)
         self.bev_channels = bev_channels  # Number of BEV feature channels
@@ -14,8 +14,7 @@ class LiftSplatShoot(nn.Module):
         # Precompute the meshgrid (independent of input)
         y, x = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
         self.xy1 = torch.stack((x.flatten(), y.flatten(), torch.ones_like(x).flatten()), dim=0).float().cuda()  # (3, H*W)
-        self.H = H
-        self.W = W
+
 
         # Learnable attention weights for depth and views
         self.view_attention = nn.Parameter(torch.ones(1, N, 1, H, W), requires_grad=True)  # For views
@@ -43,28 +42,28 @@ class LiftSplatShoot(nn.Module):
         BN, C, H, W = image_features.shape
         B = BN // intrinsics.shape[1]  # Calculate B from BN and N
         N = intrinsics.shape[1]
-
+   
         # Flatten batch and view dimensions (combine B and N into a single dimension)
-        image_features_flat = image_features
-        intrinsics_flat = intrinsics.view(B * N, 4, 4)
-        extrinsics_flat = extrinsics.view(B * N, 4, 4)
+        image_features_flat = image_features  # Note ! remove it
+        intrinsics_flat = intrinsics.view(BN, 4, 4)
+        extrinsics_flat = extrinsics.view(BN, 4, 4)
 
         # Use precomputed xy1
-        xy1 = self.xy1 # Ensure it's on the correct device
-        xy1 = xy1.unsqueeze(0).repeat(B * N, 1, 1)  # (B*N, 3, H*W)
+        xy1 = self.xy1 
+        xy1 = xy1.unsqueeze(0).repeat(BN, 1, 1)  # (B*N, 3, H*W)
 
         # Apply camera intrinsics to get rays
         intrinsics_inv = torch.inverse(intrinsics_flat[:, :3, :3])  # Invert the intrinsic matrix
         rays = intrinsics_inv @ xy1  # (B*N, 3, H*W)
 
-        # Predict depth distribution (e.g., softmax over depth bins)
-        depth_probs = torch.softmax(image_features_flat.view(B * N, C, -1), dim=-1)  # (B*N, C, H*W)
+        # Predict depth distribution (softmax over depth bins)
+        depth_probs = torch.softmax(image_features_flat.view(BN, C, -1), dim=-1)  # (B*N, C, H*W)
 
         # Use precomputed depth bins to create 3D points
         depths = self.depths # (1, 1, D, 1)
         point_cloud = depths * rays.unsqueeze(2)  # (B*N, 3, D, H*W)
-
-        return point_cloud.view(B, N, 3, H, W, self.depth_bins)  # Unflatten to (B, N, 3, H, W, D)
+        
+        return point_cloud.reshape(B, N, 3, H, W, self.depth_bins)  # Unflatten to (B, N, 3, H, W, D)
 
     def splat(self, point_cloud):
         """
@@ -89,9 +88,9 @@ class LiftSplatShoot(nn.Module):
         bev_features = weighted_point_cloud.sum(dim=[1, -1])  # Sum over N (views) and D (depth)
 
         # Apply the convolution to produce the final BEV output with feature channels
-        BEV_grid = self.bev_conv(bev_features)
+        BEV_grid = self.bev_conv(bev_features).reshape(B, self.bev_channels, H, W)
 
-        return BEV_grid.view(B, self.bev_channels, H, W)  # Unflatten to (B, bev_channels, H, W)
+        return BEV_grid  # Unflatten to (B, bev_channels, H, W)
 
     def forward(self, image_features, intrinsics, extrinsics):
         # Step 1: Lift 2D image features to 3D space, but only keep the coordinate information

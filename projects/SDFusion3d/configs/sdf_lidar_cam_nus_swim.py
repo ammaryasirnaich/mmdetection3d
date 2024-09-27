@@ -16,12 +16,12 @@ model = dict(
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=False),
     
-    img_voxelization=dict(
-        max_num_points=5,
-        point_cloud_range=[0, -40, -3, 70.4, 40, 1],
-        voxel_size=image_voxel_size,
-        max_voxels=(16000, 40000)
-    ),
+    # img_voxelization=dict(
+    #     max_num_points=5,
+    #     point_cloud_range=[0, -40, -3, 70.4, 40, 1],
+    #     voxel_size=image_voxel_size,
+    #     max_voxels=(16000, 40000)
+    # ),
     
         img_backbone=dict(
         type='mmdet.SwinTransformer',
@@ -53,35 +53,16 @@ model = dict(
         norm_cfg=dict(type='BN2d', requires_grad=True),
         act_cfg=dict(type='ReLU', inplace=True),
         upsample_cfg=dict(mode='bilinear', align_corners=False)),
-
-    # img_backbone=dict(
-    #     type='mmdet.ResNet',
-    #     depth=50,
-    #     num_stages=4,
-    #     out_indices=(0, 1, 2, 3),
-    #     frozen_stages=1, 
-    #     norm_cfg=dict(type='BN', requires_grad=True),
-    #     norm_eval=True,
-    #     style='pytorch',
-    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
-    # ),
-    # img_neck=dict(
-    #     type='mmdet.FPN',
-    #     in_channels=[256, 512, 1024, 2048],
-    #     out_channels=256,
-    #     num_outs=5
-    # ),
-
+    
     refine_adj_cfg=dict(
         type='Refine_Resolution_Adjacement',
         adaptive_weight_cfg =dict(
              type = 'AdaptiveWeight',
              voxel_dim=512, 
              image_dim=64, 
-            #  upscale_size=(200, 176)
             upscale_size=(180, 180)  ),
          adaptive_scale_net_cfg =dict(
-              type = 'AdaptiveResolutionScalingNetwork',
+            type = 'AdaptiveResolutionScalingNetwork',
              in_channels=512, 
              n_ref_points=4 )
     )
@@ -286,10 +267,10 @@ custom_hooks = [dict(type='EpochLossValuesLogging')]
 find_unused_parameters = True
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion_hyper_change'
+work_dir = './work_dirs/SHFusion_swing_transformer'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion_hyper_change'
+resume_from = './work_dirs/SHFusion_swing_transformer'
 workflow = [('train', 1)]  
 
 del _base_.custom_hooks

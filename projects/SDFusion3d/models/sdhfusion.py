@@ -161,79 +161,6 @@ class SDHFusion(Base3DDetector):
         x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)      # ([B, N, C(coord), H, W, depth_bin(100)])  ([B, C, H, W])
         return x, bev_feature 
         
-        # x = x.view(B, int(BN / B), C, H, W)
-        
-        # with torch.autocast(device_type='cuda', dtype=torch.float32):
-        #     x = self.view_transform(
-        #         x,
-        #         points,
-        #         lidar2image,
-        #         camera_intrinsics,
-        #         camera2lidar,
-        #         img_aug_matrix,
-        #         lidar_aug_matrix,
-        #         img_metas,
-        #     )
-        
-        '''
-        
-        B, N, C, H, W = img.size()
-        img = img.view(B * N, C, H, W)
-        img = img.float()
-
-        if self.data_aug is not None:
-            if 'img_color_aug' in self.data_aug and self.data_aug['img_color_aug'] and self.training:
-                img = self.color_aug(img)
-
-            if 'img_norm_cfg' in self.data_aug:
-                img_norm_cfg = self.data_aug['img_norm_cfg']
-
-                norm_mean = torch.tensor(img_norm_cfg['mean'], device=img.device)
-                norm_std = torch.tensor(img_norm_cfg['std'], device=img.device)
-
-                if img_norm_cfg['to_rgb']:
-                    img = img[:, [2, 1, 0], :, :]  # BGR to RGB
-
-                img = img - norm_mean.reshape(1, 3, 1, 1)
-                img = img / norm_std.reshape(1, 3, 1, 1)
-
-            for b in range(B):
-                img_shape = (img.shape[2], img.shape[3], img.shape[1])
-                img_metas[b]['img_shape'] = [img_shape for _ in range(N)]
-                img_metas[b]['ori_shape'] = [img_shape for _ in range(N)]
-
-            if 'img_pad_cfg' in self.data_aug:
-                img_pad_cfg = self.data_aug['img_pad_cfg']
-                img = pad_multiple(img, img_metas, size_divisor=img_pad_cfg['size_divisor'])
-                H, W = img.shape[-2:]
-
-        input_shape = img.shape[-2:]
-        # update real input shape of each single img
-        for img_meta in img_metas:
-            img_meta.update(input_shape=input_shape)
-
-        ####img_feats = self.extract_img_feat(img)
-
-        img_feats = self.img_backbone(img)
-
-        if isinstance(img_feats, dict):
-            img_feats = list(img_feats.values())
-
-        if self.with_img_neck:
-            img_feats = self.img_neck(img_feats)
-
-
-        img_feats_reshaped = []
-        for img_feat in img_feats:
-            BN, C, H, W = img_feat.size()
-            img_feats_reshaped.append(img_feat.view(B, int(BN / B), C, H, W))
-
-        return img_feats_reshaped
-        '''
-        
-        # return x
-        
-        
 
     def extract_pts_feat(self, batch_inputs_dict) -> torch.Tensor:
         points = batch_inputs_dict['points']
@@ -346,36 +273,6 @@ class SDHFusion(Base3DDetector):
         return fused_feature
     
     
-    @torch.no_grad()
-    def voxelize(self, points):
-        feats, coords, sizes = [], [], []
-        for k, res in enumerate(points):
-            ret = self.img_voxel_layer(res)
-            if len(ret) == 3:
-                # hard voxelize
-                f, c, n = ret
-            else:
-                assert len(ret) == 2
-                f, c = ret
-                n = None
-            feats.append(f)
-            coords.append(F.pad(c, (1, 0), mode='constant', value=k))
-            if n is not None:
-                sizes.append(n)
-
-        feats = torch.cat(feats, dim=0)
-        coords = torch.cat(coords, dim=0)
-        if len(sizes) > 0:
-            sizes = torch.cat(sizes, dim=0)
-            if True:   #self.voxelize_reduce = True
-                feats = feats.sum(
-                    dim=1, keepdim=False) / sizes.type_as(feats).view(-1, 1)
-                feats = feats.contiguous()
-
-        return feats, coords, sizes
-
-
-
     def loss(self, batch_inputs_dict: Dict[str, Optional[Tensor]],
              batch_data_samples: List[Det3DDataSample],
              **kwargs) -> List[Det3DDataSample]:
