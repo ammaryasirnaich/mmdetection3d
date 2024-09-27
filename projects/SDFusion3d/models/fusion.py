@@ -51,7 +51,7 @@ if __name__=="__main__":
     voxel_feature = torch.randn(4, 512, 180, 180)
     
     # Image feature shape: [batch_size, 64, 64, 176]
-    image_feature = torch.randn(4, 64, 64, 176)
+    image_feature = torch.randn(4, 64, 64, 176)   #torch.Size([12, 256, 32, 88])
 
     # Instantiate the AdaptiveWeight class
     model = AdaptiveWeight(voxel_dim=512, image_dim=64, upscale_size=(180, 180))

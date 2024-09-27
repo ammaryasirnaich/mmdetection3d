@@ -57,7 +57,7 @@ class SDHFusion(Base3DDetector):
         self.refine_resolution_adj = MODELS.build(refine_adj_cfg)
              
         # Note update this part
-        self.splitshoot=LiftSplatShoot(depth_bins=100, H=64, W=176,N=6, bev_channels=64).cuda() # depth_bins(100 meters), H=64, W=176 from resnetfpn
+        self.splitshoot=LiftSplatShoot(depth_bins=100, H=32, W=88,bev_channels=64).cuda() # depth_bins(100 meters), H=32, W=88
        
         self.bbox_head = MODELS.build(bbox_head)
 
@@ -157,8 +157,8 @@ class SDHFusion(Base3DDetector):
         if not isinstance(x, torch.Tensor):
             x = x[0]
                 
-        # BN, C, H, W = x.size()  ([24, 256, 64, 176])
-        x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)   
+        # BN, C, H, W = x.size()  torch.Size([12, 256, 32, 88])
+        x, bev_feature = self.splitshoot(x, camera_intrinsics, lidar2image)      # ([B, N, C(coord), H, W, depth_bin(100)])  ([B, C, H, W])
         return x, bev_feature 
         
         # x = x.view(B, int(BN / B), C, H, W)

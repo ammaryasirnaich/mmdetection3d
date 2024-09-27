@@ -253,10 +253,10 @@ custom_hooks = [dict(type='EpochLossValuesLogging')]
 find_unused_parameters = True
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion_hyper_change'
+work_dir = './work_dirs/SHFusion_with_swing'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion_hyper_change'
+resume_from = './work_dirs/SHFusion_with_swing'
 workflow = [('train', 1)]  
 
 del _base_.custom_hooks

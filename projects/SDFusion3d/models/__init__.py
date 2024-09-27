@@ -1,5 +1,5 @@
 from .sdhfusion import SDHFusion
-# from .bevfusion_necks import GeneralizedLSSFPN
+from .bevfusion_necks import GeneralizedLSSFPN
 # from .depth_lss import DepthLSSTransform, LSSTransform
 from .loading import BEVLoadMultiViewImageFromFiles
 # from .sparse_encoder import BEVFusionSparseEncoder
@@ -30,7 +30,7 @@ __all__ = [
      'HungarianAssigner3D', 'BBoxBEVL1Cost', 'IoU3DCost',
     'HeuristicAssigner3D', 'BEVLoadMultiViewImageFromFiles', 
     'TransformerDecoderLayer', 'BEVFusionRandomFlip3D',
-    'BEVFusionGlobalRotScaleTrans'#,'GeneralizedLSSFPN','BEVFusionSparseEncoder',
+    'BEVFusionGlobalRotScaleTrans','GeneralizedLSSFPN',#'BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
     'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
     'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',

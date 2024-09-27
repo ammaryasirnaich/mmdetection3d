@@ -3,12 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class LiftSplatShoot(nn.Module):
-    def __init__(self, depth_bins, H, W, N, bev_channels=64):
+    def __init__(self, depth_bins, H, W, bev_channels=64, N=6):
         super(LiftSplatShoot, self).__init__()
         self.depth_bins = depth_bins  # Number of depth layers (D)
         self.bev_channels = bev_channels  # Number of BEV feature channels
-        self.N = N  # Number of views
-
+    
         # Precompute the depth bins (independent of input)
         self.depths = torch.linspace(1.0, 100.0, depth_bins).view(1, 1, -1, 1).cuda()
 
