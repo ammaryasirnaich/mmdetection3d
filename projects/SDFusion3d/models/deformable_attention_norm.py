@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 class DeformableAttention(nn.Module):
     def __init__(self, in_channels, num_heads=8, num_points=4):
@@ -23,8 +26,11 @@ class DeformableAttention(nn.Module):
         
         # Residual Connection
         self.residual = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        
-    
+
+        # Cache for meshgrid, only recompute when necessary
+        self.cached_grid_size = None
+        self.cached_meshgrid = None
+
     def generate_sampling_grids(self, offsets, H, W):
         """
         Generate sampling grids based on deformable offsets.
@@ -38,22 +44,26 @@ class DeformableAttention(nn.Module):
         num_heads = self.num_heads
         num_points = self.num_points
 
-        # Generate base grid [H, W, 2]
-        base_grid_y, base_grid_x = torch.meshgrid(torch.arange(H, device=offsets.device), torch.arange(W, device=offsets.device))
-        base_grid = torch.stack([base_grid_x, base_grid_y], dim=-1).float()  # Shape [H, W, 2]
-        
-        # Expand base grid to match the dimensions of offsets
-        base_grid = base_grid.unsqueeze(0).unsqueeze(0).unsqueeze(0)  # Shape [1, 1, 1, H, W, 2]
-        base_grid = base_grid.repeat(B, num_heads, num_points, 1, 1, 1)  # Shape [B, num_heads, num_points, H, W, 2]
+        # Cache the base grid and reuse if the grid size hasn't changed
+        if (H, W) != self.cached_grid_size:
+            base_grid_y, base_grid_x = torch.meshgrid(torch.arange(H, device=offsets.device), torch.arange(W, device=offsets.device), indexing='ij')
+            base_grid = torch.stack([base_grid_x, base_grid_y], dim=-1).float()  # Shape [H, W, 2]
+
+            # Expand base grid to match the dimensions of offsets
+            base_grid = base_grid.unsqueeze(0).unsqueeze(0).unsqueeze(0)  # Shape [1, 1, 1, H, W, 2]
+            self.cached_meshgrid = base_grid
+            self.cached_grid_size = (H, W)
+
+        # Retrieve the cached grid
+        base_grid = self.cached_meshgrid
 
         # Reshape offsets to match grid shape [B, num_heads, num_points, H, W, 2]
-        offsets = offsets.view(B, num_heads, num_points, 2, H, W).permute(0, 1, 2, 4, 5, 3)  # Shape [B, num_heads, num_points, H, W, 2]
+        offsets = offsets.view(B, num_heads, num_points, 2, H, W).permute(0, 1, 2, 4, 5, 3)
 
         # Add offsets to the base grid
         sampling_grid = base_grid + offsets
 
         return sampling_grid
-    
     
     def sample_features(self, x, sampling_grids):
         """
@@ -62,7 +72,7 @@ class DeformableAttention(nn.Module):
             x: Input feature map with shape [B, C, H, W]
             sampling_grids: Sampling grids with shape [B, num_heads, num_points, H, W, 2]
         Returns:
-            Sampled features with shape [B, C, H, W] (same as input)
+            Sampled features with shape [B, num_heads, num_points, C, H, W]
         """
         B, C, H, W = x.shape
         num_heads = self.num_heads
@@ -71,29 +81,16 @@ class DeformableAttention(nn.Module):
         # Normalize sampling grids to the range [-1, 1]
         sampling_grids = 2.0 * sampling_grids / torch.tensor([W, H], device=x.device) - 1.0
 
-        # Sample from input feature map using sampling grids
-        # Repeat the input for each point and head, without changing the batch size
+        # Sample features using bilinear interpolation
         x_repeated = x.unsqueeze(2).repeat(1, 1, num_points * num_heads, 1, 1)  # Shape [B, C, num_points * num_heads, H, W]
-
-        # Flatten batch and points for grid_sample
-        x_repeated = x_repeated.view(B * num_heads * num_points, C, H, W)  # Reshape for efficient sampling
+        x_repeated = x_repeated.view(B * num_heads * num_points, C, H, W)  # Reshape for sampling
         sampling_grids = sampling_grids.view(B * num_heads * num_points, H, W, 2)
 
-        # Perform grid sampling
-        sampled_features = F.grid_sample(x_repeated, sampling_grids, mode='bilinear', align_corners=True)  # Shape [B * num_heads * num_points, C, H, W]
-
-        # Reshape back to [B, num_heads, num_points, C, H, W]
+        sampled_features = F.grid_sample(x_repeated, sampling_grids, mode='bilinear', align_corners=True)  # [B * num_heads * num_points, C, H, W]
         sampled_features = sampled_features.view(B, num_heads, num_points, C, H, W)
-
-        # Aggregate along the num_heads and num_points dimension
-        # (weighted sum of features can be applied here based on attention)
-        # Sum across heads and points to collapse to original input size
-        sampled_features = sampled_features.sum(dim=2).sum(dim=1)  # Shape [B, C, H, W]
-
+        
         return sampled_features
 
-
-        
     def forward(self, x):
         """
         Args:
@@ -118,19 +115,10 @@ class DeformableAttention(nn.Module):
         sampled_features = self.sample_features(x, sampling_grids)
         
         # Apply attention weights to the sampled features
-        # sampled_features shape: [B, num_heads, num_points, C, H, W]
-        # attention_weights shape: [B, num_heads, num_points, H, W]
-        
-        # Unsqueeze attention weights to match the sampled features shape
         attention_weights = attention_weights.unsqueeze(3)  # Shape becomes [B, num_heads, num_points, 1, H, W]
+        weighted_features = (attention_weights * sampled_features).sum(dim=2)  # Shape [B, num_heads, C, H, W]
         
-        # Multiply attention weights with sampled features across spatial dimensions
-        weighted_features = (attention_weights * sampled_features)  # Shape [B, num_heads, num_points, C, H, W]
-        
-        # Sum over the num_points dimension to aggregate features
-        weighted_features = weighted_features.sum(dim=2)  # Shape [B, num_heads, C, H, W]
-        
-        # Collapse heads by summing or projecting them (for simplicity, sum)
+        # Collapse heads by summing them
         output = weighted_features.sum(dim=1)  # Shape [B, C, H, W]
         
         # Output projection
