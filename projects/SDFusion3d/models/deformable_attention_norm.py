@@ -15,17 +15,24 @@ class DeformableAttention(nn.Module):
         # Learnable offset weights (for sampling locations)
         self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
         
+        # Learnable offset weights (for sampling locations)
+        self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
+        self.offset_bn = nn.BatchNorm2d(num_heads * num_points * 2)  # Apply BatchNorm after offset convolution
+        
         # Attention weights for each sampled point
         self.attention_weights_conv = nn.Conv2d(in_channels, num_heads * num_points, kernel_size=3, padding=1)
+        self.attention_weights_bn = nn.BatchNorm2d(num_heads * num_points)  # Apply BatchNorm after attention weights conv
         
         # Output projection layer to mix attended features
         self.output_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         
-        # Layer Normalization
+        # Layer Normalization after attention
         self.layer_norm = nn.LayerNorm(in_channels)
         
         # Residual Connection
         self.residual = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        self.residual_bn = nn.BatchNorm2d(in_channels)  # BatchNorm for residual connection
+    
 
         # Cache for meshgrid, only recompute when necessary
         self.cached_grid_size = None
@@ -102,11 +109,14 @@ class DeformableAttention(nn.Module):
         
         # Generate deformable offsets [B, num_heads * num_points * 2, H, W]
         offsets = self.offset_conv(x)
+        offsets = self.offset_bn(offsets)  # Apply BatchNorm after offset convolution
         
         # Generate attention weights [B, num_heads * num_points, H, W]
         attention_weights = self.attention_weights_conv(x)
+        attention_weights = self.attention_weights_bn(attention_weights)  # Apply BatchNorm after attention weights conv
         attention_weights = attention_weights.view(B, self.num_heads, self.num_points, H, W)
-        attention_weights = torch.softmax(attention_weights, dim=2)  # Apply softmax over num_points dimension
+        attention_weights = torch.softmax(attention_weights, dim=2)
+        
         
         # Create sampling grid based on the offsets
         sampling_grids = self.generate_sampling_grids(offsets, H, W)
@@ -125,7 +135,9 @@ class DeformableAttention(nn.Module):
         output = self.output_proj(output)
         
         # Apply residual connection and layer normalization
-        output = self.layer_norm(output.permute(0, 2, 3, 1)).permute(0, 3, 1, 2) + self.residual(x)
+        output = self.layer_norm(output.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        output = self.residual_bn(output + self.residual(x)) 
+        
         
         return output
 
