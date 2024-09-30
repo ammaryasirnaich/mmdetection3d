@@ -10,9 +10,9 @@ class AdaptiveWeight(nn.Module):
         # Upsample image feature's height and width based on upscale_size
         self.image_upscaler = nn.Sequential(
             nn.Upsample(size=upscale_size, mode='bilinear', align_corners=True),  # Upscale height and width
-            nn.Conv2d(image_dim, voxel_dim, kernel_size=1)  # Adjust image channels from 64 to 512
+            nn.Conv2d(image_dim, voxel_dim, kernel_size=1),  # Adjust image channels from 64 to 512
+            nn.BatchNorm2d(voxel_dim) 
         )
-
         # Linear layers to compute scalar weights for voxel and image features
         self.voxel_fc = nn.Linear(voxel_dim, 1)
         self.image_fc = nn.Linear(voxel_dim, 1)
@@ -29,6 +29,12 @@ class AdaptiveWeight(nn.Module):
         voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1)  # [B, 512, H * W]
         image_flat = image_feature_upscaled.view(image_feature_upscaled.size(0), image_feature_upscaled.size(1), -1)  # [B, 512, H * W]
 
+        
+        # Apply Layer Normalization
+        voxel_flat = nn.LayerNorm(voxel_flat.size()[1:])(voxel_flat)
+        image_flat = nn.LayerNorm(image_flat.size()[1:])(image_flat)
+                
+        
         # Calculate voxel and image weights
         voxel_weight = torch.sigmoid(self.voxel_fc(voxel_flat.mean(-1)))  # [B, 1]
         image_weight = torch.sigmoid(self.image_fc(image_flat.mean(-1)))  # [B, 1]
@@ -39,6 +45,9 @@ class AdaptiveWeight(nn.Module):
 
         # Fusion
         fused_feature = (voxel_weight * voxel_flat + image_weight * image_flat).view_as(voxel_feature)
+        
+        # Apply batch normalization to the fused feature
+        fused_feature = nn.BatchNorm2d(voxel_feature.size(1))(fused_feature) 
         
         return fused_feature
     

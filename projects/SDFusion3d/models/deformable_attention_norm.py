@@ -1,9 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class DeformableAttention(nn.Module):
     def __init__(self, in_channels, num_heads=8, num_points=4):
