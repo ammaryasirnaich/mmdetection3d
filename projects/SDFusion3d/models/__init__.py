@@ -20,7 +20,8 @@ from .dump.window_attention import WindowAttention
 from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
-from .deformable_attention import DeformableAttention
+# from .deformable_attention import DeformableAttention
+from .deformable_attention_norm import DeformableAttention
 from .utils import check_tensor_shape
 from .sparse_encoder import BEVFusionSparseEncoder
 

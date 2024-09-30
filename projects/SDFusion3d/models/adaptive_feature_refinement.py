@@ -36,21 +36,6 @@ class Refine_Resolution_Adjacement(nn.Module):
         return output
         
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if __name__=="__main__":
     batch_size = 4
     num_views = 6

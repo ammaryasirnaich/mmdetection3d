@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmdet3d.registry import MODELS
 
+
+@MODELS.register_module()
 class DeformableAttention(nn.Module):
     def __init__(self, in_channels, n_ref_points=4):
         super(DeformableAttention, self).__init__()

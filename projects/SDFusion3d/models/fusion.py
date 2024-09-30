@@ -20,6 +20,12 @@ class AdaptiveWeight(nn.Module):
         # Learnable parameters for fusion
         self.b_s = nn.Parameter(torch.zeros(1))
         self.b_d = nn.Parameter(torch.zeros(1))
+        
+        self.voxel_layer_norm = nn.LayerNorm([512, 32400])
+        self.image_layer_norm = nn.LayerNorm([512, 32400])
+        
+        self.batch_norm = nn.BatchNorm2d(voxel_dim)
+
 
     def forward(self, voxel_feature, image_feature):
         # Upscale the image feature's height and width to match the voxel feature dimensions
@@ -31,8 +37,8 @@ class AdaptiveWeight(nn.Module):
 
         
         # Apply Layer Normalization
-        voxel_flat = nn.LayerNorm(voxel_flat.size()[1:])(voxel_flat)
-        image_flat = nn.LayerNorm(image_flat.size()[1:])(image_flat)
+        voxel_flat = self.voxel_layer_norm(voxel_flat)
+        image_flat = self.image_layer_norm(image_flat)
                 
         
         # Calculate voxel and image weights
@@ -47,7 +53,7 @@ class AdaptiveWeight(nn.Module):
         fused_feature = (voxel_weight * voxel_flat + image_weight * image_flat).view_as(voxel_feature)
         
         # Apply batch normalization to the fused feature
-        fused_feature = nn.BatchNorm2d(voxel_feature.size(1))(fused_feature) 
+        fused_feature = self.batch_norm(fused_feature)
         
         return fused_feature
     
@@ -57,13 +63,13 @@ if __name__=="__main__":
     # Create random tensor inputs for voxel features and image features
     # Voxel feature shape: [batch_size, 512, 200, 176]
     # voxel_feature = torch.randn(4, 512, 200, 176)
-    voxel_feature = torch.randn(4, 512, 180, 180)
+    voxel_feature = torch.randn(4, 512, 180, 180).to("cuda")
     
     # Image feature shape: [batch_size, 64, 64, 176]
-    image_feature = torch.randn(4, 64, 64, 176)   #torch.Size([12, 256, 32, 88])
+    image_feature = torch.randn(4, 64, 64, 176).to("cuda")   #torch.Size([12, 256, 32, 88])
 
     # Instantiate the AdaptiveWeight class
-    model = AdaptiveWeight(voxel_dim=512, image_dim=64, upscale_size=(180, 180))
+    model = AdaptiveWeight(voxel_dim=512, image_dim=64, upscale_size=(180, 180)).cuda()
     
     # Run the forward method
     fused_feature = model(voxel_feature, image_feature)
