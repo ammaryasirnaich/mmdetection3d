@@ -87,14 +87,14 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
 
 @MODELS.register_module()
 class AdaptiveResolutionScalingNetwork(nn.Module):
-    def __init__(self, in_channels=512, n_ref_points=4):
+    def __init__(self, in_channels=512, n_ref_points=4, num_attention_blocks=6):
         super().__init__()
         
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
           
-        # Deformable attention block
-        self.deformable_attention = DeformableAttention(in_channels, n_ref_points)
+        # Deformable attention block list
+        self.deformable_attention = nn.ModuleList([DeformableAttention(in_channels, n_ref_points) for _ in range (num_attention_blocks)])
         
         # Complexity score map generation
         self.complexity_map = ComplexityScoreMap()
@@ -136,7 +136,7 @@ if __name__=="__main__":
     input_feature = torch.randn(4, 512, 180, 180).to(device)
 
     # Initialize the model
-    model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4).to(device)
+    model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4, num_attention_blocks=6).to(device)
 
     # Forward pass
     output, complexity_map = model(input_feature)

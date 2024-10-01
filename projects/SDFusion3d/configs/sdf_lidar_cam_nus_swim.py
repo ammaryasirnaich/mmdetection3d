@@ -64,7 +64,8 @@ model = dict(
          adaptive_scale_net_cfg =dict(
             type = 'AdaptiveResolutionScalingNetwork',
              in_channels=512, 
-             n_ref_points=4 )
+             n_ref_points=4,
+             num_attention_blocks=6)
     )
 )
 
