@@ -208,10 +208,10 @@ lr = 0.0002
 param_scheduler = [
     dict(
         type='LinearLR',
-        start_factor=0.1,
+        start_factor=0.33333333,
         by_epoch=False,
         begin=0,
-        end=1000),
+        end=500),
     dict(
         type='CosineAnnealingLR',
         begin=0,

@@ -157,7 +157,7 @@ class DeformableAttention(nn.Module):
         
         
         # Apply residual connection and layer normalization
-        output = self.layer_norm(output.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        output = self.layer_norm(output.permute(0, 2, 3, 1).contiguous()).permute(0, 3, 1, 2).contiguous()
         output = self.residual_bn(output + self.residual(x)) 
         
         

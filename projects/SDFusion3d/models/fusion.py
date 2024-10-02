@@ -56,8 +56,8 @@ class AdaptiveWeight(nn.Module):
         image_feature_upscaled = self.image_upscaler(image_feature)
 
         # Flatten the spatial dimensions for voxel and image features
-        voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1)  # [B, 512, H * W]
-        image_flat = image_feature_upscaled.view(image_feature_upscaled.size(0), image_feature_upscaled.size(1), -1)  # [B, 512, H * W]
+        voxel_flat = voxel_feature.view(voxel_feature.size(0), voxel_feature.size(1), -1).contiguous()  # [B, 512, H * W]
+        image_flat = image_feature_upscaled.view(image_feature_upscaled.size(0), image_feature_upscaled.size(1), -1).contiguous()  # [B, 512, H * W]
 
         
         # Apply Layer Normalization

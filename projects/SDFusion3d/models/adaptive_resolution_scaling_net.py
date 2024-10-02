@@ -104,7 +104,7 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
         mask_intermediate = ~mask_fine  # Inverse of mask_fine, shape: [B, C, H, W]
 
         # Fine-level processing for high complexity regions (with residual connection and batchnorm)
-        out_fine = F.relu(x + self.bn_dilated1(self.dilated_conv1(x)))
+        out_fine = F.relu(x + self.bn_dilated1(self.dilated_conv1(x))).contiguous()
         out_fine = F.relu(out_fine + self.bn_dilated2(self.dilated_conv2(out_fine)))
 
         # Intermediate-level processing for low complexity regions (with residual connection and batchnorm)
