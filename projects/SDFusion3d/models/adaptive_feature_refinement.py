@@ -2,8 +2,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+
 from .fusion import AdaptiveWeight
-# from .refinement import FeatureRefinement
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from einops import rearrange
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList

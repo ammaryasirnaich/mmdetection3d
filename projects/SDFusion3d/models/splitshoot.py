@@ -28,6 +28,21 @@ class LiftSplatShoot(nn.Module):
             nn.BatchNorm2d(self.bev_channels),
             nn.ReLU(),
         ).cuda()
+     
+        # Initialize weights
+        self.init_weights()
+    
+        
+    @torch.no_grad()
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity='relu')  # He initialization
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
 
     def lift(self, image_features, intrinsics, extrinsics):
@@ -63,7 +78,7 @@ class LiftSplatShoot(nn.Module):
         depths = self.depths # (1, 1, D, 1)
         point_cloud = depths * rays.unsqueeze(2)  # (B*N, 3, D, H*W)
         
-        return point_cloud.reshape(B, N, 3, H, W, self.depth_bins)  # Unflatten to (B, N, 3, H, W, D)
+        return point_cloud.view(B, N, 3, H, W, self.depth_bins)  # Unflatten to (B, N, 3, H, W, D)
 
     def splat(self, point_cloud):
         """
@@ -88,7 +103,7 @@ class LiftSplatShoot(nn.Module):
         bev_features = weighted_point_cloud.sum(dim=[1, -1])  # Sum over N (views) and D (depth)
 
         # Apply the convolution to produce the final BEV output with feature channels
-        BEV_grid = self.bev_conv(bev_features).reshape(B, self.bev_channels, H, W)
+        BEV_grid = self.bev_conv(bev_features).view(B, self.bev_channels, H, W)
 
         return BEV_grid  # Unflatten to (B, bev_channels, H, W)
 

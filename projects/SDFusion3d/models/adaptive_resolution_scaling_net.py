@@ -20,6 +20,22 @@ class MultiScaleConvolution(nn.Module):
 
         # Optional: Use a final conv layer to restore the channel count if concatenating
         self.final_conv = nn.Conv2d(in_channels * 3, in_channels, kernel_size=1)
+        
+        # Initialize weights
+        self.init_weights()
+
+    @torch.no_grad()
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity='relu')  # He initialization
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+        
+        
 
     def forward(self, x):
         # Convolution with activation and optional normalization
@@ -63,6 +79,21 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
         self.pointwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         self.bn_depthwise = nn.BatchNorm2d(in_channels)
         self.bn_pointwise = nn.BatchNorm2d(in_channels)
+        
+        # Initialize weights
+        self.init_weights()
+
+    @torch.no_grad()
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity='relu')  # He initialization
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+                
 
     def forward(self, x, complexity_map, threshold=0.5):
         B, C, H, W = x.shape

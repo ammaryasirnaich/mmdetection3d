@@ -61,7 +61,7 @@ class SDHFusion(Base3DDetector):
        
         self.bbox_head = MODELS.build(bbox_head)
 
-        self.init_weights()
+        # self.init_weights()
 
     def _forward(self,
                  batch_inputs: Tensor,

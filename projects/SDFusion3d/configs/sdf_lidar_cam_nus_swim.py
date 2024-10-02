@@ -208,10 +208,10 @@ lr = 0.0002
 param_scheduler = [
     dict(
         type='LinearLR',
-        start_factor=0.33333333,
+        start_factor=0.1,
         by_epoch=False,
         begin=0,
-        end=500),
+        end=1000),
     dict(
         type='CosineAnnealingLR',
         begin=0,
@@ -247,7 +247,7 @@ test_cfg = dict()
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
-    clip_grad=dict(max_norm=35, norm_type=2))
+    clip_grad=dict(max_norm=10, norm_type=2))
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
@@ -268,10 +268,10 @@ custom_hooks = [dict(type='EpochLossValuesLogging')]
 find_unused_parameters = True
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion_swing_transformer_num_deform_layers'
+work_dir = './work_dirs/SHFusion_swing_num_initweight_deform_layers'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion_swing_transformer_num_deform_layers'
+resume_from = './work_dirs/SHFusion_swing_num_initweight_deform_layers'
 workflow = [('train', 1)]  
 
 del _base_.custom_hooks

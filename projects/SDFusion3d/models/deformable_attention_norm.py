@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmdet3d.registry import MODELS
+from torch.nn.init import normal_
 
 
 @MODELS.register_module()
@@ -37,6 +38,26 @@ class DeformableAttention(nn.Module):
         # Cache for meshgrid, only recompute when necessary
         self.cached_grid_size = None
         self.cached_meshgrid = None
+        
+         # Initialize weights
+        self.init_weights()
+        
+    
+ 
+    @torch.no_grad()
+    def init_weights(self):
+        # Kaiming initialization for convolutional layers with ReLU activations
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.LayerNorm):
+                nn.init.constant_(m.bias, 0)
+                nn.init.ones_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.bias, 0)
+                nn.init.ones_(m.weight)
 
     def generate_sampling_grids(self, offsets, H, W):
         """
@@ -65,7 +86,7 @@ class DeformableAttention(nn.Module):
         base_grid = self.cached_meshgrid
 
         # Reshape offsets to match grid shape [B, num_heads, num_points, H, W, 2]
-        offsets = offsets.view(B, num_heads, num_points, 2, H, W).permute(0, 1, 2, 4, 5, 3)
+        offsets = offsets.view(B, num_heads, num_points, 2, H, W).permute(0, 1, 2, 4, 5, 3).contiguous()
 
         # Add offsets to the base grid
         sampling_grid = base_grid + offsets
@@ -133,6 +154,7 @@ class DeformableAttention(nn.Module):
         
         # Output projection
         output = self.output_proj(output)
+        
         
         # Apply residual connection and layer normalization
         output = self.layer_norm(output.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
