@@ -94,7 +94,7 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
           
         # Deformable attention block list
-        self.deformable_attention = nn.ModuleList([DeformableAttention(in_channels, n_ref_points) for _ in range (num_attention_blocks)])
+        self.deformable_attention_block = nn.ModuleList([DeformableAttention(in_channels, n_ref_points) for _ in range (num_attention_blocks)])
         
         # Complexity score map generation
         self.complexity_map = ComplexityScoreMap()
@@ -108,9 +108,10 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         
         # print(f'x_multi_scale : {x_multi_scale.shape}')
         
-        
-        # Step 2: Deformable attention
-        x_att = self.deformable_attention(x_multi_scale)
+      
+        # Step 2: Pass through multiple deformable attention blocks
+        for deformable_attention in self.deformable_attention_block:
+            x_att = deformable_attention(x_multi_scale)
         
         # print(f'Deformable attention feature shape : {x_att.shape}')
         
