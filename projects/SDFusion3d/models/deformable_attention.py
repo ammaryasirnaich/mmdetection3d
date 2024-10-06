@@ -2,152 +2,214 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmdet3d.registry import MODELS
+from torch.nn.init import normal_
 
 
 @MODELS.register_module()
 class DeformableAttention(nn.Module):
-    def __init__(self, in_channels, n_ref_points=4):
+    def __init__(self, in_channels, num_heads=8, num_points=4):
         super(DeformableAttention, self).__init__()
+        self.num_heads = num_heads
+        self.num_points = num_points
+        self.in_channels = in_channels
         
-        self.n_ref_points = n_ref_points
-
-        # Query, key, value projections (1x1 convs)
-        self.query_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.key_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.value_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-
-        # Offset projection for reference points (2 coords per ref point)
-        self.offset_proj = nn.Conv2d(in_channels, 2 * n_ref_points, kernel_size=1)
-
-        # Meshgrid cache
-        self.register_buffer('grid_h', None, persistent=False)
-        self.register_buffer('grid_w', None, persistent=False)
-
-        # Ensure the gradient layout consistency with DDP
-        torch.backends.cudnn.benchmark = True
+        # Learnable offset weights (for sampling locations)
+        self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
         
-        self.cached_batch_size = None   # tracking batch size
+        # Learnable offset weights (for sampling locations)
+        self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
+        self.offset_bn = nn.BatchNorm2d(num_heads * num_points * 2)  # Apply BatchNorm after offset convolution
         
+        # Attention weights for each sampled point
+        self.attention_weights_conv = nn.Conv2d(in_channels, num_heads * num_points, kernel_size=3, padding=1)
+        self.attention_weights_bn = nn.BatchNorm2d(num_heads * num_points)  # Apply BatchNorm after attention weights conv
         
-    def forward(self, x):
+        # Output projection layer to mix attended features
+        self.output_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        
+        # Layer Normalization after attention
+        self.layer_norm = nn.LayerNorm(in_channels)
+        
+        # Residual Connection
+        self.residual = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        self.residual_bn = nn.BatchNorm2d(in_channels)  # BatchNorm for residual connection
+    
+
+        # Cache for meshgrid, only recompute when necessary
+        self.cached_grid_size = None
+        self.cached_meshgrid = None
+        
+         # Initialize weights
+        self.init_weights()
+        
+    
+ 
+    @torch.no_grad()
+    def init_weights(self):
+        # Kaiming initialization for convolutional layers with ReLU activations
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.LayerNorm):
+                nn.init.constant_(m.bias, 0)
+                nn.init.ones_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.bias, 0)
+                nn.init.ones_(m.weight)
+
+    def generate_sampling_grids(self, offsets, H, W):
         """
-        Forward pass for Deformable Attention.
-
+        Generate sampling grids based on deformable offsets.
         Args:
-            x (Tensor): Input tensor of shape [B, C, H, W].
-
+            offsets: Deformable offsets with shape [B, num_heads * num_points * 2, H, W]
+            H, W: Spatial height and width of the feature map
         Returns:
-            Tensor: Output tensor after deformable attention of shape [B, C, H, W].
+            Sampling grids with shape [B, num_heads, num_points, H, W, 2]
+        """
+        B, _, h, w = offsets.shape
+        num_heads = self.num_heads
+        num_points = self.num_points
+
+        # Cache the base grid and reuse if the grid size hasn't changed
+        if (H, W) != self.cached_grid_size:
+            base_grid_y, base_grid_x = torch.meshgrid(torch.arange(H, device=offsets.device), torch.arange(W, device=offsets.device), indexing='ij')
+            base_grid = torch.stack([base_grid_x, base_grid_y], dim=-1).float()  # Shape [H, W, 2]
+
+            # Expand base grid to match the dimensions of offsets
+            base_grid = base_grid.unsqueeze(0).unsqueeze(0).unsqueeze(0)  # Shape [1, 1, 1, H, W, 2]
+            self.cached_meshgrid = base_grid
+            self.cached_grid_size = (H, W)
+
+        # Retrieve the cached grid
+        base_grid = self.cached_meshgrid
+
+        # Reshape offsets to match grid shape [B, num_heads, num_points, H, W, 2]
+        offsets = offsets.view(B, num_heads, num_points, 2, H, W).permute(0, 1, 2, 4, 5, 3).contiguous()
+
+        # Add offsets to the base grid
+        sampling_grid = base_grid + offsets
+
+        return sampling_grid
+    
+    def sample_features(self, x, sampling_grids):
+        """
+        Sample features from the input feature map using sampling grids.
+        Args:
+            x: Input feature map with shape [B, C, H, W]
+            sampling_grids: Sampling grids with shape [B, num_heads, num_points, H, W, 2]
+        Returns:
+            Sampled features with shape [B, num_heads, num_points, C, H, W]
         """
         B, C, H, W = x.shape
+        num_heads = self.num_heads
+        num_points = self.num_points
+        
+        # Normalize sampling grids to the range [-1, 1]
+        sampling_grids = 2.0 * sampling_grids / torch.tensor([W, H], device=x.device) - 1.0
 
-        # Project input to query, key, and value
-        Q = self.query_proj(x)  # [B, C, H, W]
-        K = self.key_proj(x)    # [B, C, H, W]
-        V = self.value_proj(x)  # [B, C, H, W]
+        # Sample features using bilinear interpolation
+        x_repeated = x.unsqueeze(2).repeat(1, 1, num_points * num_heads, 1, 1)  # Shape [B, C, num_points * num_heads, H, W]
+        x_repeated = x_repeated.view(B * num_heads * num_points, C, H, W)  # Reshape for sampling
+        sampling_grids = sampling_grids.view(B * num_heads * num_points, H, W, 2)
 
-        # Predict offsets for reference points
-        offsets = self.offset_proj(Q)  # [B, 2 * n_ref_points, H, W]
-        offsets = offsets.view(B, self.n_ref_points, 2, H, W)  # [B, n_ref_points, 2, H, W]
+        sampled_features = F.grid_sample(x_repeated, sampling_grids, mode='bilinear', align_corners=True)  # [B * num_heads * num_points, C, H, W]
+        sampled_features = sampled_features.view(B, num_heads, num_points, C, H, W)
+        
+        return sampled_features
 
-        # Generate meshgrid if not cached or if input size has changed
-        if (self.grid_h is None or self.grid_w is None or
-            self.grid_h.shape[-2:] != (H, W) or self.cached_batch_size != B):
-            grid_h, grid_w = torch.meshgrid(
-                torch.arange(H, device=x.device),
-                torch.arange(W, device=x.device),
-                indexing='ij'
-            )  # Each of shape [H, W]
-
-            # Update batch size cache
-            self.cached_batch_size = B
-            
-            # Expand to [B, n_ref_points, H, W]
-            grid_h = grid_h.unsqueeze(0).unsqueeze(1).expand(B, self.n_ref_points, H, W)
-            grid_w = grid_w.unsqueeze(0).unsqueeze(1).expand(B, self.n_ref_points, H, W)
-
-            self.grid_h = grid_h.contiguous()  # [B, n_ref_points, H, W]
-            self.grid_w = grid_w.contiguous()  # [B, n_ref_points, H, W]
-        else:
-            grid_h = self.grid_h  # [B, n_ref_points, H, W]
-            grid_w = self.grid_w  # [B, n_ref_points, H, W]
-
-        # Compute reference points by adding offsets to the grid
-        ref_x = (grid_w + offsets[:, :, 0]).round().long().clamp(0, W - 1)  # [B, n_ref_points, H, W]
-        ref_y = (grid_h + offsets[:, :, 1]).round().long().clamp(0, H - 1)  # [B, n_ref_points, H, W]
-
-        # Compute flattened reference indices
-        ref_indices = ref_y * W + ref_x  # [B, n_ref_points, H, W]
-
-        # Ensure that all ref_indices are within [0, H*W - 1]
-        if not torch.isfinite(ref_indices).all():
-            raise ValueError("Reference indices contain NaN or inf values.")
-
-        if torch.any(ref_indices < 0) or torch.any(ref_indices >= H * W):
-            raise ValueError("Reference indices are out of bounds.")
-
-        # Flatten K and V for gathering
-        K_flat = K.view(B, C, -1)  # [B, C, H*W]
-        V_flat = V.view(B, C, -1)  # [B, C, H*W]
-
-        # Reshape and expand ref_indices for gathering
-        ref_indices = ref_indices.view(B, self.n_ref_points, -1)  # [B, n_ref_points, H*W]
-        ref_indices = ref_indices.unsqueeze(1).expand(B, C, self.n_ref_points, H * W)  # [B, C, n_ref_points, H*W]
-        ref_indices = ref_indices.contiguous().view(B, C, -1)  # [B, C, n_ref_points * H * W]
-
-        # Gather keys and values at reference points
-        K_gathered = torch.gather(K_flat, 2, ref_indices)  # [B, C, n_ref_points * H * W]
-        V_gathered = torch.gather(V_flat, 2, ref_indices)  # [B, C, n_ref_points * H * W]
-
-        # Reshape for attention computation
-        K_gathered = K_gathered.view(B, C, self.n_ref_points, H * W)  # [B, C, n_ref_points, H*W]
-        V_gathered = V_gathered.view(B, C, self.n_ref_points, H * W)  # [B, C, n_ref_points, H*W]
-        Q_flat = Q.view(B, C, -1)  # [B, C, H*W]
-
-        # Compute attention weights
-        attention_weights = torch.einsum('bch,bcnh->bnh', Q_flat, K_gathered)  # [B, n_ref_points, H*W]
-        attention_weights = F.softmax(attention_weights, dim=1)  # Normalize along reference points
-
-        # Apply attention weights to values
-        output = torch.einsum('bnh,bcnh->bch', attention_weights, V_gathered).contiguous()  # [B, C, H*W]
-
-        # Reshape output back to [B, C, H, W]
-        output = output.view(B, C, H, W)
-
+    def forward(self, x):
+        """
+        Args:
+            x: Input feature map with shape [B, C, H, W]
+        Returns:
+            Output feature map with the same shape [B, C, H, W]
+        """
+        B, C, H, W = x.shape
+        
+        # Generate deformable offsets [B, num_heads * num_points * 2, H, W]
+        offsets = self.offset_conv(x)
+        offsets = self.offset_bn(offsets)  # Apply BatchNorm after offset convolution
+        
+        # Generate attention weights [B, num_heads * num_points, H, W]
+        attention_weights = self.attention_weights_conv(x)
+        attention_weights = self.attention_weights_bn(attention_weights)  # Apply BatchNorm after attention weights conv
+        attention_weights = attention_weights.view(B, self.num_heads, self.num_points, H, W)
+        attention_weights = torch.softmax(attention_weights, dim=2)
+        
+        
+        # Create sampling grid based on the offsets
+        sampling_grids = self.generate_sampling_grids(offsets, H, W)
+        
+        # Sample from the input feature map using the sampling grids
+        sampled_features = self.sample_features(x, sampling_grids)
+        
+        # Apply attention weights to the sampled features
+        attention_weights = attention_weights.unsqueeze(3)  # Shape becomes [B, num_heads, num_points, 1, H, W]
+        weighted_features = (attention_weights * sampled_features).sum(dim=2)  # Shape [B, num_heads, C, H, W]
+        
+        # Collapse heads by summing them
+        output = weighted_features.sum(dim=1)  # Shape [B, C, H, W]
+        
+        # Output projection
+        output = self.output_proj(output)
+        
+        
+        # Apply residual connection and layer normalization
+        output = self.layer_norm(output.permute(0, 2, 3, 1).contiguous()).permute(0, 3, 1, 2).contiguous()
+        output = self.residual_bn(output + self.residual(x)) 
+        
+        
         return output
 
-    
+
 if __name__=="__main__":
     
+    B, C, H, W = 4, 512, 180, 180  # Input shape
+     
     # Set device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
     
-    # Define the input feature map with size (B=4, C=512, H=200, W=176)
-    x = torch.randn(4, 512, 180, 180).to(device)
+    input_tensor = torch.randn(B, C, H, W).to(device)  # Random input tensor
 
-    # Initialize the model
-    model = DeformableAttention(in_channels=512, n_ref_points=4).to(device)
+    # Initialize DeformableAttention layer
+    deformable_attention = DeformableAttention(in_channels=C, num_heads=8, num_points=4).to(device)
+
+    # Forward pass with the deformable attention module
+    output_tensor = deformable_attention(input_tensor)
+
+    # Print output shape
+    print("Output shape:", output_tensor.shape)
+        
     
-    output = model(x)
-    assert output.shape == x.shape, "Output shape mismatch."
+    # Set device
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    # # Define the input feature map with size (B=4, C=512, H=200, W=176)
+    # x = torch.randn(4, 512, 180, 180).to(device)
+
+    # # Initialize the model
+    # model = DeformableAttention(in_channels=512, n_ref_points=4).to(device)
+    
+    # output = model(x)
+    # assert output.shape == x.shape, "Output shape mismatch."
   
-    # Test with varying input sizes
-    x = torch.randn(2, 256, 200, 200).to(device)
-    output = model(x)
-    assert output.shape == x.shape, "Output shape mismatch for different input size."
+    # # Test with varying input sizes
+    # x = torch.randn(2, 256, 200, 200).to(device)
+    # output = model(x)
+    # assert output.shape == x.shape, "Output shape mismatch for different input size."
 
-    # Test with large offsets (should be clamped)
-    model.offset_proj.weight.data.fill_(10.0)
-    model.offset_proj.bias.data.fill_(0.0)
-    output = model(x)
-    assert (output == 0).sum() == 0, "Output should not be all zeros."
+    # # Test with large offsets (should be clamped)
+    # model.offset_proj.weight.data.fill_(10.0)
+    # model.offset_proj.bias.data.fill_(0.0)
+    # output = model(x)
+    # assert (output == 0).sum() == 0, "Output should not be all zeros."
 
         
         
 
     # Print the output shapes
-    print(f"Output shape: {output.shape}")         # Output shape: (4, 512, 200, 176)
+    # print(f"Output shape: {output.shape}")         # Output shape: (4, 512, 200, 176)
    
-    
-    
     

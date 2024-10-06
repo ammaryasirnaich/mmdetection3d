@@ -16,12 +16,9 @@ from .fusion import AdaptiveWeight
 # from .refinement import FeatureRefinement
 from .segmentation import SegmentationHead
 
-from .dump.window_attention import WindowAttention
-from .dump.multiviewAdapFusion import Multiview_AdaptiveWeightedFusion
 from .splitshoot import LiftSplatShoot
 from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
-# from .deformable_attention import DeformableAttention
-from .deformable_attention_norm import DeformableAttention
+from .deformable_attention import DeformableAttention
 from .utils import check_tensor_shape
 from .sparse_encoder import BEVFusionSparseEncoder
 
@@ -33,7 +30,7 @@ __all__ = [
     'TransformerDecoderLayer', 'BEVFusionRandomFlip3D',
     'BEVFusionGlobalRotScaleTrans','GeneralizedLSSFPN',#'BEVFusionSparseEncoder',
     'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
-    'Refine_Resolution_Adjacement','WindowAttention','Multiview_AdaptiveWeightedFusion',
+    'Refine_Resolution_Adjacement',
     'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',
     'BEVFusionSparseEncoder','DeformableAttention'
 ]
