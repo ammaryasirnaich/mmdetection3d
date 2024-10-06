@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmdet3d.registry import MODELS
 
+@MODELS.register_module()
 class AdaptiveMultiStageFusionBEV(nn.Module):
     def __init__(self, voxel_dim=512, image_dim=64, upscale_size=(200, 176)):
         super(AdaptiveMultiStageFusionBEV, self).__init__()
@@ -57,21 +59,24 @@ class AdaptiveMultiStageFusionBEV(nn.Module):
         
         return fused_feature
 
-# Example usage for BEV features
-batch_size = 4
-voxel_dim = 512
-image_dim = 64
-height_voxel, width_voxel = 200, 176  # Spatial dimensions of LiDAR BEV features
-height_image, width_image = 50, 44  # Original spatial dimensions of Image BEV features (before upscaling)
 
-# Simulated input data (BEV features from LiDAR and Camera sensors)
-bev_lidar_feature = torch.randn(batch_size, voxel_dim, height_voxel, width_voxel)  # LiDAR BEV feature
-bev_image_feature = torch.randn(batch_size, image_dim, height_image, width_image)  # Camera BEV feature
 
-# Initialize the adaptive fusion model for BEV features with upscaling
-adaptive_fusion_model_bev = AdaptiveMultiStageFusionBEV(voxel_dim=voxel_dim, image_dim=image_dim, upscale_size=(height_voxel, width_voxel))
+if __name__ == "__main__":
+    # Example usage for BEV features
+    batch_size = 4
+    voxel_dim = 512
+    image_dim = 64
+    height_voxel, width_voxel = 200, 176  # Spatial dimensions of LiDAR BEV features
+    height_image, width_image = 50, 44  # Original spatial dimensions of Image BEV features (before upscaling)
 
-# Perform forward pass
-fused_output = adaptive_fusion_model_bev(bev_lidar_feature, bev_image_feature)
+    # Simulated input data (BEV features from LiDAR and Camera sensors)
+    bev_lidar_feature = torch.randn(batch_size, voxel_dim, height_voxel, width_voxel)  # LiDAR BEV feature
+    bev_image_feature = torch.randn(batch_size, image_dim, height_image, width_image)  # Camera BEV feature
 
-print(fused_output.shape)  # Should match LiDAR BEV shape, e.g., [B, 512, 200, 176]
+    # Initialize the adaptive fusion model for BEV features with upscaling
+    adaptive_fusion_model_bev = AdaptiveMultiStageFusionBEV(voxel_dim=voxel_dim, image_dim=image_dim, upscale_size=(height_voxel, width_voxel))
+
+    # Perform forward pass
+    fused_output = adaptive_fusion_model_bev(bev_lidar_feature, bev_image_feature)
+
+    print(fused_output.shape)  # Should match LiDAR BEV shape, e.g., [B, 512, 200, 176]

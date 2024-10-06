@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .deformable_attention_norm import DeformableAttention
+from .deformable_attention import DeformableAttention
 from mmdet3d.registry import MODELS
 
 

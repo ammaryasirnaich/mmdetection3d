@@ -56,8 +56,8 @@ model = dict(
     
     refine_adj_cfg=dict(
         type='Refine_Resolution_Adjacement',
-        adaptive_weight_cfg =dict(
-             type = 'AdaptiveWeight',
+        adaptive_fusion_cfg =dict(
+             type = 'AdaptiveMultiStageFusionBEV',
              voxel_dim=512, 
              image_dim=64, 
             upscale_size=(180, 180)  ),
@@ -121,17 +121,17 @@ train_pipeline = [
             'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
         ]),
     # Actually, 'GridMask' is not used here
-    dict(
-        type='GridMask',
-        use_h=True,
-        use_w=True,
-        max_epoch=6,
-        rotate=1,
-        offset=False,
-        ratio=0.5,
-        mode=1,
-        prob=0.0,
-        fixed_prob=True),
+    # dict(
+    #     type='GridMask',
+    #     use_h=True,
+    #     use_w=True,
+    #     max_epoch=6,
+    #     rotate=1,
+    #     offset=False,
+    #     ratio=0.5,
+    #     mode=1,
+    #     prob=0.0,
+    #     fixed_prob=True),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -268,10 +268,10 @@ custom_hooks = [dict(type='EpochLossValuesLogging')]
 find_unused_parameters = True
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion_swing_num_initweight_deform_layers'
+work_dir = './work_dirs/SHFusion_deform_layers_06_oct'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion_swing_num_initweight_deform_layers'
+resume_from = './work_dirs/SHFusion_deform_layers_06_oct'
 workflow = [('train', 1)]  
 
 del _base_.custom_hooks

@@ -3,8 +3,9 @@ import torch.nn.functional as F
 import torch
 
 
-from .fusion import AdaptiveWeight
-from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
+# from .fusion import AdaptiveWeight
+# from .adaptive_feature_bevfusion import AdaptiveMultiStageFusionBEV
+# from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from einops import rearrange
 from mmdet3d.utils import OptConfigType, OptMultiConfig, OptSampleList
 
@@ -14,7 +15,7 @@ from mmdet3d.registry import MODELS
 @MODELS.register_module()
 class Refine_Resolution_Adjacement(nn.Module):
     def __init__(self,  
-                 adaptive_weight_cfg: OptConfigType = None,
+                 adaptive_fusion_cfg: OptConfigType = None,
                  adaptive_scale_net_cfg: OptConfigType = None,):
         
         super().__init__()
@@ -22,7 +23,8 @@ class Refine_Resolution_Adjacement(nn.Module):
         # self.adaptive_weight = AdaptiveWeight(voxel_dim=512, image_dim=64,upscale_size=(200, 176)).cuda()
         # self.adaptive_resol_scale_model = AdaptiveResolutionScalingNetwork(in_channels=512, n_ref_points=4)
         
-        self.adaptive_weight = MODELS.build(adaptive_weight_cfg)
+        # self.adaptive_weight = MODELS.build(adaptive_fusion_cfg)
+        self.adaptive_fusion = MODELS.build(adaptive_fusion_cfg)
         self.adaptive_resol_scale_model = MODELS.build(adaptive_scale_net_cfg)
         
         
@@ -31,7 +33,7 @@ class Refine_Resolution_Adjacement(nn.Module):
         # dense_feature   : #  [B, C, H, W]
                       
         # Adaptive Fusion between lidar and image features
-        fused_feature = self.adaptive_weight(bev_lidar_features[0], dense_camera_feature) #  [B, C, H, W] , [B, N, 256, H, W]
+        fused_feature = self.adaptive_fusion(bev_lidar_features[0], dense_camera_feature) #  [B, C, H, W] , [B, N, 256, H, W]
         output = self.adaptive_resol_scale_model(fused_feature) #  output [B, C, H, W] , comp_map 
         return output
         
