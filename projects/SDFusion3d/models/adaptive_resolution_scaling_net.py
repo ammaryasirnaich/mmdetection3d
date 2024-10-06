@@ -13,10 +13,7 @@ class MultiScaleConvolution(nn.Module):
         self.conv3x3 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1)
         self.conv5x5 = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2)
 
-        # Optional: BatchNorm
-        self.bn1 = nn.BatchNorm2d(in_channels)
-        self.bn3 = nn.BatchNorm2d(in_channels)
-        self.bn5 = nn.BatchNorm2d(in_channels)
+        self.final_bn = nn.BatchNorm2d(in_channels * 3)
 
         # Optional: Use a final conv layer to restore the channel count if concatenating
         self.final_conv = nn.Conv2d(in_channels * 3, in_channels, kernel_size=1)
@@ -38,19 +35,21 @@ class MultiScaleConvolution(nn.Module):
         
 
     def forward(self, x):
-        # Convolution with activation and optional normalization
-        F1 = F.relu(self.bn1(self.conv1x1(x)))
-        F3 = F.relu(self.bn3(self.conv3x3(x)))
-        F5 = F.relu(self.bn5(self.conv5x5(x)))
+      # Convolution with ReLU activation
+        F1 = F.relu(self.conv1x1(x))
+        F3 = F.relu(self.conv3x3(x))
+        F5 = F.relu(self.conv5x5(x))
         
-        # Optional: Concatenate or sum the multi-scale features
-        F_multi_scale = torch.cat([F1, F3, F5], dim=1)  # Concatenate along the channel dimension
+        # Concatenate multi-scale features
+        F_multi_scale = torch.cat([F1, F3, F5], dim=1)
 
-        # Optional: Use a final 1x1 conv to merge channels back to original dimension
+        # Apply BatchNorm after concatenation (optional)
+        F_multi_scale = self.final_bn(F_multi_scale)
+
+        # Final conv to reduce back to original dimension
         F_multi_scale = self.final_conv(F_multi_scale)
 
         return F_multi_scale
-
 
 
 class ComplexityScoreMap(nn.Module):
@@ -71,16 +70,11 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
         # Fine network (dilated residual blocks)
         self.dilated_conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=2, dilation=2)
         self.dilated_conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=4, dilation=4)
-        self.bn_dilated1 = nn.BatchNorm2d(in_channels)
-        self.bn_dilated2 = nn.BatchNorm2d(in_channels)
 
         # Intermediate network (depthwise separable convolutions)
         self.depthwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, groups=in_channels)
         self.pointwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.bn_depthwise = nn.BatchNorm2d(in_channels)
-        self.bn_pointwise = nn.BatchNorm2d(in_channels)
         
-        # Initialize weights
         self.init_weights()
 
     @torch.no_grad()
@@ -98,18 +92,18 @@ class AdaptiveResidualFeatureRefinement(nn.Module):
     def forward(self, x, complexity_map, threshold=0.5):
         B, C, H, W = x.shape
 
-        # Compute the mask for complexity (broadcasted across channels)
-        mask_fine = complexity_map > threshold  # Shape: [B, 1, H, W]
-        mask_fine = mask_fine.expand(-1, C, -1, -1)  # Broadcast across the channels, shape: [B, C, H, W]
-        mask_intermediate = ~mask_fine  # Inverse of mask_fine, shape: [B, C, H, W]
+        # Compute the mask for complexity
+        mask_fine = complexity_map > threshold
+        mask_fine = mask_fine.expand(-1, C, -1, -1)
+        mask_intermediate = ~mask_fine
 
-        # Fine-level processing for high complexity regions (with residual connection and batchnorm)
-        out_fine = F.relu(x + self.bn_dilated1(self.dilated_conv1(x))).contiguous()
-        out_fine = F.relu(out_fine + self.bn_dilated2(self.dilated_conv2(out_fine)))
+        # Fine-level processing for high complexity regions
+        out_fine = F.relu(x + self.dilated_conv1(x))
+        out_fine = F.relu(out_fine + self.dilated_conv2(out_fine))
 
-        # Intermediate-level processing for low complexity regions (with residual connection and batchnorm)
-        out_intermediate = F.relu(x + self.bn_depthwise(self.depthwise_conv(x)))
-        out_intermediate = F.relu(out_intermediate + self.bn_pointwise(self.pointwise_conv(out_intermediate)))
+        # Intermediate-level processing for low complexity regions
+        out_intermediate = F.relu(x + self.depthwise_conv(x))
+        out_intermediate = F.relu(out_intermediate + self.pointwise_conv(out_intermediate))
 
         # Softly combine outputs based on the complexity map
         output = mask_fine * out_fine + mask_intermediate * out_intermediate
