@@ -12,7 +12,7 @@ class AdaptiveMultiStageFusionBEV(nn.Module):
         self.image_upscaler = nn.Sequential(
             nn.Upsample(size=upscale_size, mode='bilinear', align_corners=True),  # Upscale image BEV spatial dimensions
             nn.Conv2d(image_dim, voxel_dim, kernel_size=1),  # Adjust image channels from image_dim (e.g., 64) to voxel_dim (e.g., 512)
-            nn.BatchNorm2d(voxel_dim)  # Batch normalization after channel adjustment
+            # nn.BatchNorm2d(voxel_dim)  # Batch normalization after channel adjustment
         )
 
         # Fully connected layers for calculating weights for voxel and image BEV features

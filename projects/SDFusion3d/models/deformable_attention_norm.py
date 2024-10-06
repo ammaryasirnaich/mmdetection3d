@@ -16,33 +16,24 @@ class DeformableAttention(nn.Module):
         # Learnable offset weights (for sampling locations)
         self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
         
-        # Learnable offset weights (for sampling locations)
-        self.offset_conv = nn.Conv2d(in_channels, num_heads * num_points * 2, kernel_size=3, padding=1)
-        self.offset_bn = nn.BatchNorm2d(num_heads * num_points * 2)  # Apply BatchNorm after offset convolution
+        # Removed offset BatchNorm to reduce redundancy
         
         # Attention weights for each sampled point
         self.attention_weights_conv = nn.Conv2d(in_channels, num_heads * num_points, kernel_size=3, padding=1)
-        self.attention_weights_bn = nn.BatchNorm2d(num_heads * num_points)  # Apply BatchNorm after attention weights conv
         
         # Output projection layer to mix attended features
         self.output_proj = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         
-        # Layer Normalization after attention
-        self.layer_norm = nn.LayerNorm(in_channels)
-        
-        # Residual Connection
+        # Residual Connection with BatchNorm
         self.residual = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.residual_bn = nn.BatchNorm2d(in_channels)  # BatchNorm for residual connection
-    
+        self.residual_bn = nn.BatchNorm2d(in_channels)  # Retain BatchNorm for residual connection
 
         # Cache for meshgrid, only recompute when necessary
         self.cached_grid_size = None
         self.cached_meshgrid = None
         
-         # Initialize weights
+        # Initialize weights
         self.init_weights()
-        
-    
  
     @torch.no_grad()
     def init_weights(self):
@@ -119,7 +110,7 @@ class DeformableAttention(nn.Module):
         
         return sampled_features
 
-    def forward(self, x):
+def forward(self, x):
         """
         Args:
             x: Input feature map with shape [B, C, H, W]
@@ -128,16 +119,13 @@ class DeformableAttention(nn.Module):
         """
         B, C, H, W = x.shape
         
-        # Generate deformable offsets [B, num_heads * num_points * 2, H, W]
+        # Generate deformable offsets
         offsets = self.offset_conv(x)
-        offsets = self.offset_bn(offsets)  # Apply BatchNorm after offset convolution
         
-        # Generate attention weights [B, num_heads * num_points, H, W]
+        # Generate attention weights
         attention_weights = self.attention_weights_conv(x)
-        attention_weights = self.attention_weights_bn(attention_weights)  # Apply BatchNorm after attention weights conv
         attention_weights = attention_weights.view(B, self.num_heads, self.num_points, H, W)
         attention_weights = torch.softmax(attention_weights, dim=2)
-        
         
         # Create sampling grid based on the offsets
         sampling_grids = self.generate_sampling_grids(offsets, H, W)
@@ -146,23 +134,19 @@ class DeformableAttention(nn.Module):
         sampled_features = self.sample_features(x, sampling_grids)
         
         # Apply attention weights to the sampled features
-        attention_weights = attention_weights.unsqueeze(3)  # Shape becomes [B, num_heads, num_points, 1, H, W]
-        weighted_features = (attention_weights * sampled_features).sum(dim=2)  # Shape [B, num_heads, C, H, W]
+        attention_weights = attention_weights.unsqueeze(3)
+        weighted_features = (attention_weights * sampled_features).sum(dim=2)
         
         # Collapse heads by summing them
-        output = weighted_features.sum(dim=1)  # Shape [B, C, H, W]
+        output = weighted_features.sum(dim=1)
         
         # Output projection
         output = self.output_proj(output)
         
-        
-        # Apply residual connection and layer normalization
-        output = self.layer_norm(output.permute(0, 2, 3, 1).contiguous()).permute(0, 3, 1, 2).contiguous()
-        output = self.residual_bn(output + self.residual(x)) 
-        
+        # Apply residual connection with BatchNorm
+        output = self.residual_bn(output + self.residual(x))
         
         return output
-
 
 if __name__=="__main__":
     
