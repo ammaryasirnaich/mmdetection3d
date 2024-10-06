@@ -22,7 +22,7 @@ from .deformable_attention import DeformableAttention
 from .utils import check_tensor_shape
 from .sparse_encoder import BEVFusionSparseEncoder
 from .adaptive_feature_bevfusion import AdaptiveMultiStageFusionBEV
-from .complexity_score import Complexity_Score_Feature
+
 
 
 __all__ = [
@@ -31,10 +31,10 @@ __all__ = [
     'HeuristicAssigner3D', 'BEVLoadMultiViewImageFromFiles', 
     'TransformerDecoderLayer', 'BEVFusionRandomFlip3D',
     'BEVFusionGlobalRotScaleTrans','GeneralizedLSSFPN',#'BEVFusionSparseEncoder',
-    'AdaptiveWeight', 'FeatureRefinement','ComplexityModule','SegmentationHead',
+    'AdaptiveWeight', 'FeatureRefinement','SegmentationHead',
     'Refine_Resolution_Adjacement',
     'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',
-    'BEVFusionSparseEncoder','DeformableAttention', 'AdaptiveMultiStageFusionBEV','Complexity_Score_Feature'
+    'BEVFusionSparseEncoder','DeformableAttention', 'AdaptiveMultiStageFusionBEV'
 ]
 
 

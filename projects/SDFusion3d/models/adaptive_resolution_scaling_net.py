@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .deformable_attention import DeformableAttention
 from mmdet3d.registry import MODELS
-from .complexity_score import Complexity_Score_Feature
+
 
 @MODELS.register_module()
 class MultiScaleConvolution(nn.Module):
@@ -58,8 +58,18 @@ class ComplexityScoreMap(nn.Module):
 
     def forward(self, x):
         # Compute the mean across the channel dimension
-        complexity_map = torch.mean(x, dim=1, keepdim=True)  # [B, 1, H, W]
-        return complexity_map
+        # complexity_map = torch.mean(x, dim=1, keepdim=True)  # [B, 1, H, W]
+        # return complexity_map
+        B, C, H, W = x.shape
+    
+        # Normalize the features across the channels to obtain probabilities
+        F_normalized = F.softmax(dim=1)  # Normalize along the channel dimension (C)
+        
+        # Compute entropy across the channel dimension (C)
+        entropy = -torch.sum(F_normalized * torch.log(F_normalized + 1e-6), dim=1)  # Shape [B, H, W]
+        # print(f'entropy {entropy.shape}')
+        
+        return entropy
 
 
 @MODELS.register_module()
@@ -117,10 +127,7 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
-          
-        
-        self.complexity_score_feature = Complexity_Score_Feature()
-        
+            
         # Deformable attention block list
         self.deformable_attention_block = nn.ModuleList([DeformableAttention(in_channels, n_ref_points) for _ in range (num_attention_blocks)])
         
@@ -135,9 +142,6 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         x_multi_scale = self.multi_scale_conv(x)
         
         # print(f'x_multi_scale : {x_multi_scale.shape}')
-        
-        x_multi_scale = self.complexity_score_feature(x_multi_scale)
-
       
         # Step 2: Pass through multiple deformable attention blocks
         for deformable_attention in self.deformable_attention_block:
