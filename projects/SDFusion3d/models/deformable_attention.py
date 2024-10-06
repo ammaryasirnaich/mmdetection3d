@@ -110,7 +110,7 @@ class DeformableAttention(nn.Module):
         
         return sampled_features
 
-def forward(self, x):
+    def forward(self, x):
         """
         Args:
             x: Input feature map with shape [B, C, H, W]

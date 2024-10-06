@@ -195,8 +195,9 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
+    batch_size=4,
     dataset=dict(
-        dataset=dict(pipeline=train_pipeline, modality=input_modality)))
+        dataset=dict( pipeline=train_pipeline, modality=input_modality)))
 val_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, modality=input_modality))
 test_dataloader = val_dataloader
