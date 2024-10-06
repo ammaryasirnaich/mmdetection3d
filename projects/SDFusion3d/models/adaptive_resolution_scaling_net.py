@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .deformable_attention import DeformableAttention
 from mmdet3d.registry import MODELS
-
+from .complexity_score import Complexity_Score_Feature
 
 @MODELS.register_module()
 class MultiScaleConvolution(nn.Module):
@@ -118,6 +118,9 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         # Multi-scale convolution block
         self.multi_scale_conv = MultiScaleConvolution(in_channels)
           
+        
+        self.complexity_score_feature = Complexity_Score_Feature()
+        
         # Deformable attention block list
         self.deformable_attention_block = nn.ModuleList([DeformableAttention(in_channels, n_ref_points) for _ in range (num_attention_blocks)])
         
@@ -133,6 +136,8 @@ class AdaptiveResolutionScalingNetwork(nn.Module):
         
         # print(f'x_multi_scale : {x_multi_scale.shape}')
         
+        x_multi_scale = self.complexity_score_feature(x_multi_scale)
+
       
         # Step 2: Pass through multiple deformable attention blocks
         for deformable_attention in self.deformable_attention_block:
