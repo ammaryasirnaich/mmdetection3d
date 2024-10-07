@@ -21,7 +21,7 @@ from .adaptive_resolution_scaling_net import AdaptiveResolutionScalingNetwork
 from .deformable_attention import DeformableAttention
 from .utils import check_tensor_shape
 from .sparse_encoder import BEVFusionSparseEncoder
-from .adaptive_feature_bevfusion import AdaptiveMultiStageFusionBEV
+from .adaptive_feature_bevfusion import AdaptiveMultiStageFusionBEV,GatedFusionModule
 
 
 
@@ -34,7 +34,7 @@ __all__ = [
     'AdaptiveWeight', 'FeatureRefinement','SegmentationHead',
     'Refine_Resolution_Adjacement',
     'adjust_resolution','LiftSplatShoot' ,'AdaptiveResolutionScalingNetwork','check_tensor_shape',
-    'BEVFusionSparseEncoder','DeformableAttention', 'AdaptiveMultiStageFusionBEV'
+    'BEVFusionSparseEncoder','DeformableAttention', 'AdaptiveMultiStageFusionBEV','GatedFusionModule'
 ]
 
 

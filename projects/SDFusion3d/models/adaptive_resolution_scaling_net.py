@@ -63,10 +63,10 @@ class ComplexityScoreMap(nn.Module):
         B, C, H, W = x.shape
     
         # Normalize the features across the channels to obtain probabilities
-        F_normalized = F.softmax(dim=1)  # Normalize along the channel dimension (C)
+        F_normalized = F.softmax(x, dim=1)  # Normalize along the channel dimension (C)
         
         # Compute entropy across the channel dimension (C)
-        entropy = -torch.sum(F_normalized * torch.log(F_normalized + 1e-6), dim=1)  # Shape [B, H, W]
+        entropy = -torch.sum(F_normalized * torch.log(F_normalized + 1e-6), dim=1,keepdim=True)  # Shape [B, H, W]
         # print(f'entropy {entropy.shape}')
         
         return entropy
