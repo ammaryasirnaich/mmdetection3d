@@ -61,6 +61,78 @@ class AdaptiveMultiStageFusionBEV(nn.Module):
 
 
 
+@MODELS.register_module()
+class GatedFusionModule(nn.Module):
+    def __init__(self, voxel_dim=512, image_dim=64, upscale_size=(180, 180)):
+        super().__init__()
+        self.alpha = nn.Parameter(torch.tensor(0.5))  # Learnable alpha
+
+        self.upscale_size = upscale_size
+        self.image_upscaler = nn.Sequential(
+             nn.Conv2d(image_dim, voxel_dim, kernel_size=1),  # Adjust image channels from image_dim (e.g., 64) to voxel_dim (e.g., 512)
+            )
+        
+        # Gating mechanism: a small convolutional network for local gating
+        in_channels = voxel_dim
+        self.gate_conv = nn.Sequential(
+            nn.Conv2d(in_channels * 2, in_channels, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels, 1, kernel_size=1),  # Output single channel for gating
+            nn.Sigmoid()  # Ensures gating values are between 0 and 1
+        )
+    
+    def forward(self, bev_lidar_feature, bev_image_feature):
+        # Pool the dense feature map
+        """
+        bev_lidar_feature: LiDAR feature map [B, C, H, W]
+        bev_image_feature: Camera feature map [B, C, H, W]
+        """
+        # Ensure alpha stays in [0, 1] range using sigmoid
+        alpha = torch.sigmoid(self.alpha)        
+        bev_image_upscaled = F.interpolate(bev_image_feature, size=self.upscale_size, mode='bilinear', align_corners=True)
+        bev_image_upscaled = self.image_upscaler(bev_image_upscaled)
+        
+
+        # Concatenate the features along the channel dimension for gating
+        F_concat = torch.cat([bev_lidar_feature, bev_image_upscaled], dim=1)  # Concatenate along channel axis
+        
+        # Compute local gating values
+        G_local = self.gate_conv(F_concat)  # Shape: [B, 1, H, W]
+        
+        # Compute the fused output using both global and local control
+        F_fused = alpha * G_local * bev_lidar_feature + (1 - alpha) * (1 - G_local) * bev_image_upscaled
+        
+        return F_fused
+
+
+# Example usage
+if __name__ == "__main__":
+    # Example feature maps from LiDAR (F_voxel) and Camera (F_dense)
+    F_voxel = torch.randn(4, 512, 180, 180)  # LiDAR feature map
+    F_dense = torch.randn(4, 64, 64, 176)  # Camera feature map
+
+    # voxel_feature = torch.randn(4, 512, 180, 180).to("cuda")
+    
+    # Image feature shape: [batch_size, 64, 64, 176]
+    # image_feature = torch.randn(4, 64, 64, 176).to("cuda")   #torch.Size([12, 256, 32, 88])
+    
+    # Initialize the Gated Fusion module
+    gated_fusion_module = GatedFusionModule()
+    
+    # Forward pass through the fusion module
+    F_fused = gated_fusion_module(F_voxel, F_dense)
+    
+    print("Fused feature map shape:", F_fused.shape)  # Should output: [B, C, H, W]
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     # Example usage for BEV features
     batch_size = 4
