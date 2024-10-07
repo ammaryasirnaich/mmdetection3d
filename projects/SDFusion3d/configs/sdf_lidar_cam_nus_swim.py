@@ -269,10 +269,10 @@ custom_hooks = [dict(type='EpochLossValuesLogging')]
 find_unused_parameters = True
 
 log_level = 'INFO'
-work_dir = './work_dirs/SHFusion_deform_layers_06_oct'
+work_dir = './work_dirs/SHFusion_deform_layers_07_oct'
 load_from = None
 resume = True
-resume_from = './work_dirs/SHFusion_deform_layers_06_oct'
+resume_from = './work_dirs/SHFusion_deform_layers_07_oct'
 workflow = [('train', 1)]  
 
 del _base_.custom_hooks
