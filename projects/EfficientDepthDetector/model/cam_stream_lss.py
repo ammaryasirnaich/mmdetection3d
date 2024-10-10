@@ -123,30 +123,6 @@ class QuickCumsum(torch.autograd.Function):
         return val, None, None
 
 
-class CamEncode(nn.Module):
-    def __init__(self, D, C, inputC):
-        super(CamEncode, self).__init__()
-        self.D = D
-        self.C = C
-        self.depthnet = nn.Conv2d(inputC, self.D + self.C, kernel_size=1, padding=0)
-
-    def get_depth_dist(self, x, eps=1e-20):
-        return x.softmax(dim=1)
-
-    def get_depth_feat(self, x):
-        # Depth
-        x = self.depthnet(x)
-
-        depth = self.get_depth_dist(x[:, :self.D])
-        new_x = depth.unsqueeze(1) * x[:, self.D:(self.D + self.C)].unsqueeze(2)
-        return depth, new_x
-
-    def forward(self, x):
-        depth, x = self.get_depth_feat(x)
-
-        return x, depth
-
-
 class SELayer(nn.Module):
 
     def __init__(self, channels, act_layer=nn.ReLU, gate_layer=nn.Sigmoid):
