@@ -36,7 +36,7 @@ def main():
     importlib.import_module('loaders')
 
     # MMCV, please shut up
-    from mmengine.utils.logging import logger_initialized
+    from mmengine.logging import logger_initialized
     logger_initialized['root'] = logging.Logger(__name__, logging.WARNING)
     logger_initialized['mmengine'] = logging.Logger(__name__, logging.WARNING)
     logger_initialized['mmdet3d'] = logging.Logger(__name__, logging.WARNING)

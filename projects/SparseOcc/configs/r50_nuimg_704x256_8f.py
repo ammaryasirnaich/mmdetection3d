@@ -1,5 +1,5 @@
 dataset_type = 'NuSceneOcc'
-dataset_root = 'data/nuscenes/'
+dataset_root = '/media/ammar/eecs_ammar15/nusense/mini_dataset'
 occ_gt_root = 'data/nuscenes/occ3d'
 
 # If point cloud range is changed, the models should also change their point
