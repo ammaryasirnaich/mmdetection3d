@@ -8,8 +8,8 @@ from mmcv.ops import DynamicScatter
 
 from .. import builder
 from mmdet3d.registry import MODELS
-from .utils import VFELayer, get_paddings_indicator, DynamicVFELayer
-
+# from .utils import VFELayer, get_paddings_indicator, DynamicVFELayer
+from mmdet3d.utils import VFELayer, get_paddings_indicator, DynamicVFELayer
 
 @MODELS.register_module()
 class HardSimpleVFE(nn.Module):
