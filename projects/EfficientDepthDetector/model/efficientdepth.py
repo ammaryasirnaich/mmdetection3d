@@ -40,7 +40,7 @@ class EfficientDepth(Base3DDetector):
             data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
         self.voxelize_reduce = voxelize_cfg.pop('voxelize_reduce')
-        self.pts_voxel_layer = Voxelization(**voxelize_cfg)
+        # self.pts_voxel_layer = Voxelization(**voxelize_cfg)
 
         self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
 
