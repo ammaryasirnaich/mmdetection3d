@@ -77,7 +77,7 @@ val_pipeline = [
 test_pipeline = val_pipeline
 
 train_dataloader = dict(
-    batch_size=1,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     drop_last=True,
