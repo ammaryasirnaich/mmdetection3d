@@ -4,6 +4,7 @@ from .det3d_dataset import Det3DDataset
 from .kitti_dataset import KittiDataset
 from .lyft_dataset import LyftDataset
 from .nuscenes_dataset import NuScenesDataset
+
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
 from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
@@ -25,6 +26,9 @@ from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
 from .utils import get_loading_pipeline
 from .waymo_dataset import WaymoDataset
 
+# from .nusceocc_dataset import NuSceneOcc
+
+
 __all__ = [
     'KittiDataset', 'CBGSDataset', 'NuScenesDataset', 'LyftDataset',
     'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
@@ -37,5 +41,5 @@ __all__ = [
     'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
     'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
     'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
+    'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',#'NuSceneOcc'
 ]

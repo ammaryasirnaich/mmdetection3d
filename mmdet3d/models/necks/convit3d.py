@@ -442,7 +442,7 @@ class VisionTransformer(nn.Module):
         self.transformer_head = nn.Linear(self.embed_dim, self.fp_output_channel) #if num_classes > 0 else nn.Identity() 
         trunc_normal_(self.cls_token, std=.02)
         self.transformer_head.apply(self._init_weights)
-        self.coordrefine = CoordinateRefinementModule(self.num_heads)
+        # self.coordrefine = CoordinateRefinementModule(self.num_heads)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
