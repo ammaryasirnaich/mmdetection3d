@@ -80,8 +80,6 @@ class TransformerDecoderLayer(DetrTransformerDecoderLayer):
             key_pos = None
         query = query.transpose(1, 2)
         key = key.transpose(1, 2)
-
-        
         # Note that the `value` (equal to `query`) is encoded with `query_pos`.
         # This is different from the standard DETR Decoder Layer.
         query = self.self_attn(

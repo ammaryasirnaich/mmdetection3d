@@ -46,7 +46,7 @@ class SparseOcc(MVXTwoStageDetector):
         self.memory = {}
         self.queue = queue.Queue()
 
-    # @auto_fp16(apply_to=('img'), out_fp32=True)
+    
     def extract_img_feat(self, img):
         img_feats = self.img_backbone(img)
 
@@ -58,7 +58,7 @@ class SparseOcc(MVXTwoStageDetector):
 
         return img_feats
 
-    # @auto_fp16(apply_to=('img'))
+    
     def extract_feat(self, img, img_metas=None):
         """Extract features from images and points."""
         if len(img.shape) == 6:
