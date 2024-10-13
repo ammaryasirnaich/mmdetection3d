@@ -16,7 +16,7 @@ class_names = [
 
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+data_root = '/workspace/data/nusense/mini_dataset/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -309,17 +309,18 @@ test_pipeline = [
 
 
 
-rain_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
+train_dataloader = dict(
+    batch_size=1,
+    num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
+    
     dataset=dict(
         type='CBGSDataset',
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='nuscenes_infos_train.pkl',
+            ann_file='nuscenes_mini_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
@@ -356,17 +357,12 @@ val_evaluator = dict(
     backend_args=backend_args)
 test_evaluator = val_evaluator
 
-
-
-
-
-
-train_dataloader = dict(
-    dataset=dict(
-        dataset=dict(pipeline=train_pipeline, modality=input_modality)))
-val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, modality=input_modality))
-test_dataloader = val_dataloader
+# train_dataloader = dict(
+#     dataset=dict(
+#         dataset=dict(pipeline=train_pipeline, modality=input_modality)))
+# val_dataloader = dict(
+#     dataset=dict(pipeline=test_pipeline, modality=input_modality))
+# test_dataloader = val_dataloader
 
 param_scheduler = [
     dict(

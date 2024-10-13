@@ -39,10 +39,10 @@ class EfficientDepth(Base3DDetector):
         super().__init__(
             data_preprocessor=data_preprocessor, init_cfg=init_cfg)
 
-        self.voxelize_reduce = voxelize_cfg.pop('voxelize_reduce')
+        # self.voxelize_reduce = voxelize_cfg.pop('voxelize_reduce')
         # self.pts_voxel_layer = Voxelization(**voxelize_cfg)
 
-        self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
+        # self.pts_voxel_encoder = MODELS.build(pts_voxel_encoder)
 
         self.img_backbone = MODELS.build(
             img_backbone) if img_backbone is not None else None
@@ -50,17 +50,17 @@ class EfficientDepth(Base3DDetector):
             img_neck) if img_neck is not None else None
         self.view_transform = MODELS.build(
             view_transform) if view_transform is not None else None
-        self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
+        # self.pts_middle_encoder = MODELS.build(pts_middle_encoder)
 
         self.fusion_layer = MODELS.build(
             fusion_layer) if fusion_layer is not None else None
 
-        self.pts_backbone = MODELS.build(pts_backbone)
-        self.pts_neck = MODELS.build(pts_neck)
+        # self.pts_backbone = MODELS.build(pts_backbone)
+        # self.pts_neck = MODELS.build(pts_neck)
 
         self.bbox_head = MODELS.build(bbox_head)
 
-        self.init_weights()
+        # self.init_weights()
 
     def _forward(self,
                  batch_inputs: Tensor,
