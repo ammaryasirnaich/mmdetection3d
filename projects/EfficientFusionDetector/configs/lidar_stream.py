@@ -1,7 +1,12 @@
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.EfficientDepthDetector.EfficientDepth'], allow_failed_imports=False)
+    imports=['projects.EfficientFusionDetector.model'], allow_failed_imports=False)
 
+# model settings
+# Voxel size for voxel encoder
+# Usually voxel size is changed consistently with the point cloud range
+# If point cloud range is modified, do remember to change all related
+# keys in the config.
 voxel_size = [0.075, 0.075, 0.2]
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 class_names = [
@@ -11,7 +16,7 @@ class_names = [
 
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = '/workspace/data/nusense/mini_dataset/'
+data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -22,9 +27,22 @@ data_prefix = dict(
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
 input_modality = dict(use_lidar=True, use_camera=False)
+# backend_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         'data/nuscenes/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         './data/nuscenes_mini/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/',
+#         'data/nuscenes_mini/':
+#         's3://openmmlab/datasets/detection3d/nuscenes/'
+#     }))
 backend_args = None
+
 model = dict(
-    type='BEVFusion',
+    type='EfficientDepth',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         pad_size_divisor=32,
@@ -131,8 +149,7 @@ model = dict(
         loss_heatmap=dict(
             type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
         loss_bbox=dict(
-            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25))
-    )
+            type='mmdet.L1Loss', reduction='mean', loss_weight=0.25)))
 
 db_sampler = dict(
     data_root=data_root,
@@ -250,8 +267,8 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
+    batch_size=1,
+    num_workers=2,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(

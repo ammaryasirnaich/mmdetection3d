@@ -1,12 +1,12 @@
-# _base_ = [
-#     './bevfusion_lidar_voxel0075_second_secfpn_8xb4-cyclic-20e_nus-3d.py'
-# ]
-
-
 _base_ = ['../../../configs/_base_/default_runtime.py']
 custom_imports = dict(
-    imports=['projects.EfficientDepthDetector.model'], allow_failed_imports=False)
+    imports=['projects.EfficientFusionDetector.model'], allow_failed_imports=False)
 
+# model settings
+# Voxel size for voxel encoder
+# Usually voxel size is changed consistently with the point cloud range
+# If point cloud range is modified, do remember to change all related
+# keys in the config.
 voxel_size = [0.075, 0.075, 0.2]
 point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
 class_names = [
@@ -16,7 +16,7 @@ class_names = [
 
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = '/workspace/data/nusense/mini_dataset/'
+data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -26,7 +26,7 @@ data_prefix = dict(
     CAM_BACK_RIGHT='samples/CAM_BACK_RIGHT',
     CAM_BACK_LEFT='samples/CAM_BACK_LEFT',
     sweeps='sweeps/LIDAR_TOP')
-input_modality = dict(use_lidar=True, use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
 
 model = dict(
@@ -79,7 +79,7 @@ model = dict(
         downsample=2),
     fusion_layer=dict(
         type='ConvFuser', in_channels=[80, 256], out_channels=256),
-        bbox_head=dict(
+    bbox_head=dict(
         type='TransFusionHead',
         num_proposals=200,
         auxiliary=True,
@@ -104,9 +104,10 @@ model = dict(
             pos_encoding_cfg=dict(input_channel=2, num_pos_feats=128)),
         train_cfg=dict(
             dataset='nuScenes',
-            point_cloud_range=[-54.0, -54.0, -5.0, 54.0, 54.0, 3.0],
+            point_cloud_range=point_cloud_range,
             grid_size=[1440, 1440, 41],
-            voxel_size=[0.075, 0.075, 0.2],
+            # grid_size=[1408,1600, 41],
+            voxel_size=voxel_size,
             out_size_factor=8,
             gaussian_overlap=0.1,
             min_radius=2,
@@ -124,6 +125,7 @@ model = dict(
                 iou_cost=dict(type='IoU3DCost', weight=0.25))),
         test_cfg=dict(
             dataset='nuScenes',
+            # grid_size=[1408,1600, 41],
             grid_size=[1440, 1440, 41],
             out_size_factor=8,
             voxel_size=[0.075, 0.075],
@@ -150,8 +152,8 @@ model = dict(
             type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
         loss_bbox=dict(
             type='mmdet.L1Loss', reduction='mean', loss_weight=0.25))
-    
     )
+
 
 db_sampler = dict(
     data_root=data_root,
@@ -189,14 +191,16 @@ db_sampler = dict(
         use_dim=[0, 1, 2, 3, 4],
         backend_args=backend_args))
 
-
-
 train_pipeline = [
     dict(
         type='BEVLoadMultiViewImageFromFiles',
         to_float32=True,
         color_type='color',
         backend_args=backend_args),
+    # dict(type='LoadMultiViewImageFromFiles',
+    #      to_float32=True,
+    #      num_views=6,
+    #      backend_args=backend_args),
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -239,17 +243,17 @@ train_pipeline = [
             'barrier', 'motorcycle', 'bicycle', 'pedestrian', 'traffic_cone'
         ]),
     # Actually, 'GridMask' is not used here
-    dict(
-        type='GridMask',
-        use_h=True,
-        use_w=True,
-        max_epoch=6,
-        rotate=1,
-        offset=False,
-        ratio=0.5,
-        mode=1,
-        prob=0.0,
-        fixed_prob=True),
+    # dict(
+    #     type='GridMask',
+    #     use_h=True,
+    #     use_w=True,
+    #     max_epoch=6,
+    #     rotate=1,
+    #     offset=False,
+    #     ratio=0.5,
+    #     mode=1,
+    #     prob=0.0,
+    #     fixed_prob=True),
     dict(type='PointShuffle'),
     dict(
         type='Pack3DDetInputs',
@@ -272,6 +276,11 @@ test_pipeline = [
         to_float32=True,
         color_type='color',
         backend_args=backend_args),
+    # dict(type='LoadMultiViewImageFromFiles',
+    #      to_float32=True,
+    #      num_views=6,
+    #      backend_args=backend_args),
+    
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -307,20 +316,17 @@ test_pipeline = [
         ])
 ]
 
-
-
 train_dataloader = dict(
     batch_size=1,
-    num_workers=2,
+    num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
-    
     dataset=dict(
         type='CBGSDataset',
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='nuscenes_mini_infos_train.pkl',
+            ann_file='nuscenes_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
@@ -357,12 +363,11 @@ val_evaluator = dict(
     backend_args=backend_args)
 test_evaluator = val_evaluator
 
-# train_dataloader = dict(
-#     dataset=dict(
-#         dataset=dict(pipeline=train_pipeline, modality=input_modality)))
-# val_dataloader = dict(
-#     dataset=dict(pipeline=test_pipeline, modality=input_modality))
-# test_dataloader = val_dataloader
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+
+
 
 param_scheduler = [
     dict(
@@ -417,4 +422,11 @@ auto_scale_lr = dict(enable=False, base_batch_size=32)
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
     checkpoint=dict(type='CheckpointHook', interval=1))
-# del _base_.custom_hooks
+
+
+    
+    
+    
+    
+    
+    

@@ -5,7 +5,7 @@ import torch
 from torch import nn
 
 from mmdet3d.registry import MODELS
-from .ops import bev_pool
+# from .ops import bev_pool
 
 
 
@@ -141,7 +141,7 @@ class BaseViewTransform(nn.Module):
         x = x[kept]
         geom_feats = geom_feats[kept]
 
-        x = bev_pool(x, geom_feats, B, self.nx[2], self.nx[0], self.nx[1])
+        # x = bev_pool(x, geom_feats, B, self.nx[2], self.nx[0], self.nx[1])
 
         # collapse Z
         final = torch.cat(x.unbind(dim=2), 1)
