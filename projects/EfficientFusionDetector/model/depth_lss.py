@@ -380,6 +380,33 @@ class DepthLSSTransform(BaseDepthTransform):
             nn.ReLU(True),
             nn.Conv2d(in_channels, self.D + self.C, 1),
         )
+        
+        ##### new depth model
+        self.depthnetpro = nn.Sequential(
+            nn.Conv2d(
+                in_channels + 64, in_channels // 2, kernel_size=3, stride=1, padding=1
+            ),
+            nn.ConvTranspose2d(
+                in_channels=in_channels // 2,
+                out_channels=in_channels // 2,
+                kernel_size=2,
+                stride=2,
+                padding=0,
+                bias=True,
+            ),
+            nn.Conv2d(
+                in_channels // 2,
+                last_dims[0],
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.ReLU(True),
+            nn.Conv2d(last_dims[0], last_dims[1], kernel_size=1, stride=1, padding=0),
+            nn.ReLU(),
+        )
+        ####################################################################
+           
         if downsample > 1:
             assert downsample == 2, downsample
             self.downsample = nn.Sequential(
