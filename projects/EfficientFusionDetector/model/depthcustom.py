@@ -310,6 +310,37 @@ class DepthCustom(BaseDepthTransform):
             nn.ReLU(True),
             nn.Conv2d(in_channels, self.D + self.C, 1),
         )
+        
+        #### new depth model
+        self.depthnet = nn.Sequential(
+            nn.Conv2d(
+                in_channels + 64, in_channels // 2, kernel_size=3, stride=1, padding=1
+            ),
+            nn.ConvTranspose2d(
+                in_channels=in_channels // 2,
+                out_channels=in_channels // 2,
+                kernel_size=2,
+                stride=2,
+                padding=0,
+                bias=True,
+            ),
+            nn.Conv2d(
+                in_channels // 2,
+                last_dims[0],  
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.ReLU(True),
+            nn.Conv2d(last_dims[0], last_dims[1], kernel_size=1, stride=1, padding=0),
+            nn.ReLU(),
+        )
+        ###################################################################
+        
+        
+        
+        
+        
         if downsample > 1:
             assert downsample == 2, downsample
             self.downsample = nn.Sequential(
@@ -335,18 +366,18 @@ class DepthCustom(BaseDepthTransform):
         else:
             self.downsample = nn.Identity()
 
-    def get_cam_feats(self, x, d):
-        B, N, C, fH, fW = x.shape
+    def get_cam_feats(self, x, d):  
+        B, N, C, fH, fW = x.shape   #[1,6,256,32,88]
 
-        d = d.view(B * N, *d.shape[2:])
-        x = x.view(B * N, C, fH, fW)
-
-        d = self.dtransform(d)
-        x = torch.cat([d, x], dim=1)
-        x = self.depthnet(x)
+        d = d.view(B * N, *d.shape[2:])  # d[1,6,1,256,704] d.view [6,1,256,704]
+        x = x.view(B * N, C, fH, fW)     # [6,256,32,88]
+        d = self.dtransform(d)           # [6,64,32,88] feature enhancement
+        x = torch.cat([d, x], dim=1)     # [6, 320, 32, 88] feature cancat (256+64=320)
+        
+        x = self.depthnet(x)             # [6, 198, 32, 88] feature reduce with depth prediction             
 
         depth = x[:, :self.D].softmax(dim=1)
-        x = depth.unsqueeze(1) * x[:, self.D:(self.D + self.C)].unsqueeze(2)
+        x = depth.unsqueeze(1) * x[:, self.D:(self.D + self.C)].unsqueeze(2) # ([6, 80, 118, 32, 88])
 
         x = x.view(B, N, self.C, self.D, fH, fW)
         x = x.permute(0, 1, 3, 4, 5, 2)
