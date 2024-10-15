@@ -16,7 +16,7 @@ class_names = [
 
 metainfo = dict(classes=class_names)
 dataset_type = 'NuScenesDataset'
-data_root = '/import/digitreasure/openmm_processed_dataset/nusense_dataset/nuscenses/'
+data_root = '/workspace/data/nusense/mini_dataset/'
 data_prefix = dict(
     pts='samples/LIDAR_TOP',
     CAM_FRONT='samples/CAM_FRONT',
@@ -67,7 +67,7 @@ model = dict(
         act_cfg=dict(type='ReLU', inplace=True),
         upsample_cfg=dict(mode='bilinear', align_corners=False)),
     view_transform=dict(
-        type='DepthLSSTransform',
+        type='DepthCustom',
         in_channels=256,
         out_channels=80,
         image_size=[256, 704],
@@ -326,7 +326,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='nuscenes_infos_train.pkl',
+            ann_file='nuscenes_mini_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
@@ -345,7 +345,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='nuscenes_infos_val.pkl',
+        ann_file='nuscenes_mini_infos_val.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
