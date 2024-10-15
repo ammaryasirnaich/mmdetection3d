@@ -396,7 +396,7 @@ class DepthLSSTransform(BaseDepthTransform):
             ),
             nn.Conv2d(
                 in_channels // 2,
-                last_dims[0],
+                last_dims[0],  
                 kernel_size=3,
                 stride=1,
                 padding=1,
