@@ -378,7 +378,26 @@ optim_wrapper = dict(
 auto_scale_lr = dict(enable=False, base_batch_size=32)
 log_processor = dict(window_size=50)
 
+# default_hooks = dict(
+#     logger=dict(type='LoggerHook', interval=50),
+#     checkpoint=dict(type='CheckpointHook', interval=5))
+# custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
+
+
 default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
-    checkpoint=dict(type='CheckpointHook', interval=5))
-custom_hooks = [dict(type='DisableObjectSampleHook', disable_after_epoch=15)]
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
+    )
+
+custom_hooks = [dict(type='EpochLossValuesLogging')]
+
+find_unused_parameters = True
+
+log_level = 'INFO'
+work_dir = './work_dirs/lidar_stream'
+load_from = None
+resume = True
+resume_from = './work_dirs/lidar_stream'
+workflow = [('train', 1)]  

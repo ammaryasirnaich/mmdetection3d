@@ -425,7 +425,23 @@ default_hooks = dict(
 
 
     
-    
+default_hooks = dict(
+    logger=dict(type='LoggerHook', interval=50),
+    checkpoint=dict(type='CheckpointHook', interval=1),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False),
+    )
+
+custom_hooks = [dict(type='EpochLossValuesLogging')]
+
+find_unused_parameters = True
+
+log_level = 'INFO'
+work_dir = './work_dirs/camera_stream'
+load_from = None
+resume = True
+resume_from = './work_dirs/camera_stream'
+workflow = [('train', 1)]  
     
     
     
