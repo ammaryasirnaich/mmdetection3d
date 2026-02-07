@@ -7,10 +7,6 @@ import warnings
 from os import path as osp
 from setuptools import find_packages, setup
 
-import torch
-from torch.utils.cpp_extension import (BuildExtension, CppExtension,
-                                       CUDAExtension)
-
 
 def readme():
     with open('README.md', encoding='utf-8') as f:
@@ -33,6 +29,8 @@ def make_cuda_ext(name,
                   sources_cuda=[],
                   extra_args=[],
                   extra_include_path=[]):
+    import torch
+    from torch.utils.cpp_extension import CppExtension, CUDAExtension
 
     define_macros = []
     extra_compile_args = {'cxx': [] + extra_args}
@@ -191,6 +189,12 @@ def add_mim_extention():
 
 if __name__ == '__main__':
     add_mim_extention()
+    # Defer torch import so pip can read metadata in isolated build env (no torch)
+    try:
+        from torch.utils.cpp_extension import BuildExtension
+        cmdclass = {'build_ext': BuildExtension}
+    except ModuleNotFoundError:
+        cmdclass = {}
     setup(
         name='mmdet3d',
         version=get_version(),
@@ -223,5 +227,5 @@ if __name__ == '__main__':
             'mim': parse_requirements('requirements/mminstall.txt'),
         },
         ext_modules=[],
-        cmdclass={'build_ext': BuildExtension},
+        cmdclass=cmdclass,
         zip_safe=False)

@@ -1,13 +1,13 @@
 _base_ = [
-    '../_base_/models/convit3D_kitti.py',
+    '../_base_/models/pointconvit3d_kitti.py',
     # '../_base_/models/convit3D.py',
     '../_base_/datasets/kitti-3d-3class.py',
     '../_base_/schedules/cyclic-40e.py'
 ]
 
 
-point_cloud_range = [0, -40, -5, 70, 40, 3]
-pointcloudchannel=4
+point_cloud_range = [0, -40, -3, 70.4, 40, 1]
+pointcloudchannel = 4
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
 
@@ -33,7 +33,7 @@ train_pipeline = [
         type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.9, 1.1]),
-    dict(type='PointSample', num_points=32768), # 16384*2
+    dict(type='PointSample', num_points=32768),  # 16384*2
     dict(
         type='Pack3DDetInputs',
         keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
@@ -68,7 +68,7 @@ test_pipeline = [
 
 
 train_dataloader = dict(
-    batch_size=2, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
+    batch_size=4, dataset=dict(dataset=dict(pipeline=train_pipeline, )))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
@@ -87,7 +87,7 @@ default_hooks = dict(
         interval=1,
         save_last=True),
     sampler_seed=dict(type='DistSamplerSeedHook'),
-    visualization=dict(type='Det3DVisualizationHook',vis_task='lidar_det',draw=False)
+    visualization=dict(type='Det3DVisualizationHook', vis_task='lidar_det', draw=False)
     )
 
 log_config = dict(
@@ -108,41 +108,7 @@ checkpoint_config = dict(interval=1, save_last=True)
 # lr = 0.001
 epoch_num = 100
 
-# optim_wrapper = dict(
-#     optimizer=dict(lr=lr), clip_grad=dict(max_norm=35, norm_type=2))
-# param_scheduler = [
-#     dict(
-#         type='CosineAnnealingLR',
-#         T_max=epoch_num * 0.4,
-#         eta_min=lr * 10,
-#         begin=0,
-#         end=epoch_num * 0.4,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingLR',
-#         T_max=epoch_num * 0.6,
-#         eta_min=lr * 1e-4,
-#         begin=epoch_num * 0.4,
-#         end=epoch_num * 1,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingMomentum',
-#         T_max=epoch_num * 0.4,
-#         eta_min=0.85 / 0.95,
-#         begin=0,
-#         end=epoch_num * 0.4,
-#         by_epoch=True,
-#         convert_to_iter_based=True),
-#     dict(
-#         type='CosineAnnealingMomentum',
-#         T_max=epoch_num * 0.6,
-#         eta_min=1,
-#         begin=epoch_num * 0.4,
-#         end=epoch_num * 1,
-#         convert_to_iter_based=True)
-# ]
+
 
 # optimizer
 lr = 0.002  # max learning rate
@@ -165,7 +131,7 @@ param_scheduler = [
 
 
 # training schedule for 1x
-train_cfg = dict(_delete_=True,type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=40)
+train_cfg = dict(_delete_=True, type='EpochBasedTrainLoop', max_epochs=epoch_num, val_interval=40)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -177,14 +143,10 @@ env_cfg = dict(
 )
 
 log_level = 'INFO'
-work_dir = '/home/naich/workspace/mmdet3d/output'
+work_dir = '/home/naich/workspace/mmdet3d/output_pointconvit3d_kitti'
 # Resume from latest checkpoint in work_dir when resume=True (no load_from)
 load_from = None
 resume = True
 # legacy; MMEngine resumes from work_dir when resume=True and load_from is None
-resume_from = None
-workflow = [('train', 1)]  
-  
-
-
-
+resume_from = '/home/naich/workspace/mmdet3d/output_pointconvit3d_kitti'
+workflow = [('train', 1)]

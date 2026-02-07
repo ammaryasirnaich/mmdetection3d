@@ -7,11 +7,13 @@ from .pointnet2_fp_neck import PointNetFPNeck
 from .second_fpn import SECONDFPN
 
 from .convit3d import VisionTransformer
+# from .pointcont3d import VisionTransformer as PointCont3D
 from .convit2d import VisionTransformer2D
+from .pointcont3d import VisionTransformer3D
 
 
 
 __all__ = [
     'FPN', 'SECONDFPN', 'OutdoorImVoxelNeck', 'PointNetFPNeck', 'DLANeck',
-    'IndoorImVoxelNeck', 'VisionTransformer','VisionTransformer2D'
+    'IndoorImVoxelNeck','VisionTransformer2D','VisionTransformer3D'
 ]

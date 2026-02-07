@@ -47,7 +47,7 @@ model = dict(
             normalize_xyz=False)),
             
       neck =  dict(
-                type='VisionTransformer',   
+                type='VisionTransformer3D',   
                 num_classes=3, 
                 # in_chans=256, #1024
                 embed_dim=252, #1024

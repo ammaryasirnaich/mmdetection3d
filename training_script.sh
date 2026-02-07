@@ -1,5 +1,6 @@
 
-python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_kitti.py
+# python tools/train.py /home/naich/workspace/mmdet3d/mmdetection3d/configs/3dconvit/convit3D_pointNet_transformer_kitti.py
+python tools/train.py /home/naich/workspace/mmdet3d/mmdetection3d/configs/3dconvit/pointconvit3d_kitti_config.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_no_voxel_no_transformer_ssdhead.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py
 
@@ -14,7 +15,7 @@ python tools/train.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointNe
 # python tools/train.py /workspace/mmdetection3d/configs/3dconvit/conViT3D_PointRCNN_head.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-all.py
 # python tools/train.py /workspace/mmdetection3d/configs/3dssd/3dssd_4xb4_kitti-3d-all.py
-python tools/train.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py
+# python tools/train.py /workspace/mmdetection3d/configs/inet/intensityNetKitti_all_objects.py
 
 # CUDA_VISIBLE_DEVICES=1 python  tools/train.py "/import/digitreasure/ammar_workspace/mmdetection3d/configs/pointpillars/pointpiller_nusense_custome.py"
 
