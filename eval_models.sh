@@ -33,10 +33,14 @@
 # SHOW_DIR="/workspace/data/kitti_detection/model_output_results/IVEFResults"
 # PKLFILE_PREFIX='test_evaluator.pklfile_prefix=/workspace/data/kitti_detection/model_output_results/waymo-car/kitti_results'
 
-CONFIG_FILE="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py "
-CKPT_PATH="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_Augustepoch_80.pth"
+# CONFIG_FILE="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_August/convit3D_pointnet_transformer_ssdhead.py "
+# CKPT_PATH="/workspace/data/kitti_detection/model_output_results/convit3D_PointNet_transformer_ssdhead__14_Augustepoch_80.pth"
 # SHOW_DIR="/workspace/data/kitti_detection/model_output_results/ConVitResults"
 
+
+CONFIG_FILE="outputs/pointconvit/output_pointconvit3d_kitti/pointconvit3d_kitti_config.py"
+# Copy epoch_100.pth from your training run (e.g. output_pointconvit3d_kitti/) into the path below if needed
+CKPT_PATH="outputs/pointconvit/output_pointconvit3d_kitti/epoch_100.pth"
 
 
 # python tools/test.py /workspace/mmdetection3d/configs/3dconvit/convit3D_pointnet_transformer_ssdhead.py \

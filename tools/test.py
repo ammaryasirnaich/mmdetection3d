@@ -3,6 +3,17 @@ import argparse
 import os
 import os.path as osp
 
+import torch
+
+# PyTorch 2.6+ defaults to weights_only=True; MMEngine checkpoints can contain
+# numpy scalars. Patch torch.load so checkpoint loading works for trusted checkpoints.
+_orig_torch_load = torch.load
+def _patched_torch_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _orig_torch_load(*args, **kwargs)
+torch.load = _patched_torch_load
+
 from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.registry import RUNNERS
 from mmengine.runner import Runner
