@@ -10,6 +10,30 @@ pointcloudchannel = 4
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
 
+# NOTE:
+# This config overrides `train_pipeline` and uses `ObjectSample`, so it must
+# define `db_sampler` locally. Variables from `_base_` configs are merged after
+# parsing and are NOT available as Python symbols at parse-time.
+data_root = '/home/naich/dataset/kitti_data/'
+class_names = ['Pedestrian', 'Cyclist', 'Car']
+
+db_sampler = dict(
+    data_root=data_root,
+    info_path=data_root + 'kitti_dbinfos_train.pkl',
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
+    classes=class_names,
+    sample_groups=dict(Car=15, Pedestrian=10, Cyclist=10),
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=4,
+        backend_args=backend_args),
+    backend_args=backend_args)
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',
@@ -20,7 +44,7 @@ train_pipeline = [
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
-    # dict(type='ObjectSample', db_sampler=db_sampler),
+    dict(type='ObjectSample', db_sampler=db_sampler),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='ObjectNoise',
@@ -82,9 +106,7 @@ default_hooks = dict(
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(
-        type='CheckpointHook',
-        interval=1,
-        save_last=True),
+        type='CheckpointHook', interval=1, save_last=True),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='Det3DVisualizationHook', vis_task='lidar_det', draw=False)
     )
@@ -99,7 +121,7 @@ log_config = dict(
 custom_hooks = [dict(type='EpochLossValuesLogging')]
 
 # Save every epoch for analysis; save_last=True keeps latest as last_iter/latest.pth
-checkpoint_config = dict(interval=1, save_last=True)
+# checkpoint_config = dict(interval=1, save_last=True)
 
 
 # In practice PointPillars also uses a different schedule
@@ -147,5 +169,5 @@ work_dir = '/home/naich/workspace/mmdet3d/output_pointconvit3d_kitti'
 load_from = None
 resume = True
 # legacy; MMEngine resumes from work_dir when resume=True and load_from is None
-resume_from = '/home/naich/workspace/mmdet3d/output_pointconvit3d_kitti'
+resume_from = '/home/naich/workspace/mmdet3d/old_pointconvit3d_kitti'
 workflow = [('train', 1)]
