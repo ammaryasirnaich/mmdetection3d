@@ -169,5 +169,5 @@ work_dir = '/home/naich/workspace/mmdet3d/output_pointconvit3d_kitti'
 load_from = None
 resume = True
 # legacy; MMEngine resumes from work_dir when resume=True and load_from is None
-resume_from = '/home/naich/workspace/mmdet3d/old_pointconvit3d_kitti'
+resume_from = None
 workflow = [('train', 1)]

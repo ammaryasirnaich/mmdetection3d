@@ -1,9 +1,17 @@
 _base_ = ['./pointconvit3d_kitti_config.py']
 
-# Save logs/checkpoints under outputs/ for this experiment
-work_dir = './outputs/pointconvit3d_kitti_improved'
+# Save logs/checkpoints here. Absolute path so base config and CWD do not override.
+work_dir = '/home/naich/workspace/mmdet3d/mmdetection3d/outputs/pointconvit3d_kitti_scheduler'
 
-# Import the custom head module without editing any existing files.
+# Do not inherit base's resume/resume_from so checkpoints always save to work_dir above.
+# Resume from latest checkpoint: when resume=True and load_from=None, MMEngine automatically
+# finds and resumes from the latest checkpoint in work_dir (epoch_10.pth as of latest run).
+# To resume from a specific checkpoint, set: load_from='/path/to/checkpoint.pth'
+resume = True
+load_from = None  # None = auto-resume from latest checkpoint in work_dir
+resume_from = None  # Legacy parameter, not used when resume=True
+
+# Import the custom ßhead module without editing any existing files.
 custom_imports = dict(
     imports=['mmdet3d.models.dense_heads.ssd_3d_head_objness'],
     allow_failed_imports=False,

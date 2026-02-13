@@ -1,0 +1,91 @@
+PointConViT3D KITTI (improved) — what changed and why
+=====================================================
+
+Config file
+-----------
+- configs/3dconvit/pointconvit3d_kitti_improved.py
+
+Base config it inherits from
+----------------------------
+- configs/3dconvit/pointconvit3d_kitti_config.py
+
+What motivated these changes (from your scalars.json)
+-----------------------------------------------------
+From outputs/old_pointconvit3d_kitti/20260209_011023/vis_data/scalars.json:
+
+1) Early training instability:
+   - Very large early grad_norm spikes (e.g. >100 at the beginning) then it
+     stabilizes later. This commonly benefits from LR warmup.
+
+2) Score/objectness supervision looked ineffective:
+   - The logged centerness_loss stays ~1e-6 for most of training, which implies
+     the score head (`obj_scores`) receives almost no meaningful gradient.
+   - This can hurt score calibration / ranking which impacts AP, especially when
+     you later tune NMS/score thresholds.
+
+3) LR schedule behavior:
+   - Your original MultiStepLR drops at epochs 45 and 60. Loss continues to
+     fluctuate/plateau later; cosine decay often improves the “last-mile”
+     optimization.
+
+New files created (no original files modified)
+----------------------------------------------
+1) New head implementation (fixes objectness supervision):
+   - mmdet3d/models/dense_heads/ssd_3d_head_objness.py
+   - It registers SSD3DHeadObjness via MODELS.register_module().
+   - It changes only how obj_scores is supervised:
+       * targets: explicit binary objectness targets (per-class channel)
+       * weights: negatives weight 1, positives weight = centerness
+     All other losses (center/dir/size/corner/vote) follow SSD3DHead behavior.
+
+2) New config:
+   - configs/3dconvit/pointconvit3d_kitti_improved.py
+
+Summary of config changes vs base
+---------------------------------
+1) Custom import (to use the new head without editing package __init__.py):
+   - custom_imports.imports = ['mmdet3d.models.dense_heads.ssd_3d_head_objness']
+
+2) Head swap:
+   - model.bbox_head.type = 'SSD3DHeadObjness'
+   - model.bbox_head.objectness_loss.loss_weight = 2.0  (slightly stronger
+     learning signal for scoring; you can tune 1.0–3.0)
+
+3) Optimizer regularization:
+   - AdamW weight_decay: 0.0  ->  0.01
+
+4) LR schedule:
+   - MultiStepLR -> (Linear warmup for 1 epoch) + CosineAnnealingLR
+   - eta_min is set to 2e-5 to match the late-stage LR you previously reached.
+
+5) Test-time NMS:
+   - model.test_cfg.nms_cfg.iou_thr: 0.1 -> 0.25
+     Note: 0.1 is very aggressive. For Car AP, sweeping 0.15/0.2/0.25/0.3 is
+     often worthwhile.
+
+6) Validation frequency (to see Car AP improvements sooner):
+   - train_cfg.val_interval: 40 -> 10
+
+How to run it (same style as your training_script.sh)
+-----------------------------------------------------
+Single GPU:
+  python tools/train.py /home/naich/workspace/mmdet3d/mmdetection3d/configs/3dconvit/pointconvit3d_kitti_improved.py
+
+Multi-GPU (example):
+  CONFIG_FILE="/home/naich/workspace/mmdet3d/mmdetection3d/configs/3dconvit/pointconvit3d_kitti_improved.py"
+  GPU_NUM=2
+  CUDA_VISIBLE_DEVICES=0,1 ./tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM}
+
+What to watch in the new logs
+-----------------------------
+1) objectness_loss should be non-trivial (not ~1e-6).
+2) grad_norm should be less spiky during the first epoch (due to warmup).
+3) Car AP40 moderate/strict should improve or become more stable earlier.
+
+Notes / next quick tuning steps (Car-first, not Car-only)
+---------------------------------------------------------
+- NMS IoU sweep: try iou_thr in {0.15, 0.2, 0.25, 0.3}.
+- objectness_loss weight sweep: try {1.0, 2.0, 3.0}.
+- If Car AP improves and you later want Ped/Cyc: we can add class-balanced
+  sampling or class-specific loss weights (still without switching to Car-only).
+
