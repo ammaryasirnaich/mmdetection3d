@@ -1,0 +1,1 @@
+python tools/plot_convit_nonlocality.py outputs/pointconvit3d_kitti_scheduler --output outputs/pointconvit3d_kitti_scheduler/nonlocality_plot_v2_meters.jpeg --distance-unit meters --num-batches 1

@@ -1,0 +1,1 @@
+python tools/create_data.py nuscenes --root-path /var/lib/containers/dataset/nusence_dataset/nuscenes --out-dir /var/lib/containers/dataset/nusence_dataset/nuscenes --extra-tag nuscenes
