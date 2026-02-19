@@ -174,6 +174,12 @@ class GPSA(nn.Module):
         # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
 
+        # ConViT Section 4 (Eq. 8): optional capture for nonlocality metric D_loc = (1/L) sum_ij A_ij * ||delta_ij||
+        if getattr(self, '_capture_nonlocality', None) is not None:
+            # rel_indices encodes (δx, δy, δz, ‖δ‖²). For Eq. 8 we need Euclidean ‖δ‖.
+            dist_ij = torch.norm(rel_indices[..., :3], dim=-1).detach()  # (B, N, N)
+            self._capture_nonlocality.append((attn.detach().clone(), dist_ij.clone()))
+
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
         return attn
@@ -283,9 +289,29 @@ class MHSA(nn.Module):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        attn = F.scaled_dot_product_attention(q,k,v,attn_mask=None,scale=self.scale ,dropout_p= self.drop_attn, is_causal=False).permute(0,2,1,3)
-        B_t,N_t,H_t,D_t = attn.shape
-        attn =attn.reshape(B_t,N_t,H_t*D_t)   
+        if getattr(self, "_capture_nonlocality", None) is not None and rel_indices is not None:
+            # Compute attention weights explicitly so we can capture them for Eq. 8.
+            # q,k,v are (B, H, N, D). Attention weights are (B, H, N, N).
+            attn_weights = (q @ k.transpose(-2, -1)) * self.scale
+            attn_weights = attn_weights.softmax(dim=-1)
+
+            dist_ij = torch.norm(rel_indices[..., :3], dim=-1).detach()  # (B, N, N)
+            self._capture_nonlocality.append((attn_weights.detach().clone(), dist_ij.clone()))
+
+            attn = (attn_weights @ v).transpose(1, 2)  # (B, N, H, D)
+        else:
+            attn = F.scaled_dot_product_attention(
+                q,
+                k,
+                v,
+                attn_mask=None,
+                scale=self.scale,
+                dropout_p=self.drop_attn,
+                is_causal=False,
+            ).permute(0, 2, 1, 3)
+
+        B_t, N_t, H_t, D_t = attn.shape
+        attn = attn.reshape(B_t, N_t, H_t * D_t)
 
         attn = self.proj(attn)
         attn = self.proj_drop(attn)

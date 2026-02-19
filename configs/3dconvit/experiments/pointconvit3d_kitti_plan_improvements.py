@@ -25,7 +25,7 @@ optim_wrapper = dict(
 # -----------------------------------------------------------------------------
 # LR schedule: warmup + cosine (plan 3.6, 3.8)
 # -----------------------------------------------------------------------------
-epoch_num = 100
+epoch_num = 170
 lr = 0.002
 param_scheduler = [
     dict(type='LinearLR', start_factor=0.1, by_epoch=True, begin=0, end=1),

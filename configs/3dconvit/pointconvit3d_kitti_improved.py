@@ -24,7 +24,7 @@ optim_wrapper = dict(
 
 # --- LR schedule: warmup + cosine decay ---
 # Keeps the same base lr (0.002) from the base config.
-epoch_num = 100
+epoch_num = 170
 lr = 0.002
 param_scheduler = [
     # 1-epoch warmup to reduce early gradient spikes

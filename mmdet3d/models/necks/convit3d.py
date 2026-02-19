@@ -208,6 +208,11 @@ class GPSA(nn.Module):
         # attn = attn.squeeze(0)
         # print("attn shape after unsqueeze", attn.shape)
 
+        # ConViT Section 4 (Eq. 8): optional capture for nonlocality metric D_loc = (1/L) sum_ij A_ij * ||delta_ij||
+        if getattr(self, '_capture_nonlocality', None) is not None:
+            dist_ij = self.rel_indices[..., 3].detach()  # (B, N, N) Euclidean distance
+            self._capture_nonlocality.append((attn.detach().clone(), dist_ij.clone()))
+
         v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         attn = (attn @ v).transpose(1, 2).reshape(B, N, C)
         return attn
