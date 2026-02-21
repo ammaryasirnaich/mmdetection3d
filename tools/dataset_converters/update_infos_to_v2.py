@@ -266,9 +266,11 @@ def update_nuscenes_infos(pkl_path, out_dir):
         ('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
          'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
     }
+    # Use out_dir as dataroot so NuScenes finds the version folder (e.g. v1.0-trainval)
+    # when root_path/out_dir is not the default ./data/nuscenes.
     nusc = NuScenes(
         version=data_list['metadata']['version'],
-        dataroot='./data/nuscenes',
+        dataroot=out_dir,
         verbose=True)
 
     print('Start updating:')

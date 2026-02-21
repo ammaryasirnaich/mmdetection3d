@@ -42,6 +42,7 @@ train_pipeline = [
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
+        use_dim=5,
         backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
@@ -71,6 +72,7 @@ test_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         test_mode=True,
+        use_dim=5,
         backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -104,6 +106,7 @@ eval_pipeline = [
         type='LoadPointsFromMultiSweeps',
         sweeps_num=10,
         test_mode=True,
+        use_dim=5,
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -163,7 +166,7 @@ val_dataloader = dict(
 val_evaluator = dict(
     type='NuScenesMetric',
     data_root=data_root,
-    ann_file=data_root + 'nuscenes_infos_val.pkl',
+    ann_file=data_root + '/nuscenes_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
 test_evaluator = val_evaluator

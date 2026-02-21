@@ -59,21 +59,29 @@ def _compute_nonlocality_from_captures(
     Paper Eq. 8 (per head): D_loc = (1/N) * sum_i sum_j A_ij * ||delta_ij||,
     then averaged over heads and batch.
 
-    Returns one scalar per layer; layers without captures get float('nan').
+    Also computes D_loc for uniform attention (A_ij = 1/N) using the same dist
+    as a sanity baseline (analysis 5.4): D_loc_uniform = (1/N^2) * sum_ij d_ij.
+
+    Returns (values, uniform_values): each is a list of one scalar per layer;
+    layers without captures get float('nan'). uniform_values are averaged over
+    layers in the caller to get one "Uniform (baseline)" curve per epoch.
 
     distance_unit:
       - 'meters': return D_loc in the coordinate units of the point cloud (typically meters)
       - 'token': return D_loc normalized by a characteristic token spacing (mean nearest-neighbor distance)
     """
     values = []
+    uniform_values = []
     for layer_idx in range(depth):
         # captures_per_layer[layer_idx] is a list of (attn, dist) from one or more forwards
         # attn: (B, num_heads, N, N), dist: (B, N, N)
         layer_captures = captures_per_layer.get(layer_idx, [])
         if not layer_captures:
             values.append(float("nan"))
+            uniform_values.append(float("nan"))
             continue
         total = 0.0
+        uniform_total = 0.0
         count = 0
         for attn, dist in layer_captures:
             # Eq. 8 reduction:
@@ -82,6 +90,10 @@ def _compute_nonlocality_from_captures(
             per_query = (attn * dist.unsqueeze(1)).sum(dim=-1)  # (B, H, N)
             per_head = per_query.mean(dim=-1)  # (B, H)
             d = per_head.mean()  # scalar tensor
+
+            # Uniform baseline: A_ij = 1/N => D_loc_uniform = (1/N^2) * sum_ij d_ij
+            B, _, N, _ = attn.shape
+            d_uniform = dist.mean()  # (1/N^2)*sum_ij d_ij since dist has N*N elements
 
             if distance_unit == "token":
                 # Normalize by mean nearest-neighbor distance to get a scale-free “token-step” unit.
@@ -92,12 +104,16 @@ def _compute_nonlocality_from_captures(
                 nn_dist = masked.min(dim=-1).values  # (B, N)
                 scale = nn_dist.mean().clamp_min(1e-12)
                 d = d / scale
+                d_uniform = d_uniform / scale
 
             d = float(d.item())
+            d_uniform = float(d_uniform.item())
             total += d
+            uniform_total += d_uniform
             count += 1
         values.append(total / count if count else float("nan"))
-    return values
+        uniform_values.append(uniform_total / count if count else float("nan"))
+    return values, uniform_values
 
 
 def _extract_nonlocality_per_checkpoint(
@@ -214,13 +230,13 @@ def _extract_nonlocality_per_checkpoint(
             if m:
                 epoch = int(m.group(1))
 
-    values = _compute_nonlocality_from_captures(
+    values, uniform_values = _compute_nonlocality_from_captures(
         captures_per_layer,
         depth,
         local_up_to_layer,
         distance_unit=distance_unit,
     )
-    return epoch, values
+    return epoch, values, uniform_values
 
 
 def _plot_nonlocality(
@@ -229,8 +245,12 @@ def _plot_nonlocality(
     output_path: str,
     title: str = "ConViT (nonlocality)",
     ylabel: str = "Nonlocality (avg attention distance)",
+    data_uniform_baseline=None,
 ):
-    """Figure-5-style plot: one line per layer, x=epochs, y=nonlocality (D_loc)."""
+    """Figure-5-style plot: one line per layer, x=epochs, y=nonlocality (D_loc).
+    If data_uniform_baseline is provided (list of (epoch, value)), plot one dashed
+    "Uniform (baseline)" curve (analysis 5.4).
+    """
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -255,6 +275,14 @@ def _plot_nonlocality(
             label=f"Layer {layer_idx + 1}",
         )
 
+    if data_uniform_baseline:
+        pts = [(e, v) for e, v in data_uniform_baseline if not (isinstance(v, float) and math.isnan(v))]
+        if pts:
+            pts.sort(key=lambda x: x[0])
+            ep = np.array([p[0] for p in pts])
+            uv = np.array([p[1] for p in pts])
+            ax.plot(ep, uv, color="gray", linestyle="--", linewidth=1.5, label="Uniform (baseline)")
+
     ax.set_xlabel("Epochs")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -266,10 +294,8 @@ def _plot_nonlocality(
     plt.close()
 
 
-def plot_convit_nonlocality(
+def get_nonlocality_data(
     training_folder: str,
-    output_path: str = "nonlocality_plot.jpeg",
-    title: str = "ConViT 3D (nonlocality)",
     use_fake_data: bool = False,
     num_batches: int = 1,
     num_fake_points: int = 2048,
@@ -277,12 +303,9 @@ def plot_convit_nonlocality(
     device: str = None,
 ):
     """
-    Compute ConViT Section 4 nonlocality (Eq. 8) per layer per checkpoint and save
-    a Figure-5-style plot. Uses forward hooks on GPSA to capture attention and
-    pairwise distances.
-
-    Returns:
-        str: Absolute path to the saved figure.
+    Compute ConViT nonlocality (Eq. 8) per layer per checkpoint without plotting.
+    Returns (data_by_layer, data_uniform_baseline, depth) for use in combined plots
+    or correlation (e.g. analysis 5.2).
     """
     from mmengine import Config
 
@@ -294,7 +317,6 @@ def plot_convit_nonlocality(
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Build model and (optionally) dataloader ONCE, then iterate checkpoints by re-loading weights.
     from mmdet3d.registry import MODELS
     from mmengine.registry import init_default_scope
     from mmengine.runner import load_checkpoint
@@ -307,7 +329,6 @@ def plot_convit_nonlocality(
     if not hasattr(neck, "blocks"):
         raise ValueError("Model neck has no .blocks (expected ConViT-style VisionTransformer).")
 
-    # Prepare a small, fixed set of batches to reuse for every checkpoint.
     batches = []
     if use_fake_data:
         for _ in range(num_batches):
@@ -325,8 +346,7 @@ def plot_convit_nonlocality(
             dataloader_cfg = None
         if dataloader_cfg is None:
             raise ValueError(
-                "Config has no test_dataloader or train_dataloader. "
-                "Use --use-fake-data to run without dataset."
+                "Config has no test_dataloader or train_dataloader. Use --use-fake-data."
             )
         dataloader = Runner.build_dataloader(dataloader_cfg)
         for batch in dataloader:
@@ -348,9 +368,10 @@ def plot_convit_nonlocality(
             batches.append(batch_inputs)
 
     if not batches:
-        raise ValueError("No batches available to compute nonlocality. Check dataloader and num_batches.")
+        raise ValueError("No batches available. Check dataloader and num_batches.")
 
     data_by_layer = {i: [] for i in range(depth)}
+    data_uniform_baseline = []
     for idx, (ckpt_path, epoch_from_list) in enumerate(checkpoints, start=1):
         print(f"[{idx}/{len(checkpoints)}] Loading {os.path.basename(ckpt_path)} (epoch={epoch_from_list})")
         try:
@@ -358,7 +379,6 @@ def plot_convit_nonlocality(
         except Exception:
             load_checkpoint(model, ckpt_path, map_location="cpu")
 
-        # Reset capture buffers for this checkpoint.
         captures_per_layer = {i: [] for i in range(depth)}
         for i in range(depth):
             neck.blocks[i].attn._capture_nonlocality = []
@@ -375,7 +395,7 @@ def plot_convit_nonlocality(
                 model.extract_feat(batch_inputs)
                 _collect_captures()
 
-        values = _compute_nonlocality_from_captures(
+        values, uniform_per_layer = _compute_nonlocality_from_captures(
             captures_per_layer,
             depth,
             local_up_to_layer,
@@ -384,6 +404,39 @@ def plot_convit_nonlocality(
         epoch = epoch_from_list
         for layer_idx, val in enumerate(values):
             data_by_layer[layer_idx].append((epoch, val))
+        u_valid = [v for v in uniform_per_layer if not (isinstance(v, float) and math.isnan(v))]
+        uniform_baseline = (sum(u_valid) / len(u_valid)) if u_valid else float("nan")
+        data_uniform_baseline.append((epoch, uniform_baseline))
+
+    return data_by_layer, data_uniform_baseline, depth
+
+
+def plot_convit_nonlocality(
+    training_folder: str,
+    output_path: str = "nonlocality_plot.jpeg",
+    title: str = "ConViT 3D (nonlocality)",
+    use_fake_data: bool = False,
+    num_batches: int = 1,
+    num_fake_points: int = 2048,
+    distance_unit: str = "meters",
+    device: str = None,
+):
+    """
+    Compute ConViT Section 4 nonlocality (Eq. 8) per layer per checkpoint and save
+    a Figure-5-style plot. Uses forward hooks on GPSA to capture attention and
+    pairwise distances.
+
+    Returns:
+        str: Absolute path to the saved figure.
+    """
+    data_by_layer, data_uniform_baseline, depth = get_nonlocality_data(
+        training_folder,
+        use_fake_data=use_fake_data,
+        num_batches=num_batches,
+        num_fake_points=num_fake_points,
+        distance_unit=distance_unit,
+        device=device,
+    )
 
     output_abs = os.path.abspath(output_path)
     out_dir = os.path.dirname(output_abs)
@@ -394,7 +447,14 @@ def plot_convit_nonlocality(
         if distance_unit == "meters"
         else "Nonlocality (avg attention distance / nn_spacing)"
     )
-    _plot_nonlocality(data_by_layer, depth, output_abs, title=title, ylabel=ylabel)
+    _plot_nonlocality(
+        data_by_layer,
+        depth,
+        output_abs,
+        title=title,
+        ylabel=ylabel,
+        data_uniform_baseline=data_uniform_baseline,
+    )
     return output_abs
 
 
